@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { telegramClient } from '../telegram-client';
-import type { AuthState } from '../types/telegram';
+import type { ApiClient } from 'api/api-client';
+import type { AuthState } from 'types/telegram';
 
 @customElement('auth-screen')
 export class AuthScreen extends LitElement {
@@ -50,6 +50,7 @@ export class AuthScreen extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) client!: ApiClient;
   @property({ type: String }) authState: AuthState = 'wait_phone';
   @state() private _phone = '';
   @state() private _code = '';
@@ -63,7 +64,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await telegramClient.sendPhoneNumber(this._phone.trim());
+      await this.client.sendPhoneNumber(this._phone.trim());
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -76,7 +77,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await telegramClient.sendAuthCode(this._code.trim());
+      await this.client.sendAuthCode(this._code.trim());
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -89,7 +90,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await telegramClient.sendPassword(this._password.trim());
+      await this.client.sendPassword(this._password.trim());
     } catch (e) {
       this._error = (e as Error).message;
     }

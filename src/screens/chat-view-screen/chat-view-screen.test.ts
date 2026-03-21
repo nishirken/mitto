@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import { Message } from '../types/telegram';
+import { Message } from 'types/telegram';
 import './chat-view-screen';
 import type { ChatViewScreen } from './chat-view-screen';
 

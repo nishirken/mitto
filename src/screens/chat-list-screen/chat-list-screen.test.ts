@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import { Chat } from '../types/telegram';
+import { Chat } from 'types/telegram';
+
+vi.mock('api/telegram-client');
+
+import { mockApiClient } from 'api/__mocks__/telegram-client';
 import './chat-list-screen';
 import type { ChatListScreen } from './chat-list-screen';
 
@@ -11,8 +15,12 @@ const testChats: Chat[] = [
 
 describe('chat-list-screen', () => {
   it('shows correct chat count', async () => {
+    vi.mocked(mockApiClient.onChatsChange).mockImplementation((cb) => {
+      cb(testChats);
+    });
+
     const el = await fixture<ChatListScreen>(html`
-      <chat-list-screen .chats=${testChats}></chat-list-screen>
+      <chat-list-screen .client=${mockApiClient}></chat-list-screen>
     `);
 
     const count = el.shadowRoot!.querySelector('.count')!;
@@ -20,8 +28,12 @@ describe('chat-list-screen', () => {
   });
 
   it('renders correct number of chat items', async () => {
+    vi.mocked(mockApiClient.onChatsChange).mockImplementation((cb) => {
+      cb(testChats);
+    });
+
     const el = await fixture<ChatListScreen>(html`
-      <chat-list-screen .chats=${testChats}></chat-list-screen>
+      <chat-list-screen .client=${mockApiClient}></chat-list-screen>
     `);
 
     const items = el.shadowRoot!.querySelectorAll('chat-item');

@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { Message } from '../types/telegram';
-import { navigate } from '../router';
+import { Message } from 'types/telegram';
+import { navigate } from 'router';
 
 @customElement('chat-view-screen')
 export class ChatViewScreen extends LitElement {

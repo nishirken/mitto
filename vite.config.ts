@@ -4,6 +4,9 @@ export default defineConfig({
   build: {
     target: 'es2020',
   },
+  resolve: {
+    tsconfigPaths: true,
+  },
   server: {
     port: 3000,
   },

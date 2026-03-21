@@ -1,4 +1,4 @@
-import { Chat, Message } from './types/telegram';
+import { Chat, Message } from 'types/telegram';
 
 export const mockChats: Chat[] = [
   { id: 1, name: 'Alice', lastMessage: 'Hey, are you coming to the meetup?', timestamp: '14:32', unreadCount: 3, avatarLetter: 'A' },

@@ -1,7 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { Chat } from '../types/telegram';
-import { navigate } from '../router';
+import { customElement, property, state } from 'lit/decorators.js';
+import type { ApiClient } from 'api/api-client';
+import { Chat } from 'types/telegram';
+import { navigate } from 'router';
 import './chat-item';
 
 @customElement('chat-list-screen')
@@ -19,7 +20,16 @@ export class ChatListScreen extends LitElement {
     .count { font-size: 10px; color: #555; }
   `;
 
-  @property({ type: Array }) chats: Chat[] = [];
+  @property({ attribute: false }) client!: ApiClient;
+  @state() _chats: Chat[] = [];
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.client.onChatsChange((chats) => {
+      this._chats = chats;
+    });
+    this.client.loadChats();
+  }
 
   private _onChatClick(chatId: number) {
     navigate(`chat/${chatId}`);
@@ -29,9 +39,9 @@ export class ChatListScreen extends LitElement {
     return html`
       <div class="header">
         <span class="title">Telegram</span>
-        <span class="count">${this.chats.length} chats</span>
+        <span class="count">${this._chats.length} chats</span>
       </div>
-      ${this.chats.map(
+      ${this._chats.map(
         (chat) => html`
           <chat-item
             .avatarLetter=${chat.avatarLetter}
