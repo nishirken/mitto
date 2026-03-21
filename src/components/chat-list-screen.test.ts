@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { Chat } from '../types/telegram';
-import '../components/chat-list-screen';
-import type { ChatListScreen } from '../components/chat-list-screen';
+import './chat-list-screen';
+import type { ChatListScreen } from './chat-list-screen';
 
 const testChats: Chat[] = [
   { id: 1, name: 'Alice', lastMessage: 'Hi', timestamp: '14:32', unreadCount: 3, avatarLetter: 'A' },

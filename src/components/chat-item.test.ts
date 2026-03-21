@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import '../components/chat-item';
-import type { ChatItem } from '../components/chat-item';
+import './chat-item';
+import type { ChatItem } from './chat-item';
 
 describe('chat-item', () => {
   it('renders all fields', async () => {

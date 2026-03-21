@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseHash } from '../router';
+import { parseHash } from './router';
 
 describe('parseHash', () => {
   it('returns auth for empty hash', () => {

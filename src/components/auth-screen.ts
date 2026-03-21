@@ -57,7 +57,8 @@ export class AuthScreen extends LitElement {
   @state() private _loading = false;
   @state() private _error = '';
 
-  private async _onSubmitPhone() {
+  private async _onSubmitPhone(e?: Event) {
+    e?.preventDefault();
     if (!this._phone.trim()) return;
     this._loading = true;
     this._error = '';
@@ -69,7 +70,8 @@ export class AuthScreen extends LitElement {
     this._loading = false;
   }
 
-  private async _onSubmitCode() {
+  private async _onSubmitCode(e?: Event) {
+    e?.preventDefault();
     if (!this._code.trim()) return;
     this._loading = true;
     this._error = '';
@@ -81,7 +83,8 @@ export class AuthScreen extends LitElement {
     this._loading = false;
   }
 
-  private async _onSubmitPassword() {
+  private async _onSubmitPassword(e?: Event) {
+    e?.preventDefault();
     if (!this._password.trim()) return;
     this._loading = true;
     this._error = '';
@@ -95,67 +98,80 @@ export class AuthScreen extends LitElement {
 
   private _renderPhone() {
     return html`
-      <span class="title">Sign in</span>
-      <div class="field">
-        <div class="label">Phone number</div>
-        <input
-          class="input"
-          type="tel"
-          placeholder="+374 XX XXX XXXX"
-          .value=${this._phone}
-          @input=${(e: InputEvent) => this._phone = (e.target as HTMLInputElement).value}
-          @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && this._onSubmitPhone()}
-        >
-        <div class="hint">International format</div>
-      </div>
-      ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-      <button class="continue-btn" ?disabled=${this._loading} @click=${this._onSubmitPhone}>
-        ${this._loading ? 'Sending...' : 'Continue'}
-      </button>
+      <form @submit=${this._onSubmitPhone}>
+        <span class="title">Sign in</span>
+        <div class="field">
+          <label class="label" for="phone">Phone number</label>
+          <input
+            id="phone"
+            class="input"
+            data-testid="phone-input"
+            type="tel"
+            autocomplete="tel"
+            inputmode="tel"
+            placeholder="+374 XX XXX XXXX"
+            .value=${this._phone}
+            @input=${(e: InputEvent) => this._phone = (e.target as HTMLInputElement).value}
+          >
+          <div class="hint">International format</div>
+        </div>
+        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        <button class="continue-btn" data-testid="submit" type="submit" ?disabled=${this._loading}>
+          ${this._loading ? 'Sending...' : 'Continue'}
+        </button>
+      </form>
     `;
   }
 
   private _renderCode() {
     return html`
-      <span class="title">Enter code</span>
-      <div class="field">
-        <div class="label">Authentication code</div>
-        <input
-          class="input"
-          type="text"
-          inputmode="numeric"
-          placeholder="12345"
-          .value=${this._code}
-          @input=${(e: InputEvent) => this._code = (e.target as HTMLInputElement).value}
-          @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && this._onSubmitCode()}
-        >
-        <div class="hint">Check your Telegram app or SMS</div>
-      </div>
-      ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-      <button class="continue-btn" ?disabled=${this._loading} @click=${this._onSubmitCode}>
-        ${this._loading ? 'Verifying...' : 'Continue'}
-      </button>
+      <form @submit=${this._onSubmitCode}>
+        <span class="title">Enter code</span>
+        <div class="field">
+          <label class="label" for="code">Authentication code</label>
+          <input
+            id="code"
+            class="input"
+            data-testid="code-input"
+            type="text"
+            autocomplete="one-time-code"
+            inputmode="numeric"
+            placeholder="12345"
+            .value=${this._code}
+            @input=${(e: InputEvent) => this._code = (e.target as HTMLInputElement).value}
+          >
+          <div class="hint">Check your Telegram app or SMS</div>
+        </div>
+        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        <button class="continue-btn" data-testid="submit" type="submit" ?disabled=${this._loading}>
+          ${this._loading ? 'Verifying...' : 'Continue'}
+        </button>
+      </form>
     `;
   }
 
   private _renderPassword() {
     return html`
-      <span class="title">Two-factor auth</span>
-      <div class="field">
-        <div class="label">Password</div>
-        <input
-          class="input"
-          type="password"
-          placeholder="Password"
-          .value=${this._password}
-          @input=${(e: InputEvent) => this._password = (e.target as HTMLInputElement).value}
-          @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && this._onSubmitPassword()}
-        >
-      </div>
-      ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-      <button class="continue-btn" ?disabled=${this._loading} @click=${this._onSubmitPassword}>
-        ${this._loading ? 'Verifying...' : 'Continue'}
-      </button>
+      <form @submit=${this._onSubmitPassword}>
+        <span class="title">Two-factor auth</span>
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <input
+            id="password"
+            class="input"
+            data-testid="password-input"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            .value=${this._password}
+            @input=${(e: InputEvent) => this._password = (e.target as HTMLInputElement).value}
+          >
+        </div>
+        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        <button class="continue-btn" data-testid="submit" type="submit" ?disabled=${this._loading}>
+          ${this._loading ? 'Verifying...' : 'Continue'}
+        </button>
+      </form>
     `;
   }
 

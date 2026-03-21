@@ -18,12 +18,15 @@ export class TelegramClient {
     this._onAuthChange = cb;
   }
 
-  async init(apiId: number, apiHash: string) {
+  async init(apiId: number, apiHash: string, useTestDc = false) {
+    console.log('[TelegramClient] init useTestDc:', useTestDc);
+    const instanceName = useTestDc ? 'mitto_test' : 'mitto';
+
     this._client = new TdClient({
-      instanceName: 'mitto',
+      instanceName,
       isBackground: false,
-      jsLogVerbosityLevel: 'warning',
-      logVerbosityLevel: 1,
+      jsLogVerbosityLevel: 'debug',
+      logVerbosityLevel: 2,
       onUpdate: (update: Record<string, unknown>) => this._handleUpdate(update),
     });
 
@@ -31,9 +34,10 @@ export class TelegramClient {
       '@type': 'setTdlibParameters',
       api_id: apiId,
       api_hash: apiHash,
-      database_directory: '/mitto_db',
+      database_directory: useTestDc ? '/mitto_test_db' : '/mitto_db',
       use_message_database: true,
       use_secret_chats: false,
+      use_test_dc: useTestDc,
       system_language_code: navigator.language || 'en',
       device_model: 'Mitto E-Ink',
       application_version: '0.1.0',
@@ -70,6 +74,7 @@ export class TelegramClient {
     if (update['@type'] !== 'updateAuthorizationState') return;
 
     const authState = update.authorization_state as Record<string, unknown>;
+    console.log('[TelegramClient] authState update:', JSON.stringify(authState));
     switch (authState['@type']) {
       case 'authorizationStateWaitPhoneNumber':
         this._setAuthState('wait_phone');
@@ -88,6 +93,7 @@ export class TelegramClient {
 
   private _send(query: Record<string, unknown>): Promise<unknown> {
     if (!this._client) throw new Error('TDLib client not initialized');
+
     return this._client.send(query) as Promise<unknown>;
   }
 }

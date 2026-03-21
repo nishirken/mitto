@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
   build: {
@@ -9,17 +8,7 @@ export default defineConfig({
     port: 3000,
   },
   test: {
-    browser: {
-      enabled: true,
-      instances: [
-        {
-          browser: 'chromium',
-          provider: playwright(),
-          launch: {
-            executablePath: process.env.CHROME_EXECUTABLE,
-          },
-        },
-      ],
-    },
+    include: ['src/**/*.test.ts'],
+    environment: 'happy-dom',
   },
 });

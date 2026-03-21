@@ -8,8 +8,8 @@ import './components/auth-screen';
 import './components/chat-list-screen';
 import './components/chat-view-screen';
 
-const API_ID = 94575;
-const API_HASH = 'a3406de8d171bb422bb6ddf3bbd800e2';
+const API_ID = '30808228';
+const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
 
 @customElement('app-root')
 export class AppRoot extends LitElement {
@@ -51,7 +51,8 @@ export class AppRoot extends LitElement {
       }
     });
 
-    telegramClient.init(API_ID, API_HASH);
+    const useTestDc = new URLSearchParams(window.location.search).has('test_dc');
+    telegramClient.init(API_ID, API_HASH, useTestDc);
 
     this._route = currentRoute();
     this._unsubscribe = onRouteChange((route) => {
@@ -80,6 +81,7 @@ export class AppRoot extends LitElement {
         const chatId = Number(this._route.params.id);
         const chat = mockChats.find((c) => c.id === chatId);
         const messages = mockMessages.filter((m) => m.chatId === chatId);
+
         return html`<chat-view-screen
           .contactName=${chat?.name ?? 'Unknown'}
           .messages=${messages}
