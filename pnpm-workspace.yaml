@@ -1,2 +1,4 @@
 onlyBuiltDependencies:
   - simple-git-hooks
+patchedDependencies:
+  '@lit-labs/signals@0.2.0': patches/@lit-labs__signals@0.2.0.patch

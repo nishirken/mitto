@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@lit-labs/signals@0.2.0':
+    hash: dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f
+    path: patches/@lit-labs__signals@0.2.0.patch
+
 importers:
 
   .:
@@ -13,7 +18,7 @@ importers:
         version: 1.8.40
       '@lit-labs/signals':
         specifier: ^0.2.0
-        version: 0.2.0
+        version: 0.2.0(patch_hash=dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f)
       '@lit/context':
         specifier: ^1.1.6
         version: 1.1.6
@@ -2356,7 +2361,7 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@lit-labs/signals@0.2.0':
+  '@lit-labs/signals@0.2.0(patch_hash=dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f)':
     dependencies:
       lit: 3.3.2
       signal-polyfill: 0.2.2
