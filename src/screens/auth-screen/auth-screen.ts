@@ -4,6 +4,10 @@ import { consume } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import type { AuthState } from 'types/telegram';
+import 'components/mk-header';
+import 'components/mk-input';
+import 'components/mk-button';
+import type { MkInput } from 'components/mk-input';
 import styles from './auth-screen.css?inline';
 
 @customElement('auth-screen')
@@ -48,25 +52,19 @@ export class AuthScreen extends LitElement {
     return html`
       <form @submit=${this._onSubmitPhone}>
         <span class="title">Sign in</span>
-        <div class="field">
-          <label class="label" for="phone">Phone number</label>
-          <input
-            id="phone"
-            class="input"
-            data-testid="phone-input"
-            type="tel"
-            autocomplete="tel"
-            inputmode="tel"
-            placeholder="+374 XX XXX XXXX"
-            .value=${this._phone}
-            @input=${(e: InputEvent) => this._phone = (e.target as HTMLInputElement).value}
-          >
-          <div class="hint">International format</div>
-        </div>
+        <mk-input
+          data-testid="phone-input"
+          type="tel"
+          label="Phone number"
+          hint="International format"
+          placeholder="+374 XX XXX XXXX"
+          .value=${this._phone}
+          @input=${(e: Event) => this._phone = (e.target as MkInput).value}
+        ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-        <button class="continue-btn" data-testid="submit" type="submit" ?disabled=${this._loading}>
+        <mk-button data-testid="submit" @click=${this._onSubmitPhone} ?disabled=${this._loading}>
           ${this._loading ? 'Sending...' : 'Continue'}
-        </button>
+        </mk-button>
       </form>
     `;
   }
@@ -75,35 +73,29 @@ export class AuthScreen extends LitElement {
     return html`
       <form @submit=${this._onSubmitCode}>
         <span class="title">Enter code</span>
-        <div class="field">
-          <label class="label" for="code">Authentication code</label>
-          <input
-            id="code"
-            class="input"
-            data-testid="code-input"
-            type="text"
-            autocomplete="one-time-code"
-            inputmode="numeric"
-            placeholder="12345"
-            .value=${this._code}
-            @input=${(e: InputEvent) => this._code = (e.target as HTMLInputElement).value}
-          >
-          <div class="hint">Check your Telegram app or SMS</div>
-        </div>
+        <mk-input
+          data-testid="code-input"
+          type="text"
+          label="Authentication code"
+          hint="Check your Telegram app or SMS"
+          placeholder="12345"
+          .value=${this._code}
+          @input=${(e: Event) => this._code = (e.target as MkInput).value}
+        ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-        <button class="continue-btn" data-testid="submit" type="submit" ?disabled=${this._loading}>
+        <mk-button data-testid="submit" @click=${this._onSubmitCode} ?disabled=${this._loading}>
           ${this._loading ? 'Verifying...' : 'Continue'}
-        </button>
+        </mk-button>
       </form>
     `;
   }
 
   render() {
-    switch (this.authState) {
-      case 'wait_code':
-        return this._renderCode();
-      default:
-        return this._renderPhone();
-    }
+    return html`
+      <mk-header headline="Mitto"></mk-header>
+      <div class="body">
+        ${this.authState === 'wait_code' ? this._renderCode() : this._renderPhone()}
+      </div>
+    `;
   }
 }

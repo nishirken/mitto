@@ -1,0 +1,93 @@
+/*
+ * Mitto Design Tokens
+ * Extracted from MuditaOS K native SMS interface
+ * Target: 480×800 portrait @ 216 ppi (Mudita Kompakt)
+ */
+
+:root {
+  /* ============================================
+   * COLORS — strict monochrome
+   * ============================================ */
+  --c-black: #000;
+  --c-white: #fff;
+  --c-gray-600: #555;     /* secondary text, timestamps */
+  --c-gray-400: #888;     /* placeholders, disabled */
+  --c-gray-200: #ccc;     /* dotted separators */
+  --c-highlight: #e0e0e0;    /* outgoing message bubble fill */
+
+  /* Semantic aliases */
+  --c-bg: var(--c-white);
+  --c-text: var(--c-black);
+  --c-text-secondary: var(--c-gray-600);
+  --c-text-placeholder: var(--c-gray-400);
+  --c-separator: var(--c-gray-200);
+  --c-border: var(--c-black);
+  --c-badge-bg: var(--c-black);
+  --c-badge-text: var(--c-white);
+  --c-button-bg: var(--c-black);
+  --c-button-text: var(--c-white);
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
+  --font-family: 'Noto Sans', sans-serif;
+  --fs-title: 24px;
+  --fs-header: 22px;
+  --fs-name: 18px;
+  --fs-body: 16px;
+  --fs-preview: 15px;
+  --fs-meta: 14px;
+  --fs-caption: 13px;
+  --fs-badge: 12px;
+  --fw-bold: 700;
+  --fw-regular: 400;
+  --lh-tight: 1.2;
+  --lh-normal: 1.4;
+
+  /* ============================================
+   * SPACING
+   * ============================================ */
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+  --page-px: var(--sp-16);
+
+  /* ============================================
+   * BORDERS & SEPARATORS
+   * ============================================ */
+  --border-solid: 1.5px solid var(--c-border);
+  --border-thin: 1px solid var(--c-border);
+  --separator-dotted: 1px dotted var(--c-separator);
+  --separator-solid: 1.5px solid var(--c-border);
+
+  /* ============================================
+   * SHAPES
+   * ============================================ */
+  --radius-bubble: 8px;
+  --radius-button: 50%;
+  --radius-badge: 10px;
+
+  /* ============================================
+   * SIZING
+   * ============================================ */
+  --tap-min: 48px;
+  --header-height: 56px;
+  --bottom-bar-height: 52px;
+  --list-item-height: 72px;
+  --icon-size: 24px;
+  --badge-size: 20px;
+  --fab-size: 40px;
+
+  /* ============================================
+   * SCROLLBAR
+   * ============================================ */
+  --scrollbar-width: 4px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: var(--c-black);
+}

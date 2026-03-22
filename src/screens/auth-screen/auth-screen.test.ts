@@ -5,6 +5,7 @@ import { servicesContext } from 'api/services-context';
 import { mockServices } from 'api/__mocks__/telegram-client';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
+import type { MkInput } from 'components/mk-input';
 import { tid } from 'test-utils';
 
 function withContext() {
@@ -21,13 +22,13 @@ beforeEach(() => {
 describe('auth-screen', () => {
   it('calls sendPhoneNumber on phone submit', async () => {
     const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, { parentNode: withContext() });
-    const input = tid(el, 'phone-input') as HTMLInputElement;
+    const input = tid(el, 'phone-input') as MkInput;
     const phoneNumber = '+1234567890';
     input.value = phoneNumber;
     input.dispatchEvent(new Event('input'));
     await el.updateComplete;
 
-    (tid(el, 'submit') as HTMLButtonElement).click();
+    (tid(el, 'submit') as HTMLElement).click();
     await el.updateComplete;
 
     expect(mockServices.authClient.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
@@ -48,12 +49,12 @@ describe('auth-screen', () => {
       <auth-screen authState="wait_code"></auth-screen>
     `, { parentNode: withContext() });
 
-    const input = tid(el, 'code-input') as HTMLInputElement;
+    const input = tid(el, 'code-input') as MkInput;
     input.value = '12345';
     input.dispatchEvent(new Event('input'));
     await el.updateComplete;
 
-    (tid(el, 'submit') as HTMLButtonElement).click();
+    (tid(el, 'submit') as HTMLElement).click();
     await el.updateComplete;
 
     expect(mockServices.authClient.sendAuthCode).toHaveBeenCalledWith('12345');

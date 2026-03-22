@@ -6,8 +6,9 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
 import { ChatListStore } from './chat-list-store';
-import styles from './chat-list-screen.css?inline';
+import 'components/mk-header';
 import './chat-item';
+import styles from './chat-list-screen.css?inline';
 
 @customElement('chat-list-screen')
 export class ChatListScreen extends SignalWatcher(LitElement) {
@@ -32,22 +33,26 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
     const chats = this._store?.chats.get() ?? [];
 
     return html`
-      <div class="header">
-        <span class="title">Telegram</span>
-        <span class="count">${chats.length} chats</span>
-      </div>
-      ${chats.map(
-        (chat) => html`
-          <chat-item
-            .avatarLetter=${chat.avatarLetter}
-            .name=${chat.name}
-            .timestamp=${chat.timestamp}
-            .preview=${chat.lastMessage}
-            .unreadCount=${chat.unreadCount}
-            @click=${() => this._onChatClick(chat.id)}
-          ></chat-item>
-        `
-      )}
+      <mk-header headline="Mitto">
+        <span class="count" slot="end">${chats.length} chats</span>
+      </mk-header>
+      ${chats.length === 0
+        ? html`<div class="empty">Loading…</div>`
+        : html`
+          <div class="list">
+            ${chats.map(
+              (chat) => html`
+                <chat-item
+                  .name=${chat.name}
+                  .timestamp=${chat.timestamp}
+                  .preview=${chat.lastMessage}
+                  .unreadCount=${chat.unreadCount}
+                  @click=${() => this._onChatClick(chat.id)}
+                ></chat-item>
+              `
+            )}
+          </div>
+        `}
     `;
   }
 }

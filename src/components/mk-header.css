@@ -1,0 +1,27 @@
+:host {
+  display: flex;
+  align-items: center;
+  min-height: var(--header-height);
+  padding: var(--sp-8) var(--page-px);
+  border-bottom: var(--separator-solid);
+  flex-shrink: 0;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-header);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+::slotted([slot="start"]) {
+  flex-shrink: 0;
+}
+
+::slotted([slot="end"]) {
+  flex-shrink: 0;
+}

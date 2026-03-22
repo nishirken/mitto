@@ -1,12 +1,12 @@
-import { LitElement, html, unsafeCSS } from 'lit';
+import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import 'components/mk-badge';
 import styles from './chat-item.css?inline';
 
 @customElement('chat-item')
 export class ChatItem extends LitElement {
   static styles = unsafeCSS(styles);
 
-  @property({ type: String }) avatarLetter = '';
   @property({ type: String }) name = '';
   @property({ type: String }) timestamp = '';
   @property({ type: String }) preview = '';
@@ -14,17 +14,18 @@ export class ChatItem extends LitElement {
 
   render() {
     return html`
-      <div class="avatar">${this.avatarLetter}</div>
       <div class="content">
         <div class="top">
           <span class="name">${this.name}</span>
           <span class="time">${this.timestamp}</span>
         </div>
-        <div class="preview">${this.preview}</div>
+        <div class="bottom">
+          <span class="preview">${this.preview}</span>
+          ${this.unreadCount > 0
+            ? html`<mk-badge class="badge" .count=${this.unreadCount}></mk-badge>`
+            : nothing}
+        </div>
       </div>
-      ${this.unreadCount > 0
-        ? html`<div class="badge">${this.unreadCount}</div>`
-        : ''}
     `;
   }
 }

@@ -1,63 +1,64 @@
 :host {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-12);
   align-items: center;
-  padding: 5px 10px;
-  border-bottom: 1px solid #000;
+  padding: var(--sp-12) var(--page-px);
+  border-bottom: var(--separator-dotted);
   cursor: pointer;
-}
-
-.avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1.5px solid #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
+  min-height: var(--list-item-height);
 }
 
 .content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
 }
 
 .top {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
+  gap: var(--sp-8);
 }
 
 .name {
-  font-weight: 700;
-  font-size: 11px;
-}
-
-.time {
-  font-size: 9px;
-  color: #555;
-}
-
-.preview {
-  font-size: 9px;
-  color: #555;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-name);
+  line-height: var(--lh-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.time {
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-regular);
+  color: var(--c-text-secondary);
+  flex-shrink: 0;
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+}
+
+.preview {
+  font-size: var(--fs-preview);
+  font-weight: var(--fw-regular);
+  color: var(--c-text-secondary);
+  line-height: var(--lh-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .badge {
-  background: #000;
-  color: #fff;
-  font-size: 8px;
-  min-width: 14px;
-  height: 14px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 3px;
-  font-weight: 700;
+  flex-shrink: 0;
 }

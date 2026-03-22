@@ -1,0 +1,8 @@
+:host {
+  display: block;
+  border-bottom: var(--separator-dotted);
+}
+
+:host([variant="solid"]) {
+  border-bottom: var(--separator-solid);
+}

@@ -1,0 +1,18 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-badge-bg);
+  color: var(--c-badge-text);
+  font-size: var(--fs-badge);
+  font-weight: var(--fw-bold);
+  min-width: var(--badge-size);
+  height: var(--badge-size);
+  border-radius: var(--radius-badge);
+  padding: 0 var(--sp-6);
+  line-height: 1;
+}
+
+:host([hidden]) {
+  display: none;
+}

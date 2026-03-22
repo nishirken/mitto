@@ -1,0 +1,35 @@
+:host {
+  display: inline-block;
+}
+
+button {
+  font-family: var(--font-family);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  min-height: var(--tap-min);
+  padding: var(--sp-12) var(--sp-24);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-button-bg);
+  color: var(--c-button-text);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--c-black);
+  outline-offset: 2px;
+}
+
+:host([variant="text"]) button {
+  background: none;
+  color: var(--c-text);
+  padding: var(--sp-8) var(--sp-12);
+}

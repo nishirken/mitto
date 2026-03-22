@@ -1,0 +1,23 @@
+:host {
+  display: inline-block;
+}
+
+button {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text);
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: var(--icon-size);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--c-black);
+  outline-offset: 2px;
+}

@@ -5,6 +5,10 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import type { Message } from 'types/telegram';
 import { navigate } from 'router';
+import 'components/mk-header';
+import 'components/mk-icon-button';
+import 'components/mk-input';
+import 'components/mk-button';
 import styles from './chat-view-screen.css?inline';
 
 @customElement('chat-view-screen')
@@ -18,10 +22,6 @@ export class ChatViewScreen extends LitElement {
   @state() private _messages: Message[] = [];
   @query('#messages') private _messagesContainer?: HTMLElement;
 
-  // Domain methods (loadMessages, onNewMessage) are commented out
-  // in TelegramClient — this screen will have runtime errors until they're
-  // re-implemented as event-based patterns.
-
   private async _scrollToBottom() {
     if (this._messagesContainer) {
       this._messagesContainer.scrollTop = this._messagesContainer.scrollHeight;
@@ -34,10 +34,10 @@ export class ChatViewScreen extends LitElement {
 
   render() {
     return html`
-      <div class="header">
-        <button class="back" @click=${this._onBack}>←</button>
+      <mk-header>
+        <mk-icon-button class="back" slot="start" label="Back" @click=${this._onBack}>←</mk-icon-button>
         <span class="contact">${this.contactName}</span>
-      </div>
+      </mk-header>
       <div class="messages" id="messages">
         ${this._messages.map(
           (msg) => html`
@@ -49,8 +49,8 @@ export class ChatViewScreen extends LitElement {
         )}
       </div>
       <div class="footer">
-        <input class="input" type="text" placeholder="Message…">
-        <button class="send-btn">Send</button>
+        <mk-input type="text" placeholder="Message…"></mk-input>
+        <mk-button>Send</mk-button>
       </div>
     `;
   }
