@@ -1,0 +1,19 @@
+:host { display: block; }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 2px solid #000;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.count {
+  font-size: 10px;
+  color: #555;
+}

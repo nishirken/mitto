@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-
-vi.mock('api/telegram-client');
-
+import { ContextProvider } from '@lit/context';
+import { servicesContext } from 'api/services-context';
+import { mockServices } from 'api/__mocks__/telegram-client';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
-import { mockApiClient } from 'api/__mocks__/telegram-client';
 import { tid } from 'test-utils';
+
+function withContext() {
+  const provider = document.createElement('div');
+  new ContextProvider(provider, { context: servicesContext, initialValue: mockServices });
+
+  return provider;
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -14,7 +20,7 @@ beforeEach(() => {
 
 describe('auth-screen', () => {
   it('calls sendPhoneNumber on phone submit', async () => {
-    const el = await fixture<AuthScreen>(html`<auth-screen .client=${mockApiClient}></auth-screen>`);
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, { parentNode: withContext() });
     const input = tid(el, 'phone-input') as HTMLInputElement;
     const phoneNumber = '+1234567890';
     input.value = phoneNumber;
@@ -24,11 +30,11 @@ describe('auth-screen', () => {
     (tid(el, 'submit') as HTMLButtonElement).click();
     await el.updateComplete;
 
-    expect(mockApiClient.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
+    expect(mockServices.authClient.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
   });
 
   it('shows code input after auth state changes to wait_code', async () => {
-    const el = await fixture<AuthScreen>(html`<auth-screen .client=${mockApiClient}></auth-screen>`);
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, { parentNode: withContext() });
 
     el.authState = 'wait_code';
     await el.updateComplete;
@@ -39,8 +45,8 @@ describe('auth-screen', () => {
 
   it('calls sendAuthCode on code submit', async () => {
     const el = await fixture<AuthScreen>(html`
-      <auth-screen .client=${mockApiClient} authState="wait_code"></auth-screen>
-    `);
+      <auth-screen authState="wait_code"></auth-screen>
+    `, { parentNode: withContext() });
 
     const input = tid(el, 'code-input') as HTMLInputElement;
     input.value = '12345';
@@ -50,6 +56,6 @@ describe('auth-screen', () => {
     (tid(el, 'submit') as HTMLButtonElement).click();
     await el.updateComplete;
 
-    expect(mockApiClient.sendAuthCode).toHaveBeenCalledWith('12345');
+    expect(mockServices.authClient.sendAuthCode).toHaveBeenCalledWith('12345');
   });
 });

@@ -1,83 +1,32 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { Message } from 'types/telegram';
+import { LitElement, html, unsafeCSS } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import { consume } from '@lit/context';
+import { servicesContext } from 'api/services-context';
+import type { Services } from 'api/services-context';
+import type { Message } from 'types/telegram';
 import { navigate } from 'router';
+import styles from './chat-view-screen.css?inline';
 
 @customElement('chat-view-screen')
 export class ChatViewScreen extends LitElement {
-  static styles = css`
-    :host {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-bottom: 2px solid #000;
-    }
-    .back {
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 0;
-      font-family: inherit;
-    }
-    .contact { font-weight: 700; font-size: 12px; }
-    .messages {
-      flex: 1;
-      padding: 6px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      overflow-y: auto;
-    }
-    .message {
-      border: 1px solid #000;
-      padding: 4px 8px;
-      max-width: 75%;
-      font-size: 10px;
-    }
-    .incoming { align-self: flex-start; }
-    .outgoing { align-self: flex-end; background: #e0e0e0; }
-    .msg-time {
-      text-align: right;
-      font-size: 8px;
-      color: #555;
-      margin-top: 1px;
-    }
-    .footer {
-      display: flex;
-      gap: 6px;
-      padding: 5px 10px;
-      border-top: 2px solid #000;
-    }
-    .input {
-      flex: 1;
-      border: 1px solid #000;
-      padding: 4px 8px;
-      font-size: 10px;
-      font-family: inherit;
-      outline: none;
-    }
-    .send-btn {
-      background: #000;
-      color: #fff;
-      padding: 4px 12px;
-      font-size: 10px;
-      font-weight: 700;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-    }
-  `;
+  static styles = unsafeCSS(styles);
 
   @property({ type: String }) contactName = '';
-  @property({ type: Array }) messages: Message[] = [];
+  @property({ type: Number }) chatId = 0;
+  @consume({ context: servicesContext, subscribe: true })
+  services?: Services;
+  @state() private _messages: Message[] = [];
+  @query('#messages') private _messagesContainer?: HTMLElement;
+
+  // Domain methods (loadMessages, onNewMessage) are commented out
+  // in TelegramClient — this screen will have runtime errors until they're
+  // re-implemented as event-based patterns.
+
+  private async _scrollToBottom() {
+    if (this._messagesContainer) {
+      this._messagesContainer.scrollTop = this._messagesContainer.scrollHeight;
+    }
+  }
 
   private _onBack() {
     navigate('chats');
@@ -89,8 +38,8 @@ export class ChatViewScreen extends LitElement {
         <button class="back" @click=${this._onBack}>←</button>
         <span class="contact">${this.contactName}</span>
       </div>
-      <div class="messages">
-        ${this.messages.map(
+      <div class="messages" id="messages">
+        ${this._messages.map(
           (msg) => html`
             <div class="message ${msg.isOutgoing ? 'outgoing' : 'incoming'}">
               ${msg.text}

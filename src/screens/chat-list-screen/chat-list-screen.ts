@@ -1,34 +1,27 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-import type { ApiClient } from 'api/api-client';
-import { Chat } from 'types/telegram';
+import { LitElement, html, unsafeCSS } from 'lit';
+import { customElement } from 'lit/decorators.js';
+import { consume } from '@lit/context';
+import { SignalWatcher } from '@lit-labs/signals';
+import { servicesContext } from 'api/services-context';
+import type { Services } from 'api/services-context';
 import { navigate } from 'router';
+import { ChatListStore } from './chat-list-store';
+import styles from './chat-list-screen.css?inline';
 import './chat-item';
 
 @customElement('chat-list-screen')
-export class ChatListScreen extends LitElement {
-  static styles = css`
-    :host { display: block; }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 10px;
-      border-bottom: 2px solid #000;
-    }
-    .title { font-weight: 700; font-size: 13px; }
-    .count { font-size: 10px; color: #555; }
-  `;
+export class ChatListScreen extends SignalWatcher(LitElement) {
+  static styles = unsafeCSS(styles);
 
-  @property({ attribute: false }) client!: ApiClient;
-  @state() _chats: Chat[] = [];
+  @consume({ context: servicesContext, subscribe: true })
+  services!: Services;
+
+  private _store?: ChatListStore;
 
   connectedCallback() {
     super.connectedCallback();
-    this.client.onChatsChange((chats) => {
-      this._chats = chats;
-    });
-    this.client.loadChats();
+    this._store = new ChatListStore(this.services.apiClient, this.services.chatsClient);
+    this._store.loadChats();
   }
 
   private _onChatClick(chatId: number) {
@@ -36,12 +29,14 @@ export class ChatListScreen extends LitElement {
   }
 
   render() {
+    const chats = this._store?.chats.get() ?? [];
+
     return html`
       <div class="header">
         <span class="title">Telegram</span>
-        <span class="count">${this._chats.length} chats</span>
+        <span class="count">${chats.length} chats</span>
       </div>
-      ${this._chats.map(
+      ${chats.map(
         (chat) => html`
           <chat-item
             .avatarLetter=${chat.avatarLetter}

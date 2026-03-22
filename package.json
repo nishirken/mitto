@@ -22,7 +22,10 @@
   },
   "dependencies": {
     "@dibgram/tdweb": "^1.8.40",
-    "lit": "^3.3.2"
+    "@lit-labs/signals": "^0.2.0",
+    "@lit/context": "^1.1.6",
+    "lit": "^3.3.2",
+    "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
