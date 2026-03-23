@@ -14,6 +14,7 @@ export const mockApiClient: ApiClient = {
 export const mockAuthClient: AuthClient = {
   sendPhoneNumber: vi.fn(),
   sendAuthCode: vi.fn(),
+  resendCodeViaSms: vi.fn(),
 };
 
 export const mockChatsClient: ChatsClient = {

@@ -9,7 +9,7 @@ export class MkButton extends LitElement {
 
   private readonly _internals: ElementInternals;
 
-  @property({ type: String, reflect: true }) variant: 'primary' | 'text' = 'primary';
+  @property({ type: String, reflect: true }) variant: 'primary' | 'secondary' | 'text' = 'primary';
   @property({ type: String }) type: 'button' | 'submit' | 'reset' = 'button';
   @property({ type: Boolean, reflect: true }) disabled = false;
 

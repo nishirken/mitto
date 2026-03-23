@@ -22,6 +22,7 @@ export class AppRoot extends LitElement {
 
   @state() private _route: Route = currentRoute();
   @state() private _authState: AuthState = 'loading';
+  @state() private _smsAvailable = false;
   @provide({ context: servicesContext })
   private _services: Services;
   private _unsubRoute?: () => void;
@@ -48,10 +49,13 @@ export class AppRoot extends LitElement {
           this._authState = 'wait_phone';
           navigate('auth');
           break;
-        case 'authorizationStateWaitCode':
+        case 'authorizationStateWaitCode': {
           this._authState = 'wait_code';
+          const codeInfo = authState['code_info'] as Record<string, unknown> | undefined;
+          this._smsAvailable = !!codeInfo?.['next_type'];
           navigate('auth');
           break;
+        }
         case 'authorizationStateWaitPassword':
           this._authState = 'wait_password';
           navigate('auth');
@@ -82,7 +86,7 @@ export class AppRoot extends LitElement {
     }
 
     if (this._authState !== 'ready') {
-      return html`<auth-screen .authState=${this._authState}></auth-screen>`;
+      return html`<auth-screen .authState=${this._authState} .smsAvailable=${this._smsAvailable}></auth-screen>`;
     }
 
     switch (this._route.name) {
@@ -97,7 +101,7 @@ export class AppRoot extends LitElement {
         ></chat-view-screen>`;
       }
       default:
-        return html`<auth-screen .authState=${this._authState}></auth-screen>`;
+        return html`<auth-screen .authState=${this._authState} .smsAvailable=${this._smsAvailable}></auth-screen>`;
     }
   }
 

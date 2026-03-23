@@ -17,10 +17,12 @@ export class AuthScreen extends LitElement {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   @property({ type: String }) authState: AuthState = 'wait_phone';
+  @property({ type: Boolean }) smsAvailable = false;
   @state() private _phone = '';
   @state() private _code = '';
   @state() private _loading = false;
   @state() private _error = '';
+  @state() private _codeSentViaSms = false;
 
   private async _onSubmitPhone(e?: Event) {
     e?.preventDefault();
@@ -29,6 +31,18 @@ export class AuthScreen extends LitElement {
     this._error = '';
     try {
       await this.services.authClient.sendPhoneNumber(this._phone.trim());
+    } catch (e) {
+      this._error = (e as Error).message;
+    }
+    this._loading = false;
+  }
+
+  private async _onResendViaSms() {
+    this._loading = true;
+    this._error = '';
+    try {
+      await this.services.authClient.resendCodeViaSms();
+      this._codeSentViaSms = true;
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -77,15 +91,23 @@ export class AuthScreen extends LitElement {
           data-testid="code-input"
           type="text"
           label="Authentication code"
-          hint="Check your Telegram app or SMS"
+          hint=${this._codeSentViaSms ? 'Code sent via SMS' : 'Check your Telegram app'}
           placeholder="12345"
+          required
+          minlength="5"
+          maxlength="5"
           .value=${this._code}
           @input=${(e: Event) => this._code = (e.target as MkInput).value}
         ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-        <mk-button data-testid="submit" @click=${this._onSubmitCode} ?disabled=${this._loading}>
+        <mk-button data-testid="submit" type="submit" ?disabled=${this._loading}>
           ${this._loading ? 'Verifying...' : 'Continue'}
         </mk-button>
+        ${this.smsAvailable && !this._codeSentViaSms ? html`
+          <mk-button variant="secondary" ?disabled=${this._loading} @click=${this._onResendViaSms}>
+            Use SMS instead
+          </mk-button>
+        ` : ''}
       </form>
     `;
   }

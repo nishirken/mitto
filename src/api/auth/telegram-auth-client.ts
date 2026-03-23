@@ -11,4 +11,8 @@ export class TelegramAuthClient implements AuthClient {
   async sendAuthCode(code: string) {
     await this._client.send({ '@type': 'checkAuthenticationCode', code });
   }
+
+  async resendCodeViaSms() {
+    await this._client.send({ '@type': 'resendAuthenticationCode' });
+  }
 }

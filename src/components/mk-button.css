@@ -29,6 +29,12 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+:host([variant="secondary"]) button {
+  background: var(--c-white);
+  color: var(--c-black);
+  border: var(--border-thin);
+}
+
 :host([variant="text"]) button {
   background: none;
   color: var(--c-text);

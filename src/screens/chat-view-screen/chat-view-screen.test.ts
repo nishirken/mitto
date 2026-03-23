@@ -17,6 +17,7 @@ function mockServices(): Services {
     authClient: {
       sendPhoneNumber: vi.fn(),
       sendAuthCode: vi.fn(),
+      resendCodeViaSms: vi.fn(),
     },
     chatsClient: {
       loadChats: vi.fn(),
