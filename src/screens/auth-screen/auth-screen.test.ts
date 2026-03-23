@@ -5,7 +5,7 @@ import { servicesContext } from 'api/services-context';
 import { mockServices } from 'api/__mocks__/telegram-client';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
-import type { MkInput } from 'components/mk-input';
+import type { MkInput } from 'components/mk-input/mk-input';
 import { tid } from 'test-utils';
 
 function withContext() {

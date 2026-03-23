@@ -5,10 +5,10 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import type { Message } from 'types/telegram';
 import { navigate } from 'router';
-import 'components/mk-header';
-import 'components/mk-icon-button';
-import 'components/mk-input';
-import 'components/mk-button';
+import 'components/mk-header/mk-header';
+import 'components/mk-icon-button/mk-icon-button';
+import 'components/mk-input/mk-input';
+import 'components/mk-button/mk-button';
 import styles from './chat-view-screen.css?inline';
 
 @customElement('chat-view-screen')

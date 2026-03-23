@@ -1,6 +1,6 @@
 import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import 'components/mk-badge';
+import 'components/mk-badge/mk-badge';
 import styles from './chat-item.css?inline';
 
 @customElement('chat-item')

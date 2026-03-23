@@ -6,7 +6,7 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
 import { ChatListStore } from './chat-list-store';
-import 'components/mk-header';
+import 'components/mk-header/mk-header';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
 

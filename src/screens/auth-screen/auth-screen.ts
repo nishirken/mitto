@@ -4,10 +4,10 @@ import { consume } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import type { AuthState } from 'types/telegram';
-import 'components/mk-header';
-import 'components/mk-input';
-import 'components/mk-button';
-import type { MkInput } from 'components/mk-input';
+import 'components/mk-header/mk-header';
+import 'components/mk-input/mk-input';
+import 'components/mk-button/mk-button';
+import type { MkInput } from 'components/mk-input/mk-input';
 import styles from './auth-screen.css?inline';
 
 @customElement('auth-screen')
