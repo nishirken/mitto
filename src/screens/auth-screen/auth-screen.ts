@@ -57,12 +57,12 @@ export class AuthScreen extends LitElement {
           type="tel"
           label="Phone number"
           hint="International format"
-          placeholder="+374 XX XXX XXXX"
+          required=${true}
           .value=${this._phone}
           @input=${(e: Event) => this._phone = (e.target as MkInput).value}
         ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-        <mk-button data-testid="submit" @click=${this._onSubmitPhone} ?disabled=${this._loading}>
+        <mk-button data-testid="submit" @click=${this._onSubmitPhone} ?disabled=${this._loading} type="submit">
           ${this._loading ? 'Sending...' : 'Continue'}
         </mk-button>
       </form>
@@ -92,7 +92,6 @@ export class AuthScreen extends LitElement {
 
   render() {
     return html`
-      <mk-header headline="Mitto"></mk-header>
       <div class="body">
         ${this.authState === 'wait_code' ? this._renderCode() : this._renderPhone()}
       </div>

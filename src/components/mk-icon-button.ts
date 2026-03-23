@@ -4,13 +4,30 @@ import styles from './mk-icon-button.css?inline';
 
 @customElement('mk-icon-button')
 export class MkIconButton extends LitElement {
+  static formAssociated = true;
   static styles = unsafeCSS(styles);
 
+  private readonly _internals: ElementInternals;
+
   @property({ type: String }) label = '';
+  @property({ type: String }) type: 'button' | 'submit' | 'reset' = 'button';
+
+  constructor() {
+    super();
+    this._internals = this.attachInternals();
+  }
+
+  private _onClick() {
+    if (this.type === 'submit') {
+      this._internals.form?.requestSubmit();
+    } else if (this.type === 'reset') {
+      this._internals.form?.reset();
+    }
+  }
 
   render() {
     return html`
-      <button aria-label=${this.label}>
+      <button type="button" aria-label=${this.label} @click=${this._onClick}>
         <slot></slot>
       </button>
     `;

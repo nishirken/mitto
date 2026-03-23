@@ -7,4 +7,9 @@ export class MkSeparator extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ type: String, reflect: true }) variant: 'dotted' | 'solid' = 'dotted';
+
+  constructor() {
+    super();
+    this.setAttribute('role', 'separator');
+  }
 }

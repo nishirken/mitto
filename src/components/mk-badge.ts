@@ -8,6 +8,15 @@ export class MkBadge extends LitElement {
 
   @property({ type: Number }) count = 0;
 
+  constructor() {
+    super();
+    this.setAttribute('role', 'status');
+  }
+
+  updated() {
+    this.setAttribute('aria-label', `${this.count} unread`);
+  }
+
   render() {
     if (this.count <= 0) return nothing;
 

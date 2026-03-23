@@ -10,9 +10,11 @@ export class MkHeader extends LitElement {
 
   render() {
     return html`
-      <slot name="start"></slot>
-      <span class="title">${this.headline}<slot></slot></span>
-      <slot name="end"></slot>
+      <header>
+        <slot name="start"></slot>
+        <span class="title">${this.headline}<slot></slot></span>
+        <slot name="end"></slot>
+      </header>
     `;
   }
 }

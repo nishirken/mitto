@@ -15,6 +15,7 @@ input {
   width: 100%;
   box-sizing: border-box;
   border: var(--border-thin);
+  border-radius: var(--radius-button);
   padding: var(--sp-8) var(--sp-12);
   font-family: var(--font-family);
   font-size: var(--fs-body);
