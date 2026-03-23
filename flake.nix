@@ -30,13 +30,13 @@
           buildInputs = with pkgs; [
             nodejs_22
             pnpm
-            jdk17
+            jdk21
             androidSdk
           ];
 
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
           ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
-          JAVA_HOME = "${pkgs.jdk17}";
+          JAVA_HOME = "${pkgs.jdk21}";
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/36.0.0/aapt2";
         };
       });
