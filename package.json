@@ -6,6 +6,7 @@
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build",
+    "build:apk": "tsc && vite build && cap sync android && cd android && ./gradlew assembleDebug",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit && eslint src/ && stylelint 'src/**/*.css'",
@@ -21,6 +22,8 @@
     "src/**/*.css": "stylelint --fix"
   },
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
     "@dibgram/tdweb": "^1.8.40",
     "@lit-labs/signals": "^0.2.0",
     "@lit/context": "^1.1.6",
@@ -28,6 +31,7 @@
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.2.0",
     "@eslint/js": "^10.0.1",
     "@open-wc/testing": "^4.0.0",
     "eslint": "^10.1.0",

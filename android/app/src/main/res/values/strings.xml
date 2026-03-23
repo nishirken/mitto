@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">mitto</string>
+    <string name="title_activity_main">mitto</string>
+    <string name="package_name">com.mitto.app</string>
+    <string name="custom_url_scheme">com.mitto.app</string>
+</resources>
