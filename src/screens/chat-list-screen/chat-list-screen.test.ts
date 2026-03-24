@@ -18,7 +18,6 @@ function mockServices() {
   const listeners = new Map<string, Set<Listener>>();
   const services: Services = {
     apiClient: {
-      init: vi.fn(),
       send: vi.fn(),
       addEventListener: vi.fn((event: string, cb: Listener) => {
         let set = listeners.get(event);
@@ -30,11 +29,7 @@ function mockServices() {
       }),
       removeEventListener: vi.fn(),
     },
-    authClient: {
-      sendPhoneNumber: vi.fn(),
-      sendAuthCode: vi.fn(),
-      resendCodeViaSms: vi.fn(),
-    },
+    authStore: {} as Services['authStore'],
     chatsClient: {
       loadChats: vi.fn(),
       getChat: vi.fn(),

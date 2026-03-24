@@ -3,16 +3,15 @@ export interface Route {
   params: Record<string, string>;
 }
 
-export type RouteChangeCallback = (route: Route) => void;
+export type RouteChangeCallback = (route: Route | null) => void;
 
-export function parseHash(hash: string): Route {
+export function parseHash(hash: string): Route | null {
   const path = hash.replace(/^#\/?/, '');
-  if (!path || path === 'auth') return { name: 'auth', params: {} };
   if (path === 'chats') return { name: 'chats', params: {} };
   const chatMatch = path.match(/^chat\/(.+)$/);
   if (chatMatch) return { name: 'chat', params: { id: chatMatch[1] } };
 
-  return { name: 'auth', params: {} };
+  return null;
 }
 
 export function navigate(path: string) {
@@ -26,6 +25,6 @@ export function onRouteChange(callback: RouteChangeCallback): () => void {
   return () => window.removeEventListener('hashchange', handler);
 }
 
-export function currentRoute(): Route {
+export function currentRoute(): Route | null {
   return parseHash(window.location.hash);
 }

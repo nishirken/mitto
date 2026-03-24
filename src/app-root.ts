@@ -1,74 +1,44 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { SignalWatcher } from '@lit-labs/signals';
 import { provide } from '@lit/context';
-import { Route, currentRoute, onRouteChange, navigate } from 'router';
-import { TelegramClient } from 'api/telegram-client';
-import { TelegramAuthClient } from 'api/auth/telegram-auth-client';
+import { Route, currentRoute, onRouteChange } from 'router';
 import { TelegramChatsClient } from 'api/chats/telegram-chats-client';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import type { AuthState } from 'types/telegram';
 import styles from './app-root.css?inline';
-import 'screens/auth-screen/auth-screen';
+import 'screens/auth/auth-screen';
 import 'screens/chat-list-screen/chat-list-screen';
 import 'screens/chat-view-screen/chat-view-screen';
+import { TelegramApiClient } from 'api/telegram-api-client';
+import { TelegramAuthStore } from './screens/auth/auth-store';
 
 const API_ID = '30808228';
 const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
 
 @customElement('app-root')
-export class AppRoot extends LitElement {
+export class AppRoot extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @state() private _route: Route = currentRoute();
-  @state() private _authState: AuthState = 'loading';
-  @state() private _smsAvailable = false;
+  @state() private _route: Route | null = null;
   @provide({ context: servicesContext })
-  private _services: Services;
+  private readonly _services: Services;
   private _unsubRoute?: () => void;
 
   constructor() {
     super();
-    const useTestDc = new URLSearchParams(window.location.search).has('test_dc');
-    const client = new TelegramClient({ apiId: API_ID, apiHash: API_HASH, useTestDc });
+    const config = { apiId: API_ID, apiHash: API_HASH };
+    const client = new TelegramApiClient();
     this._services = {
       apiClient: client,
-      authClient: new TelegramAuthClient(client),
+      authStore: new TelegramAuthStore(config, client),
       chatsClient: new TelegramChatsClient(client),
     };
   }
 
   connectedCallback() {
     super.connectedCallback();
-
-    this._services.apiClient.addEventListener('updateAuthorizationState', (update) => {
-      const authState = update.authorization_state as Record<string, unknown>;
-      const type = authState['@type'] as string;
-      switch (type) {
-        case 'authorizationStateWaitPhoneNumber':
-          this._authState = 'wait_phone';
-          navigate('auth');
-          break;
-        case 'authorizationStateWaitCode': {
-          this._authState = 'wait_code';
-          const codeInfo = authState['code_info'] as Record<string, unknown> | undefined;
-          this._smsAvailable = !!codeInfo?.['next_type'];
-          navigate('auth');
-          break;
-        }
-        case 'authorizationStateWaitPassword':
-          this._authState = 'wait_password';
-          navigate('auth');
-          break;
-        case 'authorizationStateReady':
-          this._authState = 'ready';
-          navigate('chats');
-          break;
-      }
-    });
-
-    this._services.apiClient.init();
-
+    this._services.authStore.init();
     this._route = currentRoute();
     this._unsubRoute = onRouteChange((route) => {
       this._route = route;
@@ -77,19 +47,12 @@ export class AppRoot extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._services.authStore.dispose();
     this._unsubRoute?.();
   }
 
   private _renderRoute() {
-    if (this._authState === 'loading') {
-      return html`<div class="loading">Loading...</div>`;
-    }
-
-    if (this._authState !== 'ready') {
-      return html`<auth-screen .authState=${this._authState} .smsAvailable=${this._smsAvailable}></auth-screen>`;
-    }
-
-    switch (this._route.name) {
+    switch (this._route?.name) {
       case 'chats':
         return html`<chat-list-screen></chat-list-screen>`;
       case 'chat': {
@@ -101,11 +64,25 @@ export class AppRoot extends LitElement {
         ></chat-view-screen>`;
       }
       default:
-        return html`<auth-screen .authState=${this._authState} .smsAvailable=${this._smsAvailable}></auth-screen>`;
+        return html`<div class="loading">Loading...</div>`;
     }
   }
 
   render() {
+    const authState = this._services.authStore.state.get();
+
+    if (authState === 'loading') {
+      return html`<div class="loading">Loading...</div>`;
+    }
+
+    if (authState === 'error') {
+      return 'Something went wrong';
+    }
+
+    if (authState !== 'ready') {
+      return html`<auth-screen></auth-screen>`;
+    }
+
     return this._renderRoute();
   }
 }

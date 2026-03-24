@@ -9,16 +9,11 @@ import type { ChatViewScreen } from './chat-view-screen';
 function mockServices(): Services {
   return {
     apiClient: {
-      init: vi.fn(),
       send: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     },
-    authClient: {
-      sendPhoneNumber: vi.fn(),
-      sendAuthCode: vi.fn(),
-      resendCodeViaSms: vi.fn(),
-    },
+    authStore: {} as Services['authStore'],
     chatsClient: {
       loadChats: vi.fn(),
       getChat: vi.fn(),

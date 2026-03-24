@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { parseHash } from 'router';
 
 describe('parseHash', () => {
-  it('returns auth for empty hash', () => {
-    expect(parseHash('')).toEqual({ name: 'auth', params: {} });
+  it('returns null for empty hash', () => {
+    expect(parseHash('')).toBeNull();
   });
 
-  it('returns auth for #/auth', () => {
-    expect(parseHash('#/auth')).toEqual({ name: 'auth', params: {} });
+  it('returns null for #/auth', () => {
+    expect(parseHash('#/auth')).toBeNull();
   });
 
   it('returns chats for #/chats', () => {
@@ -22,7 +22,7 @@ describe('parseHash', () => {
     expect(parseHash('#/chat/42')).toEqual({ name: 'chat', params: { id: '42' } });
   });
 
-  it('returns auth for unknown routes', () => {
-    expect(parseHash('#/unknown')).toEqual({ name: 'auth', params: {} });
+  it('returns null for unknown routes', () => {
+    expect(parseHash('#/unknown')).toBeNull();
   });
 });

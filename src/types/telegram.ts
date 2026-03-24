@@ -7,17 +7,17 @@ export interface Chat {
   avatarLetter: string;
 }
 
-export interface Message {
+export type Message = {
   id: number;
   chatId: number;
   text: string;
   timestamp: string;
   isOutgoing: boolean;
-}
+};
 
-export type AuthState =
-  | 'loading'
-  | 'wait_phone'
-  | 'wait_code'
-  | 'wait_password'
-  | 'ready';
+export type TelegramConfig = {
+  apiId: string;
+  apiHash: string;
+  useTestDc?: boolean;
+};
+

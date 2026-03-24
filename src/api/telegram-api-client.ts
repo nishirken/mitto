@@ -5,44 +5,17 @@ import type { ApiClient } from './api-client';
 
 type Listener = (event: Record<string, unknown>) => void;
 
-interface TelegramClientConfig {
-  apiId: string;
-  apiHash: string;
-  useTestDc?: boolean;
-}
+export class TelegramApiClient implements ApiClient {
+  private readonly _client: typeof TdClient;
+  private readonly _listeners = new Map<string, Set<Listener>>();
 
-export class TelegramClient implements ApiClient {
-  private _config: TelegramClientConfig;
-  private _client: typeof TdClient | null = null;
-  private _listeners = new Map<string, Set<Listener>>();
-
-  constructor(config: TelegramClientConfig) {
-    this._config = config;
-  }
-
-  async init() {
-    const { apiId, apiHash, useTestDc = false } = this._config;
-    const instanceName = useTestDc ? 'mitto_test' : 'mitto';
-
+  constructor() {
     this._client = new TdClient({
-      instanceName,
+      instanceName: 'mitto',
       isBackground: false,
       jsLogVerbosityLevel: 'debug',
       logVerbosityLevel: 2,
       onUpdate: (update: Record<string, unknown>) => this._handleUpdate(update),
-    });
-
-    await this.send({
-      '@type': 'setTdlibParameters',
-      api_id: apiId,
-      api_hash: apiHash,
-      database_directory: useTestDc ? '/mitto_test_db' : '/mitto_db',
-      use_message_database: true,
-      use_secret_chats: false,
-      use_test_dc: useTestDc,
-      system_language_code: navigator.language || 'en',
-      device_model: 'Mitto E-Ink',
-      application_version: '0.1.0',
     });
   }
 
@@ -75,9 +48,4 @@ export class TelegramClient implements ApiClient {
       }
     }
   }
-
-  // --- Domain methods commented out during refactor ---
-  // getChats, getChat, onAuthStateChange, onChatsChange, loadMessages,
-  // onNewMessage, loadChats, sendPhoneNumber, sendAuthCode, sendPassword,
-  // _setAuthState, _notifyChatsChange, _mapTdMessage, _mapTdChat, _formatTimestamp
 }

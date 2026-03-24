@@ -22,7 +22,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
   connectedCallback() {
     super.connectedCallback();
     this._store = new ChatListStore(this.services.apiClient, this.services.chatsClient);
-    this._store.loadChats();
+    this._store.init();
   }
 
   private _onChatClick(chatId: number) {
@@ -31,6 +31,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
 
   render() {
     const chats = this._store?.chats.get() ?? [];
+    console.debug('REnder chats: ', chats);
 
     return html`
       <mk-header headline="Mitto">

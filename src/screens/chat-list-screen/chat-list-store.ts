@@ -15,6 +15,7 @@ export class ChatListStore {
   ) {
     this._apiClient.addEventListener('updateNewChat', (update) => {
       const tdChat = update.chat as Record<string, unknown>;
+      console.debug(tdChat);
       const chat = mapTdChat(tdChat);
       this._chatsMap.set(chat.id, chat);
       this._publish();
@@ -53,7 +54,7 @@ export class ChatListStore {
     });
   }
 
-  async loadChats(limit?: number) {
+  async init(limit?: number) {
     await this._chatsClient.loadChats(limit);
   }
 

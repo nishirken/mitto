@@ -1,9 +1,9 @@
 import { LitElement, html, unsafeCSS } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
+import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import type { AuthState } from 'types/telegram';
 import 'components/mk-header/mk-header';
 import 'components/mk-input/mk-input';
 import 'components/mk-button/mk-button';
@@ -11,18 +11,15 @@ import type { MkInput } from 'components/mk-input/mk-input';
 import styles from './auth-screen.css?inline';
 
 @customElement('auth-screen')
-export class AuthScreen extends LitElement {
+export class AuthScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
-  @property({ type: String }) authState: AuthState = 'wait_phone';
-  @property({ type: Boolean }) smsAvailable = false;
   @state() private _phone = '';
   @state() private _code = '';
   @state() private _loading = false;
   @state() private _error = '';
-  @state() private _codeSentViaSms = false;
 
   private async _onSubmitPhone(e?: Event) {
     e?.preventDefault();
@@ -30,7 +27,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await this.services.authClient.sendPhoneNumber(this._phone.trim());
+      await this.services.authStore.sendPhoneNumber(this._phone.trim());
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -41,8 +38,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await this.services.authClient.resendCodeViaSms();
-      this._codeSentViaSms = true;
+      await this.services.authStore.resendCodeViaSms();
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -55,7 +51,7 @@ export class AuthScreen extends LitElement {
     this._loading = true;
     this._error = '';
     try {
-      await this.services.authClient.sendAuthCode(this._code.trim());
+      await this.services.authStore.sendAuthCode(this._code.trim());
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -83,7 +79,7 @@ export class AuthScreen extends LitElement {
     `;
   }
 
-  private _renderCode() {
+  private _renderCode(isSmsAvailable: boolean) {
     return html`
       <form @submit=${this._onSubmitCode}>
         <span class="title">Enter code</span>
@@ -91,11 +87,12 @@ export class AuthScreen extends LitElement {
           data-testid="code-input"
           type="text"
           label="Authentication code"
-          hint=${this._codeSentViaSms ? 'Code sent via SMS' : 'Check your Telegram app'}
+          hint=${'Check your Telegram app or SMS'}
           placeholder="12345"
           required
           minlength="5"
           maxlength="5"
+          type="tel"
           .value=${this._code}
           @input=${(e: Event) => this._code = (e.target as MkInput).value}
         ></mk-input>
@@ -103,7 +100,7 @@ export class AuthScreen extends LitElement {
         <mk-button data-testid="submit" type="submit" ?disabled=${this._loading}>
           ${this._loading ? 'Verifying...' : 'Continue'}
         </mk-button>
-        ${this.smsAvailable && !this._codeSentViaSms ? html`
+        ${isSmsAvailable ? html`
           <mk-button variant="secondary" ?disabled=${this._loading} @click=${this._onResendViaSms}>
             Use SMS instead
           </mk-button>
@@ -112,10 +109,22 @@ export class AuthScreen extends LitElement {
     `;
   }
 
+  private _renderAuthState() {
+    const authState = this.services.authStore.state.get();
+
+    if (authState === 'wait_phone') {
+      return this._renderPhone();
+    }
+
+    if (typeof authState === 'object' && 'type' in authState && authState.type === 'wait_code') {
+      return this._renderCode(authState.isSmsAvailable);
+    }
+  }
+
   render() {
     return html`
       <div class="body">
-        ${this.authState === 'wait_code' ? this._renderCode() : this._renderPhone()}
+        ${this._renderAuthState()}
       </div>
     `;
   }
