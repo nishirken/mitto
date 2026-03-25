@@ -5,7 +5,6 @@ import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
-import { ChatListStore } from './chat-list-store';
 import 'components/mk-header/mk-header';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
@@ -17,12 +16,14 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
 
-  private _store?: ChatListStore;
-
   connectedCallback() {
     super.connectedCallback();
-    this._store = new ChatListStore(this.services.apiClient, this.services.chatsClient);
-    this._store.init();
+    this.services.chatListStore.init();
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.services.chatListStore.dispose();
   }
 
   private _onChatClick(chatId: number) {
@@ -30,8 +31,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const chats = this._store?.chats.get() ?? [];
-    console.debug('REnder chats: ', chats);
+    const chats = this.services.chatListStore.chats.get();
 
     return html`
       <mk-header headline="Mitto">

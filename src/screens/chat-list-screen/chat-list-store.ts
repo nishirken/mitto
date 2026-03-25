@@ -1,27 +1,54 @@
 import { signal } from '@lit-labs/signals';
 import type { ApiClient } from 'api/api-client';
-import type { ChatsClient } from 'api/chats/chats-client';
-import { mapTdChat } from 'api/chats/telegram-chats-client';
 import type { Chat } from 'types/telegram';
 
 export class ChatListStore {
   readonly chats = signal<Chat[]>([]);
+  private readonly _chatsMap: Map<number, Chat> = new Map(); 
 
-  private _chatsMap = new Map<number, Chat>();
+  constructor(private readonly _apiClient: ApiClient) {}
 
-  constructor(
-    private _apiClient: ApiClient,
-    private _chatsClient: ChatsClient,
-  ) {
-    this._apiClient.addEventListener('updateNewChat', (update) => {
-      const tdChat = update.chat as Record<string, unknown>;
-      console.debug(tdChat);
-      const chat = mapTdChat(tdChat);
-      this._chatsMap.set(chat.id, chat);
-      this._publish();
+  async init(limit = 50) {
+    this._apiClient.addEventListener('updateNewChat', this._handleNewChat);
+    this._apiClient.addEventListener('updateChatLastMessage', this._handleUpdateChatLastMessage); 
+    this._apiClient.addEventListener('updateChatReadInbox', this._handleChatReadInbox); 
+
+    await this._apiClient.send({
+      '@type': 'getChats',
+      chat_list: { '@type': 'chatListMain' },
+      limit,
     });
+  }
 
-    this._apiClient.addEventListener('updateChatLastMessage', (update) => {
+  dispose(): void {
+    this._apiClient.removeEventListener('updateNewChat', this._handleNewChat);
+    this._apiClient.removeEventListener('updateChatLastMessage', this._handleUpdateChatLastMessage);
+    this._apiClient.removeEventListener('updateChatReadInbox', this._handleChatReadInbox);
+  }
+
+  private _setChat = (id: number, chat: Chat): void => {
+    this._chatsMap.set(id, chat);
+    this.chats.set([...this._chatsMap.values()]);
+  };
+
+  private _handleNewChat = (update: Record<string, unknown>): void => {
+    const tdChat = update.chat as Record<string, unknown>;
+    console.debug(tdChat);
+    const chat = mapTdChat(tdChat);
+    this._setChat(chat.id, chat);
+  };
+
+  // https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1update_chat_read_inbox.html
+  private _handleChatReadInbox = (update: Record<string, unknown>): void => {
+    const chatId = update.chat_id as number;
+    const existing = this._chatsMap.get(chatId);
+    if (!existing) return;
+    existing.unreadCount = (update.unread_count as number) || 0;
+    this._setChat(chatId, existing);
+  };
+
+  // https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1update_chat_last_message.html
+  private _handleUpdateChatLastMessage = (update: Record<string, unknown>): void => {
       const chatId = update.chat_id as number;
       const existing = this._chatsMap.get(chatId);
       if (!existing) return;
@@ -36,34 +63,44 @@ export class ChatListStore {
           existing.lastMessage = `[${(content['@type'] as string).replace('message', '')}]`;
         }
         if (lastMsg.date) {
-          const date = new Date((lastMsg.date as number) * 1000);
-          existing.timestamp = formatTimestamp(date);
+          existing.timestamp = formatTimestamp(lastMsg.date as number);
         }
       }
-      this._chatsMap.set(chatId, existing);
-      this._publish();
-    });
-
-    this._apiClient.addEventListener('updateChatReadInbox', (update) => {
-      const chatId = update.chat_id as number;
-      const existing = this._chatsMap.get(chatId);
-      if (!existing) return;
-      existing.unreadCount = (update.unread_count as number) || 0;
-      this._chatsMap.set(chatId, existing);
-      this._publish();
-    });
-  }
-
-  async init(limit?: number) {
-    await this._chatsClient.loadChats(limit);
-  }
-
-  private _publish() {
-    this.chats.set([...this._chatsMap.values()]);
-  }
+      this._setChat(chatId, existing);
+    };
 }
 
-function formatTimestamp(date: Date): string {
+function mapTdChat(tdChat: Record<string, unknown>): Chat {
+  const title = (tdChat.title as string) || 'Unknown';
+  const lastMsg = tdChat.last_message as Record<string, unknown> | undefined;
+  const content = lastMsg?.content as Record<string, unknown> | undefined;
+  const unread = (tdChat.unread_count as number) || 0;
+
+  let lastMessage = '';
+  if (content?.['@type'] === 'messageText') {
+    const text = content.text as Record<string, unknown>;
+    lastMessage = (text.text as string) || '';
+  } else if (content?.['@type']) {
+    const type = (content['@type'] as string).replace('message', '');
+    lastMessage = `[${type}]`;
+  }
+
+  const timestamp = lastMsg?.date
+    ? formatTimestamp(lastMsg.date as number)
+    : '';
+
+  return {
+    id: tdChat.id as number,
+    name: title,
+    lastMessage,
+    timestamp,
+    unreadCount: unread,
+    avatarLetter: title.charAt(0).toUpperCase(),
+  };
+}
+
+function formatTimestamp(unix: number): string {
+  const date = new Date(unix * 1000);
   const now = new Date();
   const diffDays = Math.floor(
     (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)

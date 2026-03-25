@@ -32,10 +32,6 @@ vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   };
 });
 
-vi.mock('api/chats/telegram-chats-client', () => ({
-  TelegramChatsClient: function () { return { loadChats: vi.fn(), getChat: vi.fn() }; },
-}));
-
 import 'app-root';
 import type { AppRoot } from 'app-root';
 

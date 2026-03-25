@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
 import { signal } from '@lit-labs/signals';
 import type { ApiClient } from '../api-client';
-import type { ChatsClient } from '../chats/chats-client';
 import type { Services } from '../services-context';
 import type { AuthState, TelegramAuthStore } from '../../screens/auth/auth-store';
 
@@ -20,13 +19,7 @@ export const mockAuthStore = {
   resendCodeViaSms: vi.fn(),
 } as unknown as TelegramAuthStore;
 
-export const mockChatsClient: ChatsClient = {
-  loadChats: vi.fn(),
-  getChat: vi.fn(),
-};
-
 export const mockServices: Services = {
   apiClient: mockApiClient,
   authStore: mockAuthStore,
-  chatsClient: mockChatsClient,
 };

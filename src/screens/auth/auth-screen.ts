@@ -1,5 +1,5 @@
 import { LitElement, html, unsafeCSS } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
@@ -14,6 +14,7 @@ import styles from './auth-screen.css?inline';
 export class AuthScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
+  @property() private _onSubmit?: VoidFunction;
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   @state() private _phone = '';
@@ -52,6 +53,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._error = '';
     try {
       await this.services.authStore.sendAuthCode(this._code.trim());
+      this._onSubmit?.();
     } catch (e) {
       this._error = (e as Error).message;
     }

@@ -4,7 +4,6 @@ export interface Chat {
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
-  avatarLetter: string;
 }
 
 export type Message = {

@@ -3,7 +3,6 @@ import { customElement, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { provide } from '@lit/context';
 import { Route, currentRoute, onRouteChange } from 'router';
-import { TelegramChatsClient } from 'api/chats/telegram-chats-client';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import styles from './app-root.css?inline';
@@ -12,6 +11,7 @@ import 'screens/chat-list-screen/chat-list-screen';
 import 'screens/chat-view-screen/chat-view-screen';
 import { TelegramApiClient } from 'api/telegram-api-client';
 import { TelegramAuthStore } from './screens/auth/auth-store';
+import { ChatListStore } from './screens/chat-list-screen/chat-list-store';
 
 const API_ID = '30808228';
 const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
@@ -20,7 +20,7 @@ const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
 export class AppRoot extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @state() private _route: Route | null = null;
+  @state() private _route: Route = currentRoute();
   @provide({ context: servicesContext })
   private readonly _services: Services;
   private _unsubRoute?: () => void;
@@ -32,7 +32,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
     this._services = {
       apiClient: client,
       authStore: new TelegramAuthStore(config, client),
-      chatsClient: new TelegramChatsClient(client),
+      chatListStore: new ChatListStore(client),
     };
   }
 
@@ -52,7 +52,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
   }
 
   private _renderRoute() {
-    switch (this._route?.name) {
+    switch (this._route.name) {
       case 'chats':
         return html`<chat-list-screen></chat-list-screen>`;
       case 'chat': {

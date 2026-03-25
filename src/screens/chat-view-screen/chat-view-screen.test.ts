@@ -14,10 +14,6 @@ function mockServices(): Services {
       removeEventListener: vi.fn(),
     },
     authStore: {} as Services['authStore'],
-    chatsClient: {
-      loadChats: vi.fn(),
-      getChat: vi.fn(),
-    },
   };
 }
 
