@@ -1,7 +1,7 @@
 export interface Chat {
   id: number;
   name: string;
-  lastMessage: string;
+  lastMessage: { id: number; text: string };
   timestamp: string;
   unreadCount: number;
 }

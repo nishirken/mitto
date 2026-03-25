@@ -14,6 +14,18 @@ vi.mock('api/telegram-api-client', () => ({
   },
 }));
 
+vi.mock('./screens/chat-list-screen/chat-list-store', () => ({
+  ChatListStore: function () {
+    return { chats: signal([]), getChat: vi.fn(() => null), init: vi.fn(), dispose: vi.fn() };
+  },
+}));
+
+vi.mock('./screens/chat-view-screen/chat-view-store', () => ({
+  ChatViewStore: function () {
+    return { messages: signal([]), init: vi.fn(), dispose: vi.fn() };
+  },
+}));
+
 vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./screens/auth/auth-store')>();
 

@@ -56,11 +56,8 @@ export class AppRoot extends SignalWatcher(LitElement) {
       case 'chats':
         return html`<chat-list-screen></chat-list-screen>`;
       case 'chat': {
-        const chatId = this._route.params.id;
-
         return html`<chat-view-screen
-          .contactName=${'Chat'}
-          .chatId=${Number(chatId)}
+          .chatId=${Number(this._route.params.id)}
         ></chat-view-screen>`;
       }
       default:

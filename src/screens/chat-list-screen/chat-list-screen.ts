@@ -46,7 +46,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
                 <chat-item
                   .name=${chat.name}
                   .timestamp=${chat.timestamp}
-                  .preview=${chat.lastMessage}
+                  .preview=${chat.lastMessage.text}
                   .unreadCount=${chat.unreadCount}
                   @click=${() => this._onChatClick(chat.id)}
                 ></chat-item>

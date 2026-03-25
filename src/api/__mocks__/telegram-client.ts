@@ -22,4 +22,5 @@ export const mockAuthStore = {
 export const mockServices: Services = {
   apiClient: mockApiClient,
   authStore: mockAuthStore,
+  chatListStore: {} as Services['chatListStore'],
 };

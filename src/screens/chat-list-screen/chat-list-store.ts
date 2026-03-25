@@ -33,7 +33,6 @@ export class ChatListStore {
 
   private _handleNewChat = (update: Record<string, unknown>): void => {
     const tdChat = update.chat as Record<string, unknown>;
-    console.debug(tdChat);
     const chat = mapTdChat(tdChat);
     this._setChat(chat.id, chat);
   };
@@ -55,35 +54,23 @@ export class ChatListStore {
 
       const lastMsg = update.last_message as Record<string, unknown> | undefined;
       if (lastMsg) {
-        const content = lastMsg.content as Record<string, unknown> | undefined;
-        if (content?.['@type'] === 'messageText') {
-          const text = content.text as Record<string, unknown>;
-          existing.lastMessage = (text.text as string) || '';
-        } else if (content?.['@type']) {
-          existing.lastMessage = `[${(content['@type'] as string).replace('message', '')}]`;
-        }
+        existing.lastMessage = extractLastMessage(lastMsg);
         if (lastMsg.date) {
           existing.timestamp = formatTimestamp(lastMsg.date as number);
         }
       }
       this._setChat(chatId, existing);
     };
+
+    getChat(id: number): Chat | null {
+      return this._chatsMap.get(id) ?? null;
+    }
 }
 
 function mapTdChat(tdChat: Record<string, unknown>): Chat {
   const title = (tdChat.title as string) || 'Unknown';
   const lastMsg = tdChat.last_message as Record<string, unknown> | undefined;
-  const content = lastMsg?.content as Record<string, unknown> | undefined;
   const unread = (tdChat.unread_count as number) || 0;
-
-  let lastMessage = '';
-  if (content?.['@type'] === 'messageText') {
-    const text = content.text as Record<string, unknown>;
-    lastMessage = (text.text as string) || '';
-  } else if (content?.['@type']) {
-    const type = (content['@type'] as string).replace('message', '');
-    lastMessage = `[${type}]`;
-  }
 
   const timestamp = lastMsg?.date
     ? formatTimestamp(lastMsg.date as number)
@@ -92,11 +79,28 @@ function mapTdChat(tdChat: Record<string, unknown>): Chat {
   return {
     id: tdChat.id as number,
     name: title,
-    lastMessage,
+    lastMessage: lastMsg ? extractLastMessage(lastMsg) : { id: 0, text: '' },
     timestamp,
     unreadCount: unread,
-    avatarLetter: title.charAt(0).toUpperCase(),
   };
+}
+
+function extractLastMessage(msg: Record<string, unknown>): { id: number; text: string } {
+  const id = (msg.id as number) || 0;
+  const content = msg.content as Record<string, unknown> | undefined;
+
+  if (content?.['@type'] === 'messageText') {
+    const text = content.text as Record<string, unknown>;
+
+    return { id, text: (text.text as string) || '' };
+  }
+  if (content?.['@type']) {
+    const type = (content['@type'] as string).replace('message', '');
+
+    return { id, text: `[${type}]` };
+  }
+
+  return { id, text: '' };
 }
 
 function formatTimestamp(unix: number): string {

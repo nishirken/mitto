@@ -1,38 +1,36 @@
 import { describe, it, expect, vi } from 'vitest';
+import { signal } from '@lit-labs/signals';
 import { fixture, html } from '@open-wc/testing';
 import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import { Chat } from 'types/telegram';
+import type { Chat } from 'types/telegram';
 import './chat-list-screen';
 import type { ChatListScreen } from './chat-list-screen';
 
 const testChats: Chat[] = [
-  { id: 1, name: 'Alice', lastMessage: 'Hi', timestamp: '14:32', unreadCount: 3, avatarLetter: 'A' },
-  { id: 2, name: 'Bob', lastMessage: 'Hey', timestamp: '13:15', unreadCount: 0, avatarLetter: 'B' },
+  { id: 1, name: 'Alice', lastMessage: { id: 100, text: 'Hi' }, timestamp: '14:32', unreadCount: 3 },
+  { id: 2, name: 'Bob', lastMessage: { id: 200, text: 'Hey' }, timestamp: '13:15', unreadCount: 0 },
 ];
 
-type Listener = (event: Record<string, unknown>) => void;
-
 function mockServices() {
-  const listeners = new Map<string, Set<Listener>>();
+  const chatsSignal = signal<Chat[]>([]);
   const services: Services = {
     apiClient: {
       send: vi.fn(),
-      addEventListener: vi.fn((event: string, cb: Listener) => {
-        let set = listeners.get(event);
-        if (!set) {
-          set = new Set();
-          listeners.set(event, set);
-        }
-        set.add(cb);
-      }),
+      addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     },
     authStore: {} as Services['authStore'],
+    chatListStore: {
+      chats: chatsSignal,
+      getChat: vi.fn(() => null),
+      init: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as Services['chatListStore'],
   };
 
-  return { services, listeners };
+  return { services, chatsSignal };
 }
 
 function withContext(services: Services) {
@@ -42,35 +40,14 @@ function withContext(services: Services) {
   return provider;
 }
 
-function emitNewChat(listeners: Map<string, Set<Listener>>, chat: Chat) {
-  const set = listeners.get('updateNewChat');
-  if (set) {
-    for (const cb of set) {
-      cb({
-        '@type': 'updateNewChat',
-        chat: {
-          id: chat.id,
-          title: chat.name,
-          unread_count: chat.unreadCount,
-          last_message: chat.lastMessage ? {
-            content: { '@type': 'messageText', text: { text: chat.lastMessage } },
-          } : undefined,
-        },
-      });
-    }
-  }
-}
-
 describe('chat-list-screen', () => {
   it('shows correct chat count', async () => {
-    const { services, listeners } = mockServices();
+    const { services, chatsSignal } = mockServices();
     const el = await fixture<ChatListScreen>(html`
       <chat-list-screen></chat-list-screen>
     `, { parentNode: withContext(services) });
 
-    for (const chat of testChats) {
-      emitNewChat(listeners, chat);
-    }
+    chatsSignal.set(testChats);
     await el.updateComplete;
 
     const count = el.shadowRoot!.querySelector('.count')!;
@@ -78,14 +55,12 @@ describe('chat-list-screen', () => {
   });
 
   it('renders correct number of chat items', async () => {
-    const { services, listeners } = mockServices();
+    const { services, chatsSignal } = mockServices();
     const el = await fixture<ChatListScreen>(html`
       <chat-list-screen></chat-list-screen>
     `, { parentNode: withContext(services) });
 
-    for (const chat of testChats) {
-      emitNewChat(listeners, chat);
-    }
+    chatsSignal.set(testChats);
     await el.updateComplete;
 
     const items = el.shadowRoot!.querySelectorAll('chat-item');
