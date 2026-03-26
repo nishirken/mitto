@@ -9,6 +9,7 @@ import styles from './app-root.css?inline';
 import 'screens/auth/auth-screen';
 import 'screens/chat-list-screen/chat-list-screen';
 import 'screens/chat-view-screen/chat-view-screen';
+import 'components/mk-loading/mk-loading';
 import { TelegramApiClient } from 'api/telegram-api-client';
 import { TelegramAuthStore } from './screens/auth/auth-store';
 import { ChatListStore } from './screens/chat-list-screen/chat-list-store';
@@ -61,7 +62,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
         ></chat-view-screen>`;
       }
       default:
-        return html`<div class="loading">Loading...</div>`;
+        return html`<mk-loading></mk-loading>`;
     }
   }
 
@@ -69,7 +70,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
     const authState = this._services.authStore.state.get();
 
     if (authState === 'loading') {
-      return html`<div class="loading">Loading...</div>`;
+      return html`<mk-loading></mk-loading>`;
     }
 
     if (authState === 'error') {

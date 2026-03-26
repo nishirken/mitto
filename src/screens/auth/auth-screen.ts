@@ -62,11 +62,12 @@ export class AuthScreen extends SignalWatcher(LitElement) {
 
   private _renderPhone() {
     return html`
-      <form @submit=${this._onSubmitPhone}>
+      <form class="form" @submit=${this._onSubmitPhone}>
         <span class="title">Sign in</span>
         <mk-input
           data-testid="phone-input"
           type="tel"
+          placeholder="+37455777222"
           label="Phone number"
           hint="International format"
           required=${true}
@@ -83,7 +84,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
 
   private _renderCode(isSmsAvailable: boolean) {
     return html`
-      <form @submit=${this._onSubmitCode}>
+      <form class="form" @submit=${this._onSubmitCode}>
         <span class="title">Enter code</span>
         <mk-input
           data-testid="code-input"

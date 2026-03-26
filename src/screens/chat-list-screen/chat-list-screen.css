@@ -14,12 +14,3 @@
   flex: 1;
   overflow-y: auto;
 }
-
-.empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: var(--fs-name);
-  color: var(--c-text-secondary);
-}

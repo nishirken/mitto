@@ -5,7 +5,6 @@ import { navigate } from 'router';
 import 'components/mk-header/mk-header';
 import 'components/mk-icon-button/mk-icon-button';
 import 'components/mk-input/mk-input';
-import 'components/mk-button/mk-button';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewStore } from './chat-view-store';
 import type { Services } from 'api/services-context';
@@ -75,7 +74,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       </div>
       <div class="footer">
         <mk-input type="text" placeholder="Message…"></mk-input>
-        <mk-button>Send</mk-button>
+        <mk-icon-button label="Send" type="submit">→</mk-icon-button>
       </div>
     `;
   }

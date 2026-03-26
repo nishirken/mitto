@@ -6,6 +6,7 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
 import 'components/mk-header/mk-header';
+import 'components/mk-loading/mk-loading';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
 
@@ -38,7 +39,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
         <span class="count" slot="end">${chats.length} chats</span>
       </mk-header>
       ${chats.length === 0
-        ? html`<div class="empty">Loading…</div>`
+        ? html`<mk-loading></mk-loading>`
         : html`
           <div class="list">
             ${chats.map(

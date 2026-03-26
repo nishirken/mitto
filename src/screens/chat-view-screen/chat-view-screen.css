@@ -64,6 +64,7 @@
 
 .footer mk-input {
   flex: 1;
+  margin-right: var(--sp-4);
 }
 
 .empty {
