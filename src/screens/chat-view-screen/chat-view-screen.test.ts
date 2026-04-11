@@ -20,11 +20,15 @@ import type { ChatViewScreen } from './chat-view-screen';
 
 function mockServices(): Services {
   return {
-    apiClient: {
-      send: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    },
+    client: {
+      connect: vi.fn(),
+      invoke: vi.fn(),
+      addEventHandler: vi.fn(),
+      removeEventHandler: vi.fn(),
+      checkAuthorization: vi.fn(),
+      sendCode: vi.fn(),
+      session: { save: vi.fn() },
+    } as unknown as Services['client'],
     authStore: {} as Services['authStore'],
     chatListStore: {
       chats: signal([]),

@@ -28,7 +28,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     }
 
     this._chatViewStore = new ChatViewStore(
-      this.services.apiClient,
+      this.services.client,
       this.services.chatListStore,
     );
     this._chatViewStore.init(this.chatId);
@@ -67,7 +67,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
           (msg) => html`
             <div class="message ${msg.isOutgoing ? 'outgoing' : 'incoming'}">
               ${msg.text}
-              <div class="msg-time">${msg.timestamp}</div>
+              <div class="msg-time">${msg.formattedDate}</div>
             </div>
           `
         )}

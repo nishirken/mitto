@@ -1,113 +1,118 @@
 import { signal } from '@lit-labs/signals';
-import type { ApiClient } from 'api/api-client';
-import type { Chat } from 'types/telegram';
+import type { TelegramClient, Api, events } from 'telegram';
+import telegram from 'telegram';
+
+export type ChatEntry = {
+  id: number;
+  name: string;
+  lastMessage: { id: number; text: string };
+  timestamp: string;
+  unreadCount: number;
+};
 
 export class ChatListStore {
-  readonly chats = signal<Chat[]>([]);
-  private readonly _chatsMap: Map<number, Chat> = new Map(); 
+  readonly chats = signal<ChatEntry[]>([]);
+  private readonly _chatsMap = new Map<number, ChatEntry>();
+  private readonly _newMessageEvent = {};
 
-  constructor(private readonly _apiClient: ApiClient) {}
+  constructor(private readonly _client: TelegramClient) {}
 
   async init(limit = 50) {
-    this._apiClient.addEventListener('updateNewChat', this._handleNewChat);
-    this._apiClient.addEventListener('updateChatLastMessage', this._handleUpdateChatLastMessage); 
-    this._apiClient.addEventListener('updateChatReadInbox', this._handleChatReadInbox); 
+    const result = await this._client.invoke(
+      new telegram.Api.messages.GetDialogs({
+        offsetDate: 0,
+        offsetId: 0,
+        offsetPeer: new telegram.Api.InputPeerEmpty(),
+        limit,
+        hash: 0 as unknown as Api.long,
+      }),
+    );
 
-    await this._apiClient.send({
-      '@type': 'getChats',
-      chat_list: { '@type': 'chatListMain' },
-      limit,
-    });
+    if (result instanceof telegram.Api.messages.Dialogs || result instanceof telegram.Api.messages.DialogsSlice) {
+      const chatsById = new Map<string, Api.Chat | Api.Channel | Api.User>();
+      for (const c of result.chats) {
+        chatsById.set(c.id.toString(), c as Api.Chat | Api.Channel);
+      }
+      for (const u of result.users) {
+        chatsById.set(u.id.toString(), u as Api.User);
+      }
+      const messagesById = new Map<number, Api.Message>();
+      for (const m of result.messages) {
+        if (m instanceof telegram.Api.Message) {
+          messagesById.set(m.id, m);
+        }
+      }
+
+      for (const dialog of result.dialogs) {
+        if (!(dialog instanceof telegram.Api.Dialog)) continue;
+        const peerId = getPeerId(dialog.peer);
+        const entity = chatsById.get(peerId.toString());
+        const topMsg = messagesById.get(dialog.topMessage);
+
+        const name = entityName(entity);
+        const lastMessage = topMsg
+          ? { id: topMsg.id, text: topMsg.message || '' }
+          : { id: 0, text: '' };
+        const timestamp = topMsg ? formatTimestamp(topMsg.date) : '';
+
+        const entry: ChatEntry = {
+          id: peerId,
+          name,
+          lastMessage,
+          timestamp,
+          unreadCount: dialog.unreadCount,
+        };
+        this._chatsMap.set(peerId, entry);
+      }
+      this.chats.set([...this._chatsMap.values()]);
+    }
+
+    this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
   }
 
   dispose(): void {
-    this._apiClient.removeEventListener('updateNewChat', this._handleNewChat);
-    this._apiClient.removeEventListener('updateChatLastMessage', this._handleUpdateChatLastMessage);
-    this._apiClient.removeEventListener('updateChatReadInbox', this._handleChatReadInbox);
+    this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
   }
 
-  private _setChat = (id: number, chat: Chat): void => {
-    this._chatsMap.set(id, chat);
-    this.chats.set([...this._chatsMap.values()]);
-  };
+  getChat(id: number): ChatEntry | null {
+    return this._chatsMap.get(id) ?? null;
+  }
 
-  private _handleNewChat = (update: Record<string, unknown>): void => {
-    const tdChat = update.chat as Record<string, unknown>;
-    const chat = mapTdChat(tdChat);
-    this._setChat(chat.id, chat);
-  };
-
-  // https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1update_chat_read_inbox.html
-  private _handleChatReadInbox = (update: Record<string, unknown>): void => {
-    const chatId = update.chat_id as number;
+  private _handleNewMessage = (event: events.NewMessageEvent): void => {
+    const msg = event.message;
+    const chatId = msg.chatId?.toJSNumber?.() ?? Number(msg.chatId);
     const existing = this._chatsMap.get(chatId);
     if (!existing) return;
-    existing.unreadCount = (update.unread_count as number) || 0;
-    this._setChat(chatId, existing);
-  };
 
-  // https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1update_chat_last_message.html
-  private _handleUpdateChatLastMessage = (update: Record<string, unknown>): void => {
-      const chatId = update.chat_id as number;
-      const existing = this._chatsMap.get(chatId);
-      if (!existing) return;
-
-      const lastMsg = update.last_message as Record<string, unknown> | undefined;
-      if (lastMsg) {
-        existing.lastMessage = extractLastMessage(lastMsg);
-        if (lastMsg.date) {
-          existing.timestamp = formatTimestamp(lastMsg.date as number);
-        }
-      }
-      this._setChat(chatId, existing);
-    };
-
-    getChat(id: number): Chat | null {
-      return this._chatsMap.get(id) ?? null;
-    }
-}
-
-function mapTdChat(tdChat: Record<string, unknown>): Chat {
-  const title = (tdChat.title as string) || 'Unknown';
-  const lastMsg = tdChat.last_message as Record<string, unknown> | undefined;
-  const unread = (tdChat.unread_count as number) || 0;
-
-  const timestamp = lastMsg?.date
-    ? formatTimestamp(lastMsg.date as number)
-    : '';
-
-  return {
-    id: tdChat.id as number,
-    name: title,
-    lastMessage: lastMsg ? extractLastMessage(lastMsg) : { id: 0, text: '' },
-    timestamp,
-    unreadCount: unread,
+    existing.lastMessage = { id: msg.id, text: msg.message || '' };
+    existing.timestamp = formatTimestamp(msg.date);
+    this._chatsMap.set(chatId, existing);
+    this.chats.set([...this._chatsMap.values()]);
   };
 }
 
-function extractLastMessage(msg: Record<string, unknown>): { id: number; text: string } {
-  const id = (msg.id as number) || 0;
-  const content = msg.content as Record<string, unknown> | undefined;
+function getPeerId(peer: Api.TypePeer): number {
+  if (peer instanceof telegram.Api.PeerUser) return peer.userId.toJSNumber?.() ?? Number(peer.userId);
+  if (peer instanceof telegram.Api.PeerChat) return peer.chatId.toJSNumber?.() ?? Number(peer.chatId);
+  if (peer instanceof telegram.Api.PeerChannel) return peer.channelId.toJSNumber?.() ?? Number(peer.channelId);
 
-  if (content?.['@type'] === 'messageText') {
-    const text = content.text as Record<string, unknown>;
+  return 0;
+}
 
-    return { id, text: (text.text as string) || '' };
+function entityName(entity: Api.Chat | Api.Channel | Api.User | undefined): string {
+  if (!entity) return 'Unknown';
+  if (entity instanceof telegram.Api.User) {
+    return [entity.firstName, entity.lastName].filter(Boolean).join(' ') || 'Unknown';
   }
-  if (content?.['@type']) {
-    const type = (content['@type'] as string).replace('message', '');
 
-    return { id, text: `[${type}]` };
-  }
-
-  return { id, text: '' };
+  return (entity as Api.Chat | Api.Channel).title || 'Unknown';
 }
 
 function formatTimestamp(unix: number): string {
   const date = new Date(unix * 1000);
   const now = new Date();
   const diffDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays === 0) {

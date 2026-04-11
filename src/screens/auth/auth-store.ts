@@ -1,99 +1,96 @@
-import {signal} from '@lit-labs/signals';
-import type { ApiClient } from 'api/api-client';
-import { TelegramConfig } from 'types/telegram';
+import { signal } from '@lit-labs/signals';
+import type { TelegramClient } from 'telegram';
+import telegram from 'telegram';
+import type { TelegramConfig } from 'types/telegram';
 
-export type AuthState = 
+export type AuthState =
   | 'loading'
   | 'error'
   | 'wait_phone'
-  | { type: 'wait_code'; isSmsAvailable: boolean; }
+  | { type: 'wait_code'; isSmsAvailable: boolean }
   | 'wait_password'
   | 'ready';
 
-// https://core.telegram.org/tdlib/getting-started#user-authorization
 export class TelegramAuthStore {
   readonly state = signal<AuthState>('loading');
 
-  constructor(private readonly _config: TelegramConfig, private readonly _client: ApiClient) {
-  }
+  private _phoneNumber = '';
+  private _phoneCodeHash = '';
 
-  init(): void {
-    this._client.addEventListener('updateAuthorizationState', this._handleUpdateAuthorizationState);
+  constructor(
+    private readonly _config: TelegramConfig,
+    private readonly _client: TelegramClient,
+  ) {}
+
+  async init(): Promise<void> {
+    try {
+      await this._client.connect();
+      const authorized = await this._client.checkAuthorization();
+      this.state.set(authorized ? 'ready' : 'wait_phone');
+    } catch {
+      this.state.set('error');
+    }
   }
 
   dispose(): void {
-    this._client.removeEventListener('updateAuthorizationState', this._handleUpdateAuthorizationState);
+    // no-op — GramJS handles cleanup via disconnect
   }
 
-  private readonly _handleUpdateAuthorizationState = async (ev: Record<string, unknown>): Promise<void> => {
-      if (typeof ev !== 'object' || typeof ev.authorization_state !== 'object') {
-        this.state.set('error');
-
-        return;
-      }
-      const authState = ev.authorization_state as Record<string, unknown>;
-
-      if (!authState || !('@type' in authState) || typeof authState['@type'] !== 'string') {
-        this.state.set('error');
-
-        return;
-      }
-      const type = authState['@type'];
-
-      switch (type) {
-        case 'authorizationStateWaitTdlibParameters': {
-          const { apiId, apiHash } = this._config;
-
-          const res = await this._client.send({
-            '@type': 'setTdlibParameters',
-            api_id: apiId,
-            api_hash: apiHash,
-            database_directory: '/mitto_db',
-            use_message_database: true,
-            use_secret_chats: false,
-            system_language_code: navigator.language || 'en',
-            device_model: 'Mitto E-Ink',
-            application_version: '0.1.0',
-          });
-
-          if (!res) {
-            this.state.set('error');
-          }
-
-          break;
-        }
-        case 'authorizationStateWaitPhoneNumber':
-          this.state.set('wait_phone');
-          break;
-        case 'authorizationStateWaitCode': {
-          const smsAvailable = (): boolean => {
-            if ('code_info' in authState && authState['next_type']) {
-              return !!authState['next_type'];
-            }
-
-            return false;
-          };
-          this.state.set({ type: 'wait_code', isSmsAvailable: smsAvailable() });
-          break;
-        }
-        case 'authorizationStateWaitPassword':
-          this.state.set('wait_password');
-          break;
-        case 'authorizationStateReady':
-          this.state.set('ready');
-          break;
-      }
-    };
-
-  async sendPhoneNumber(phone: string) {
-    await this._client.send({ '@type': 'setAuthenticationPhoneNumber', phone_number: phone });
+  async sendPhoneNumber(phone: string): Promise<void> {
+    this._phoneNumber = phone;
+    const { apiId, apiHash } = this._config;
+    const result = await this._client.sendCode(
+      { apiId, apiHash },
+      phone,
+    );
+    if (result instanceof telegram.Api.auth.SentCode) {
+      this._phoneCodeHash = result.phoneCodeHash;
+      const isViaApp = result.type instanceof telegram.Api.auth.SentCodeTypeApp;
+      this.state.set({ type: 'wait_code', isSmsAvailable: !isViaApp });
+    } else {
+      // SentCodeSuccess — already authorized
+      const sessionString = this._client.session.save() as unknown as string;
+      localStorage.setItem('session', sessionString);
+      this.state.set('ready');
+    }
   }
 
-  async sendAuthCode(code: string) {
-    await this._client.send({ '@type': 'checkAuthenticationCode', code });
+  async sendAuthCode(code: string): Promise<void> {
+    try {
+      await this._client.invoke(
+        new telegram.Api.auth.SignIn({
+          phoneNumber: this._phoneNumber,
+          phoneCodeHash: this._phoneCodeHash,
+          phoneCode: code,
+        }),
+      );
+      const sessionString = this._client.session.save() as unknown as string;
+      localStorage.setItem('session', sessionString);
+      this.state.set('ready');
+    } catch (e: unknown) {
+      if (e && typeof e === 'object' && 'errorMessage' in e && (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED') {
+        this.state.set('wait_password');
+      } else {
+        throw e;
+      }
+    }
   }
 
-  async resendCodeViaSms() {
-    await this._client.send({ '@type': 'resendAuthenticationCode' });
+  async resendCodeViaSms(): Promise<void> {
+    const result = await this._client.invoke(
+      new telegram.Api.auth.ResendCode({
+        phoneNumber: this._phoneNumber,
+        phoneCodeHash: this._phoneCodeHash,
+      }),
+    );
+    if (result instanceof telegram.Api.auth.SentCode) {
+      this._phoneCodeHash = result.phoneCodeHash;
+    }
+  }
+
+  async logout(): Promise<void> {
+    await this._client.invoke(new telegram.Api.auth.LogOut());
+    localStorage.removeItem('session');
+    this.state.set('wait_phone');
   }
 }

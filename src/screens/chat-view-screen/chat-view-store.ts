@@ -1,15 +1,27 @@
 import { signal } from '@lit-labs/signals';
-import type { ApiClient } from 'api/api-client';
-import type { Message } from 'types/telegram';
-import { ChatListStore } from '../chat-list-screen/chat-list-store';
+import type { TelegramClient, Api, events } from 'telegram';
+import telegram from 'telegram';
+import type { ChatListStore } from '../chat-list-screen/chat-list-store';
+
+const { NewMessage } = telegram.events;
+
+export type MessageEntry = {
+  id: number;
+  text: string;
+  formattedDate: string;
+  isOutgoing: boolean;
+};
 
 export class ChatViewStore {
-  readonly messages = signal<Message[]>([]);
-  private readonly _messagesMap: Map<number, Message> = new Map();
+  readonly messages = signal<MessageEntry[]>([]);
 
   private _chatId = 0;
+  private readonly _newMessageEvent = new NewMessage({});
 
-  constructor(private readonly _apiClient: ApiClient, private readonly _chatListStore: ChatListStore) {}
+  constructor(
+    private readonly _client: TelegramClient,
+    private readonly _chatListStore: ChatListStore,
+  ) {}
 
   async init(chatId: number, limit = 10) {
     this._chatId = chatId;
@@ -19,108 +31,51 @@ export class ChatViewStore {
       throw new Error(`No chat found for id ${chatId}`);
     }
 
-    this._apiClient.addEventListener('updateNewMessage', this._handleNewMessage);
-    this._apiClient.addEventListener('updateMessageContent', this._handleMessageContent);
-    this._apiClient.addEventListener('updateDeleteMessages', this._handleDeleteMessages);
+    const result = await this._client.invoke(
+      new telegram.Api.messages.GetHistory({
+        peer: new telegram.Api.InputPeerChat({ chatId: chatId as unknown as Api.long }),
+        offsetId: 0,
+        offsetDate: 0,
+        addOffset: 0,
+        limit,
+        maxId: 0,
+        minId: 0,
+        hash: 0 as unknown as Api.long,
+      }),
+    );
 
-    //while (this._messagesMap.size < limit) {
-    //  const result = (await this._apiClient.send({
-    //    '@type': 'getChatHistory',
-    //    chat_id: chatId,
-    //    from_message_id: fromMessageId,
-    //    offset: fromMessageId ? -1 : 0,
-    //    limit: limit - this._messagesMap.size,
-    //    only_local: false,
-    //  })) as Record<string, unknown> | undefined;
-
-    //  const tdMessages = ((result?.messages) as Record<string, unknown>[] | undefined) ?? [];
-    //  if (tdMessages.length === 0) break;
-
-    //  for (const msg of tdMessages) {
-    //    const mapped = mapTdMessage(msg);
-    //    this._messagesMap.set(mapped.id, mapped);
-    //  }
-
-    //  const oldest = tdMessages[tdMessages.length - 1];
-    //  fromMessageId = oldest.id as number;
-    //}
-    const res = await this._apiClient.send({
-      '@type': 'getChatHistory',
-      chat_id: chatId,
-      from_message_id: chat.lastMessage.id,
-      limit,
-    });
-    if (typeof res === "object" && res !== null && 'messages' in res && Array.isArray(res.messages)) {
-      this.messages.set(res.messages.map(mapTdMessage));
+    const res = result as Api.messages.Messages;
+    if (res.messages) {
+      const mapped = res.messages
+        .filter((m): m is Api.Message => m instanceof telegram.Api.Message)
+        .map(mapMessage);
+      this.messages.set(mapped.sort((a, b) => a.id - b.id));
     }
+
+    this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
   }
 
   dispose(): void {
-    this._apiClient.removeEventListener('updateNewMessage', this._handleNewMessage);
-    this._apiClient.removeEventListener('updateMessageContent', this._handleMessageContent);
-    this._apiClient.removeEventListener('updateDeleteMessages', this._handleDeleteMessages);
+    this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
   }
 
-  private _publishMessages = (): void => {
-    const sorted = [...this._messagesMap.values()]
-      .sort((a, b) => a.id - b.id);
-    this.messages.set(sorted);
-  };
+  private _handleNewMessage = (event: events.NewMessageEvent): void => {
+    const msg = event.message;
+    const chatId = msg.chatId?.toJSNumber?.() ?? Number(msg.chatId);
+    if (chatId !== this._chatId) return;
 
-  private _handleNewMessage = (update: Record<string, unknown>): void => {
-    const tdMsg = update.message as Record<string, unknown>;
-    if ((tdMsg.chat_id as number) !== this._chatId) return;
-    const msg = mapTdMessage(tdMsg);
-    this._messagesMap.set(msg.id, msg);
-    this._publishMessages();
-  };
-
-  private _handleMessageContent = (update: Record<string, unknown>): void => {
-    if ((update.chat_id as number) !== this._chatId) return;
-    const msgId = update.message_id as number;
-    const existing = this._messagesMap.get(msgId);
-    if (!existing) return;
-    const content = update.new_content as Record<string, unknown>;
-    existing.text = extractText(content);
-    this._messagesMap.set(msgId, existing);
-    this._publishMessages();
-  };
-
-  private _handleDeleteMessages = (update: Record<string, unknown>): void => {
-    if ((update.chat_id as number) !== this._chatId) return;
-    const ids = update.message_ids as number[];
-    if (!ids) return;
-    for (const id of ids) {
-      this._messagesMap.delete(id);
-    }
-    this._publishMessages();
+    const entry = mapMessage(msg);
+    const current = this.messages.get();
+    this.messages.set([...current, entry]);
   };
 }
 
-function extractText(content: Record<string, unknown>): string {
-  if (content?.['@type'] === 'messageText') {
-    const text = content.text as Record<string, unknown>;
-
-    return (text.text as string) || '';
-  }
-  if (content?.['@type']) {
-    return `[${(content['@type'] as string).replace('message', '')}]`;
-  }
-
-  return '';
-}
-
-function mapTdMessage(td: Record<string, unknown>): Message {
-  const content = td.content as Record<string, unknown> | undefined;
-  const text = content ? extractText(content) : '';
-  const timestamp = td.date ? formatTimestamp(td.date as number) : '';
-
+function mapMessage(msg: Api.Message): MessageEntry {
   return {
-    id: td.id as number,
-    chatId: td.chat_id as number,
-    text,
-    timestamp,
-    isOutgoing: (td.is_outgoing as boolean) || false,
+    id: msg.id,
+    text: msg.message || '',
+    formattedDate: msg.date ? formatTimestamp(msg.date) : '',
+    isOutgoing: msg.out ?? false,
   };
 }
 
@@ -128,7 +83,7 @@ function formatTimestamp(unix: number): string {
   const date = new Date(unix * 1000);
   const now = new Date();
   const diffDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays === 0) {

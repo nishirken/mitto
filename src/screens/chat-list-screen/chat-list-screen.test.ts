@@ -4,23 +4,27 @@ import { fixture, html } from '@open-wc/testing';
 import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import type { Chat } from 'types/telegram';
+import type { ChatEntry } from './chat-list-store';
 import './chat-list-screen';
 import type { ChatListScreen } from './chat-list-screen';
 
-const testChats: Chat[] = [
+const testChats: ChatEntry[] = [
   { id: 1, name: 'Alice', lastMessage: { id: 100, text: 'Hi' }, timestamp: '14:32', unreadCount: 3 },
   { id: 2, name: 'Bob', lastMessage: { id: 200, text: 'Hey' }, timestamp: '13:15', unreadCount: 0 },
 ];
 
 function mockServices() {
-  const chatsSignal = signal<Chat[]>([]);
+  const chatsSignal = signal<ChatEntry[]>([]);
   const services: Services = {
-    apiClient: {
-      send: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    },
+    client: {
+      connect: vi.fn(),
+      invoke: vi.fn(),
+      addEventHandler: vi.fn(),
+      removeEventHandler: vi.fn(),
+      checkAuthorization: vi.fn(),
+      sendCode: vi.fn(),
+      session: { save: vi.fn() },
+    } as unknown as Services['client'],
     authStore: {} as Services['authStore'],
     chatListStore: {
       chats: chatsSignal,

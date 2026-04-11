@@ -10,11 +10,13 @@ import 'screens/auth/auth-screen';
 import 'screens/chat-list-screen/chat-list-screen';
 import 'screens/chat-view-screen/chat-view-screen';
 import 'components/mk-loading/mk-loading';
-import { TelegramApiClient } from 'api/telegram-api-client';
+import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
 import { ChatListStore } from './screens/chat-list-screen/chat-list-store';
 
-const API_ID = '30808228';
+const { TelegramClient, sessions: { StringSession } } = telegram;
+
+const API_ID = 30808228;
 const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
 
 @customElement('app-root')
@@ -28,10 +30,14 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   constructor() {
     super();
+    const session = new StringSession(localStorage.getItem('session') ?? '');
+    const client = new TelegramClient(session, API_ID, API_HASH, {
+      connectionRetries: 5,
+      testServers: import.meta.env.VITE_USE_TEST_DC === 'true',
+    });
     const config = { apiId: API_ID, apiHash: API_HASH };
-    const client = new TelegramApiClient();
     this._services = {
-      apiClient: client,
+      client,
       authStore: new TelegramAuthStore(config, client),
       chatListStore: new ChatListStore(client),
     };
@@ -48,7 +54,6 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._services.authStore.dispose();
     this._unsubRoute?.();
   }
 

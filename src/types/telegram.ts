@@ -1,22 +1,5 @@
-export interface Chat {
-  id: number;
-  name: string;
-  lastMessage: { id: number; text: string };
-  timestamp: string;
-  unreadCount: number;
-}
-
-export type Message = {
-  id: number;
-  chatId: number;
-  text: string;
-  timestamp: string;
-  isOutgoing: boolean;
-};
-
 export type TelegramConfig = {
-  apiId: string;
+  apiId: number;
   apiHash: string;
-  useTestDc?: boolean;
+  testServers?: boolean;
 };
-
