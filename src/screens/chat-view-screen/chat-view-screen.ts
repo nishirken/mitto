@@ -1,10 +1,11 @@
 import { LitElement, PropertyValues, html, unsafeCSS } from 'lit';
-import { customElement, property, query } from 'lit/decorators.js';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
 import 'components/mk-header/mk-header';
 import 'components/mk-icon-button/mk-icon-button';
-import 'components/mk-input/mk-input';
+import 'components/mk-textarea/mk-textarea';
+import type { MkTextarea } from 'components/mk-textarea/mk-textarea';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewStore } from './chat-view-store';
 import type { Services } from 'api/services-context';
@@ -19,6 +20,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   private _chatViewStore?: ChatViewStore;
+  @state() private _message = '';
   @query('#messages') private _messagesContainer?: HTMLElement;
 
   connectedCallback() {
@@ -53,6 +55,15 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     navigate('chats');
   }
 
+  private _handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    const text = this._message.trim();
+    if (!text) return;
+    this._chatViewStore?.sendMessage(text);
+    this._message = '';
+    this._scrollToBottom();
+  }
+
   render() {
     const messages = this._chatViewStore?.messages.get() ?? [];
     const contactName = this.services.chatListStore.getChat(this.chatId)?.name ?? '';
@@ -65,17 +76,19 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       <div class="messages" id="messages">
         ${messages.map(
           (msg) => html`
-            <div class="message ${msg.isOutgoing ? 'outgoing' : 'incoming'}">
-              ${msg.text}
-              <div class="msg-time">${msg.formattedDate}</div>
+            <div class="message-wrapper ${msg.isOutgoing ? 'outgoing' : 'incoming'}">
+              <span class="message">
+                ${msg.text}
+              </span>
+              <span class="msg-time">${msg.formattedDate}</div>
             </div>
           `
         )}
       </div>
-      <div class="footer">
-        <mk-input type="text" placeholder="Message…"></mk-input>
-        <mk-icon-button label="Send" type="submit">→</mk-icon-button>
-      </div>
+      <form @submit=${this._handleSubmit} class="footer">
+        <mk-textarea placeholder="Message…" .value=${this._message} @input=${(e: Event) => this._message = (e.target as MkTextarea).value} data-testid="chat-view.message-input"></mk-textarea>
+        <mk-icon-button class="send-button" label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
+      </form>
     `;
   }
 }

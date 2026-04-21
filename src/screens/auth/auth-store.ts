@@ -22,6 +22,30 @@ export class TelegramAuthStore {
     private readonly _client: TelegramClient,
   ) {}
 
+  /**
+   * GramJS auto-reconnect doesn't re-send InitConnection, and its built-in
+   * CONNECTION_NOT_INITED retry is broken (checks e.message instead of
+   * e.errorMessage). This wrapper handles it by reconnecting and retrying.
+   */
+  private async _invoke<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'errorMessage' in e &&
+        (e as Record<string, unknown>).errorMessage === 'CONNECTION_NOT_INITED'
+      ) {
+        await this._client.disconnect();
+        await this._client.connect();
+
+        return await fn();
+      }
+      throw e;
+    }
+  }
+
   async init(): Promise<void> {
     try {
       await this._client.connect();
@@ -38,32 +62,31 @@ export class TelegramAuthStore {
 
   async sendPhoneNumber(phone: string): Promise<void> {
     this._phoneNumber = phone;
+
     const { apiId, apiHash } = this._config;
-    const result = await this._client.sendCode(
-      { apiId, apiHash },
-      phone,
+    const { phoneCodeHash, isCodeViaApp } = await this._invoke(() =>
+      this._client.sendCode({ apiId, apiHash }, phone),
     );
-    if (result instanceof telegram.Api.auth.SentCode) {
-      this._phoneCodeHash = result.phoneCodeHash;
-      const isViaApp = result.type instanceof telegram.Api.auth.SentCodeTypeApp;
-      this.state.set({ type: 'wait_code', isSmsAvailable: !isViaApp });
-    } else {
-      // SentCodeSuccess — already authorized
-      const sessionString = this._client.session.save() as unknown as string;
-      localStorage.setItem('session', sessionString);
-      this.state.set('ready');
-    }
+    this._phoneCodeHash = phoneCodeHash;
+    this.state.set({ type: 'wait_code', isSmsAvailable: !isCodeViaApp });
   }
 
   async sendAuthCode(code: string): Promise<void> {
     try {
-      await this._client.invoke(
-        new telegram.Api.auth.SignIn({
-          phoneNumber: this._phoneNumber,
-          phoneCodeHash: this._phoneCodeHash,
-          phoneCode: code,
-        }),
+      const result = await this._invoke(() =>
+        this._client.invoke(
+          new telegram.Api.auth.SignIn({
+            phoneNumber: this._phoneNumber,
+            phoneCodeHash: this._phoneCodeHash,
+            phoneCode: code,
+          }),
+        ),
       );
+
+      if (result instanceof telegram.Api.auth.AuthorizationSignUpRequired) {
+        throw new Error('Please create a Telegram account using an official client first');
+      }
+
       const sessionString = this._client.session.save() as unknown as string;
       localStorage.setItem('session', sessionString);
       this.state.set('ready');

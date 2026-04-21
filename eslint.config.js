@@ -18,6 +18,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', 'src/lib/telegram.js'],
+    ignores: ['dist/', 'node_modules/', 'src/lib/'],
   },
 );

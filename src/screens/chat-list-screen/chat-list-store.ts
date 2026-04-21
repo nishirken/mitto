@@ -2,6 +2,8 @@ import { signal } from '@lit-labs/signals';
 import type { TelegramClient, Api, events } from 'telegram';
 import telegram from 'telegram';
 
+const { NewMessage } = telegram.events;
+
 export type ChatEntry = {
   id: number;
   name: string;
@@ -13,7 +15,7 @@ export type ChatEntry = {
 export class ChatListStore {
   readonly chats = signal<ChatEntry[]>([]);
   private readonly _chatsMap = new Map<number, ChatEntry>();
-  private readonly _newMessageEvent = {};
+  private readonly _newMessageEvent = new NewMessage({});
 
   constructor(private readonly _client: TelegramClient) {}
 
@@ -76,6 +78,11 @@ export class ChatListStore {
 
   getChat(id: number): ChatEntry | null {
     return this._chatsMap.get(id) ?? null;
+  }
+
+  addChat(entry: ChatEntry): void {
+    this._chatsMap.set(entry.id, entry);
+    this.chats.set([...this._chatsMap.values()]);
   }
 
   private _handleNewMessage = (event: events.NewMessageEvent): void => {

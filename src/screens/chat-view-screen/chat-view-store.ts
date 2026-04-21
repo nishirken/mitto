@@ -25,22 +25,24 @@ export class ChatViewStore {
 
   async init(chatId: number, limit = 10) {
     this._chatId = chatId;
-    const chat = this._chatListStore.getChat(chatId);
+    let chat = this._chatListStore.getChat(chatId);
 
     if (!chat) {
-      throw new Error(`No chat found for id ${chatId}`);
+      const entity = await this._client.getEntity(chatId);
+      chat = {
+        id: chatId,
+        name: entityName(entity),
+        lastMessage: { id: 0, text: '' },
+        timestamp: '',
+        unreadCount: 0,
+      };
+      this._chatListStore.addChat(chat);
     }
 
     const result = await this._client.invoke(
       new telegram.Api.messages.GetHistory({
-        peer: new telegram.Api.InputPeerChat({ chatId: chatId as unknown as Api.long }),
-        offsetId: 0,
-        offsetDate: 0,
-        addOffset: 0,
+        peer: chat.id,
         limit,
-        maxId: 0,
-        minId: 0,
-        hash: 0 as unknown as Api.long,
       }),
     );
 
@@ -53,6 +55,12 @@ export class ChatViewStore {
     }
 
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+  }
+
+  async sendMessage(text: string): Promise<void> {
+    const msg = await this._client.sendMessage(this._chatId, { message: text });
+    const entry = mapMessage(msg);
+    this.messages.set([...this.messages.get(), entry]);
   }
 
   dispose(): void {
@@ -68,6 +76,17 @@ export class ChatViewStore {
     const current = this.messages.get();
     this.messages.set([...current, entry]);
   };
+}
+
+function entityName(entity: Api.TypeEntityLike): string {
+  if (entity instanceof telegram.Api.User) {
+    return [entity.firstName, entity.lastName].filter(Boolean).join(' ') || 'Unknown';
+  }
+  if (entity instanceof telegram.Api.Chat || entity instanceof telegram.Api.Channel) {
+    return entity.title || 'Unknown';
+  }
+
+  return 'Unknown';
 }
 
 function mapMessage(msg: Api.Message): MessageEntry {

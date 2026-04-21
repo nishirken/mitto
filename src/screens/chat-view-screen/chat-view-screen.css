@@ -24,11 +24,16 @@
   overflow-y: auto;
 }
 
+.message-wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
 .message {
   border: var(--border-thin);
   border-radius: var(--radius-bubble);
   padding: var(--sp-8) var(--sp-12);
-  max-width: 75%;
   font-size: var(--fs-body);
   line-height: var(--lh-normal);
   overflow-wrap: break-word;
@@ -36,17 +41,23 @@
 
 .incoming {
   align-self: flex-start;
-  background: var(--c-bg);
+}
+
+.incoming .message {
+  border-bottom-left-radius: 0;
 }
 
 .outgoing {
   align-self: flex-end;
-  background: var(--c-highlight);
+}
+
+.outgoing .message {
+  border-width: 2px;
+  border-bottom-right-radius: 0;
 }
 
 .msg-time {
-  font-size: var(--fs-caption);
-  color: var(--c-text-secondary);
+  font-size: var(--fs-badge);
   margin-top: var(--sp-2);
 }
 
@@ -57,14 +68,16 @@
 .footer {
   display: flex;
   align-items: center;
+  padding: var(--sp-4);
   border-top: var(--separator-solid);
   min-height: var(--bottom-bar-height);
   flex-shrink: 0;
 }
 
-.footer mk-input {
+.footer mk-textarea {
   flex: 1;
-  margin-right: var(--sp-4);
+  margin: var(--sp-4);
+  font-size: var(--fs-name);
 }
 
 .empty {
@@ -74,4 +87,9 @@
   justify-content: center;
   color: var(--c-text-secondary);
   font-size: var(--fs-preview);
+}
+
+.send-button {
+  border: var(--border-thin);
+  border-radius: var(--radius-bubble);
 }

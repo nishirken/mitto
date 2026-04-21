@@ -88,7 +88,6 @@ export class AuthScreen extends SignalWatcher(LitElement) {
         <span class="title">Enter code</span>
         <mk-input
           data-testid="code-input"
-          type="text"
           label="Authentication code"
           hint=${'Check your Telegram app or SMS'}
           placeholder="12345"

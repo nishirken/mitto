@@ -10,7 +10,7 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
     alias: {
-      telegram: fileURLToPath(new URL('./src/lib/telegram.js', import.meta.url)),
+      telegram: fileURLToPath(new URL('./src/lib/telegram/index.js', import.meta.url)),
     },
   },
   server: {

@@ -1,0 +1,30 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  padding: var(--sp-8) var(--sp-12);
+  font-size: inherit;
+  font-family: var(--font-family);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  color: var(--c-text);
+  background: var(--c-bg);
+  outline: none;
+  min-height: var(--tap-min);
+  resize: none;
+  field-sizing: content;
+}
+
+textarea::placeholder {
+  color: var(--c-text-placeholder);
+}
+
+textarea:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

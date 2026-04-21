@@ -31,9 +31,9 @@ export class AppRoot extends SignalWatcher(LitElement) {
   constructor() {
     super();
     const session = new StringSession(localStorage.getItem('session') ?? '');
+    const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
     const client = new TelegramClient(session, API_ID, API_HASH, {
-      connectionRetries: 5,
-      testServers: import.meta.env.VITE_USE_TEST_DC === 'true',
+      testServers: useTestDC,
     });
     const config = { apiId: API_ID, apiHash: API_HASH };
     this._services = {

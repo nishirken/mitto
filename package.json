@@ -17,7 +17,7 @@
     "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
-    "src/**/*.ts": "eslint --fix",
+    "src/**/*.ts": "eslint --no-warn-ignored --fix",
     "src/**/*.css": "stylelint --fix"
   },
   "dependencies": {
