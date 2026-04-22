@@ -31,7 +31,9 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       this.services.client,
       this.services.chatListStore,
     );
-    this._chatViewStore.init(this.chatId).then(() => this._scrollToBottom());
+    this._chatViewStore.init(this.chatId)
+      .then(() => this.updateComplete)
+      .then(() => this._scrollToBottom());
   }
 
   disconnectedCallback() {
