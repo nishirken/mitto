@@ -61,7 +61,7 @@
   /* ============================================
    * BORDERS & SEPARATORS
    * ============================================ */
-  --border-solid: 3px solid var(--c-border);
+  --border-solid: 2px solid var(--c-border);
   --border-thin: 1px solid var(--c-border);
   --separator-dotted: 1px dotted var(--c-separator);
   --separator-solid: 2px solid var(--c-border);

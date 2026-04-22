@@ -1,10 +1,13 @@
 :host {
-  display: flex;
-  align-items: center;
   padding: var(--sp-4);
   border-top: var(--separator-solid);
   min-height: var(--bottom-bar-height);
   flex-shrink: 0;
+}
+
+form {
+  display: flex;
+  align-items: center;
 }
 
 mk-textarea {
