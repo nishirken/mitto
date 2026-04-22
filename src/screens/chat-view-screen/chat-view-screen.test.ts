@@ -66,16 +66,16 @@ describe('chat-view-screen', () => {
       ></chat-view-screen>
     `, { parentNode: withContext(mockServices()) });
 
-    expect(el.shadowRoot!.querySelector('.contact')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('chat-view-header')).not.toBeNull();
   });
 
-  it('has a back button', async () => {
+  it('has a footer', async () => {
     const el = await fixture<ChatViewScreen>(html`
       <chat-view-screen
         .chatId=${1}
       ></chat-view-screen>
     `, { parentNode: withContext(mockServices()) });
 
-    expect(el.shadowRoot!.querySelector('.back')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('chat-view-footer')).not.toBeNull();
   });
 });

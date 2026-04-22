@@ -1,11 +1,9 @@
-import { LitElement, PropertyValues, html, unsafeCSS } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
+import { LitElement, html, unsafeCSS } from 'lit';
+import { customElement, property, query } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
-import 'components/mk-header/mk-header';
-import 'components/mk-icon-button/mk-icon-button';
-import 'components/mk-textarea/mk-textarea';
-import type { MkTextarea } from 'components/mk-textarea/mk-textarea';
+import './chat-view-header';
+import './chat-view-footer';
 import './message-view';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewStore } from './chat-view-store';
@@ -21,7 +19,6 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   private _chatViewStore?: ChatViewStore;
-  @state() private _message = '';
   @query('#messages') private _messagesContainer?: HTMLElement;
 
   connectedCallback() {
@@ -34,11 +31,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       this.services.client,
       this.services.chatListStore,
     );
-    this._chatViewStore.init(this.chatId);
-  }
-  
-  protected firstUpdated(_changedProperties: PropertyValues): void {
-    this._scrollToBottom();
+    this._chatViewStore.init(this.chatId).then(() => this._scrollToBottom());
   }
 
   disconnectedCallback() {
@@ -48,6 +41,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
   private _scrollToBottom() {
     if (this._messagesContainer) {
+      console.log(this._messagesContainer.scrollTop, this._messagesContainer.scrollHeight);
       this._messagesContainer.scrollTop = this._messagesContainer.scrollHeight;
     }
   }
@@ -56,12 +50,8 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     navigate('chats');
   }
 
-  private _handleSubmit(e: SubmitEvent) {
-    e.preventDefault();
-    const text = this._message.trim();
-    if (!text) return;
-    this._chatViewStore?.sendMessage(text);
-    this._message = '';
+  private _onSend(e: CustomEvent<string>) {
+    this._chatViewStore?.sendMessage(e.detail);
     this._scrollToBottom();
   }
 
@@ -70,10 +60,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     const contactName = this.services.chatListStore.getChat(this.chatId)?.name ?? '';
 
     return html`
-      <mk-header>
-        <mk-icon-button bordered class="back" slot="start" label="Back" @click=${this._onBack}>←</mk-icon-button>
-        <span class="contact">${contactName}</span>
-      </mk-header>
+      <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
       <div class="messages" id="messages">
         ${messages.map(
           (msg) => html`
@@ -85,10 +72,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
           `
         )}
       </div>
-      <form @submit=${this._handleSubmit} class="footer">
-        <mk-textarea placeholder="Message…" .value=${this._message} @input=${(e: Event) => this._message = (e.target as MkTextarea).value} data-testid="chat-view.message-input"></mk-textarea>
-        <mk-icon-button bordered label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
-      </form>
+      <chat-view-footer @send=${this._onSend}></chat-view-footer>
     `;
   }
 }

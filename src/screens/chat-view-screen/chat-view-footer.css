@@ -1,0 +1,14 @@
+:host {
+  display: flex;
+  align-items: center;
+  padding: var(--sp-4);
+  border-top: var(--separator-solid);
+  min-height: var(--bottom-bar-height);
+  flex-shrink: 0;
+}
+
+mk-textarea {
+  flex: 1;
+  margin: var(--sp-4);
+  font-size: var(--fs-name);
+}

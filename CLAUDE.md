@@ -22,6 +22,9 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Styles
 - Colocated CSS files, imported with `?inline`, scoped via `static styles = unsafeCSS(...)`
+- Order CSS selectors low→high specificity (stylelint `no-descending-specificity`)
+- Whole pixel values only — fractional px rounds unpredictably on e-ink
+- No `cursor: pointer` — touch-only device
 
 ## Testing
 - `@open-wc/testing` with `happy-dom` environment
