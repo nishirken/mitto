@@ -55,7 +55,7 @@ describe('chat-view-screen', () => {
     `, { parentNode: withContext(mockServices()) });
     await el.updateComplete;
 
-    const messages = el.shadowRoot!.querySelectorAll('.message');
+    const messages = el.shadowRoot!.querySelectorAll('message-view');
     expect(messages.length).toBe(0);
   });
 

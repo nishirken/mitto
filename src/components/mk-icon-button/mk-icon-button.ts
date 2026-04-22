@@ -11,6 +11,7 @@ export class MkIconButton extends LitElement {
 
   @property({ type: String }) label = '';
   @property({ type: String }) type: 'button' | 'submit' | 'reset' = 'button';
+  @property({ type: Boolean, reflect: true }) bordered = false;
 
   constructor() {
     super();

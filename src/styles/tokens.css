@@ -61,10 +61,10 @@
   /* ============================================
    * BORDERS & SEPARATORS
    * ============================================ */
-  --border-solid: 1.5px solid var(--c-border);
+  --border-solid: 3px solid var(--c-border);
   --border-thin: 1px solid var(--c-border);
   --separator-dotted: 1px dotted var(--c-separator);
-  --separator-solid: 1.5px solid var(--c-border);
+  --separator-solid: 2px solid var(--c-border);
 
   /* ============================================
    * SHAPES
@@ -76,8 +76,8 @@
   /* ============================================
    * SIZING
    * ============================================ */
-  --tap-min: 48px;
-  --header-height: 56px;
+  --tap-min: 32px;
+  --header-height: 40px;
   --bottom-bar-height: 52px;
   --list-item-height: 72px;
   --icon-size: 24px;

@@ -1,0 +1,40 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+:host([outgoing]) {
+  align-self: flex-end;
+}
+
+:host(:not([outgoing])) {
+  align-self: flex-start;
+}
+
+.message {
+  border: var(--border-thin);
+  border-radius: var(--radius-bubble);
+  padding: var(--sp-8) var(--sp-12);
+  font-size: var(--fs-body);
+  line-height: var(--lh-normal);
+  overflow-wrap: break-word;
+}
+
+:host(:not([outgoing])) .message {
+  border-bottom-left-radius: 0;
+}
+
+:host([outgoing]) .message {
+  border: var(--border-solid);
+  border-bottom-right-radius: 0;
+}
+
+.msg-time {
+  font-size: var(--fs-badge);
+  margin-top: var(--sp-2);
+}
+
+:host([outgoing]) .msg-time {
+  text-align: right;
+}

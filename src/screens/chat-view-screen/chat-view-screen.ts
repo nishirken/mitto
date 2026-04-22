@@ -6,6 +6,7 @@ import 'components/mk-header/mk-header';
 import 'components/mk-icon-button/mk-icon-button';
 import 'components/mk-textarea/mk-textarea';
 import type { MkTextarea } from 'components/mk-textarea/mk-textarea';
+import './message-view';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewStore } from './chat-view-store';
 import type { Services } from 'api/services-context';
@@ -70,24 +71,23 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
     return html`
       <mk-header>
-        <mk-icon-button class="back" slot="start" label="Back" @click=${this._onBack}>←</mk-icon-button>
+        <mk-icon-button bordered class="back" slot="start" label="Back" @click=${this._onBack}>←</mk-icon-button>
         <span class="contact">${contactName}</span>
       </mk-header>
       <div class="messages" id="messages">
         ${messages.map(
           (msg) => html`
-            <div class="message-wrapper ${msg.isOutgoing ? 'outgoing' : 'incoming'}">
-              <span class="message">
-                ${msg.text}
-              </span>
-              <span class="msg-time">${msg.formattedDate}</div>
-            </div>
+            <message-view
+              ?outgoing=${msg.isOutgoing}
+              .text=${msg.text}
+              .timestamp=${msg.formattedDate}
+            ></message-view>
           `
         )}
       </div>
       <form @submit=${this._handleSubmit} class="footer">
         <mk-textarea placeholder="Message…" .value=${this._message} @input=${(e: Event) => this._message = (e.target as MkTextarea).value} data-testid="chat-view.message-input"></mk-textarea>
-        <mk-icon-button class="send-button" label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
+        <mk-icon-button bordered label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
       </form>
     `;
   }

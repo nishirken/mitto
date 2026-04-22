@@ -1,7 +1,11 @@
+/* E-ink reset: disable subpixel antialiasing and Android tap highlights
+   that produce artifacts on monochrome/grayscale displays. */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {

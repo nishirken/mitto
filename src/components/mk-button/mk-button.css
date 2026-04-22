@@ -12,7 +12,6 @@ button {
   padding: var(--sp-12) var(--sp-24);
   border: none;
   border-radius: var(--radius-button);
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -20,9 +19,13 @@ button {
   color: var(--c-button-text);
 }
 
+button:active {
+  background: var(--c-white);
+  color: var(--c-black);
+}
+
 button:disabled {
   opacity: 0.5;
-  cursor: default;
 }
 
 button:focus-visible {
@@ -40,4 +43,10 @@ button:focus-visible {
   background: none;
   color: var(--c-text);
   padding: var(--sp-8) var(--sp-12);
+}
+
+:host([variant="secondary"]) button:active,
+:host([variant="text"]) button:active {
+  background: var(--c-black);
+  color: var(--c-white);
 }
