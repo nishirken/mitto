@@ -13,7 +13,6 @@
   --c-gray-600: #555;     /* secondary text, timestamps */
   --c-gray-400: #888;     /* placeholders, disabled */
   --c-gray-200: #ccc;     /* dotted separators */
-  --c-highlight: #e0e0e0;    /* outgoing message bubble fill */
 
   /* Semantic aliases */
   --c-bg: var(--c-white);
@@ -35,8 +34,6 @@
   --fs-header: 22px;
   --fs-name: 18px;
   --fs-body: 16px;
-  --fs-preview: 15px;
-  --fs-meta: 14px;
   --fs-caption: 13px;
   --fs-badge: 12px;
   --fw-bold: 700;
@@ -76,7 +73,7 @@
   /* ============================================
    * SIZING
    * ============================================ */
-  --tap-min: 32px;
+  --tap-min: 40px;
   --header-height: 40px;
   --bottom-bar-height: 52px;
   --list-item-height: 72px;

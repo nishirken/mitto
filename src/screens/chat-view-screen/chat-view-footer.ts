@@ -27,7 +27,7 @@ export class ChatViewFooter extends LitElement {
   render() {
     return html`
       <form @submit=${this._handleSubmit}>
-        <mk-textarea placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="chat-view.message-input"></mk-textarea>
+        <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="chat-view.message-input"></mk-textarea>
         <mk-icon-button bordered label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
       </form>
     `;

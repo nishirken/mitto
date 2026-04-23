@@ -4,7 +4,6 @@
   align-items: center;
   padding: var(--sp-12) var(--page-px);
   border-bottom: var(--separator-dotted);
-  cursor: pointer;
   min-height: var(--list-item-height);
 }
 
@@ -35,7 +34,7 @@
 }
 
 .time {
-  font-size: var(--fs-meta);
+  font-size: var(--fs-caption);
   font-weight: var(--fw-regular);
   color: var(--c-text-secondary);
   flex-shrink: 0;
@@ -48,7 +47,7 @@
 }
 
 .preview {
-  font-size: var(--fs-preview);
+  font-size: var(--fs-body);
   font-weight: var(--fw-regular);
   color: var(--c-text-secondary);
   line-height: var(--lh-normal);

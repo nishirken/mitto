@@ -2,12 +2,14 @@ import { LitElement, html, unsafeCSS, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import styles from './mk-input.css?inline';
 
+let nextInputId = 0;
+
 @customElement('mk-input')
 export class MkInput extends LitElement {
   static formAssociated = true;
   static styles = unsafeCSS(styles);
 
-  private readonly _inputId = 'mk-input';
+  private readonly _inputId = `mk-input-${nextInputId++}`;
   private readonly _internals: ElementInternals;
 
   @property({ type: String }) label = '';

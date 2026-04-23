@@ -22,7 +22,7 @@ vi.mock('./screens/chat-list-screen/chat-list-store', () => ({
 
 vi.mock('./screens/chat-view-screen/chat-view-store', () => ({
   ChatViewStore: function () {
-    return { messages: signal([]), init: vi.fn(), dispose: vi.fn() };
+    return { messages: signal([]), init: vi.fn(async () => {}), dispose: vi.fn() };
   },
 }));
 

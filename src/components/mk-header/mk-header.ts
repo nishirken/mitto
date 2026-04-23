@@ -12,7 +12,7 @@ export class MkHeader extends LitElement {
     return html`
       <header>
         <slot name="start"></slot>
-        <span class="title">${this.headline}<slot></slot></span>
+        <h1 class="title">${this.headline}<slot></slot></h1>
         <slot name="end"></slot>
       </header>
     `;

@@ -5,15 +5,7 @@ import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 
-const mockMessages = signal([]);
-const mockInit = vi.fn();
-const mockDispose = vi.fn();
-
-vi.mock('./chat-view-store', () => ({
-  ChatViewStore: function () {
-    return { messages: mockMessages, init: mockInit, dispose: mockDispose };
-  },
-}));
+vi.mock('./chat-view-store');
 
 import './chat-view-screen';
 import type { ChatViewScreen } from './chat-view-screen';

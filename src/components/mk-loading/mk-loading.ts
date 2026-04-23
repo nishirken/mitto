@@ -7,6 +7,12 @@ import styles from './mk-loading.css?inline';
 export class MkLoading extends LitElement {
   static styles = unsafeCSS(styles);
 
+  constructor() {
+    super();
+    this.setAttribute('role', 'status');
+    this.setAttribute('aria-label', 'Loading');
+  }
+
   render() {
     return html`<mk-loading-text></mk-loading-text>`;
   }

@@ -5,7 +5,7 @@
 }
 
 .count {
-  font-size: var(--fs-meta);
+  font-size: var(--fs-caption);
   font-weight: var(--fw-regular);
   color: var(--c-text-secondary);
 }

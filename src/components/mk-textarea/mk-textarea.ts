@@ -9,6 +9,7 @@ export class MkTextarea extends LitElement {
 
   private readonly _internals: ElementInternals;
 
+  @property({ type: String }) label = '';
   @property({ type: String }) placeholder = '';
   @property({ type: Boolean, reflect: true }) disabled = false;
   @property({ type: Number }) rows = 1;
@@ -41,6 +42,7 @@ export class MkTextarea extends LitElement {
   render() {
     return html`
       <textarea
+        aria-label=${this.label}
         placeholder=${this.placeholder}
         .value=${this._value}
         ?disabled=${this.disabled}

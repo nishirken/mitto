@@ -14,7 +14,11 @@ export class MkBadge extends LitElement {
   }
 
   updated() {
-    this.setAttribute('aria-label', `${this.count} unread`);
+    if (this.count > 0) {
+      this.setAttribute('aria-label', `${this.count} unread`);
+    } else {
+      this.removeAttribute('aria-label');
+    }
   }
 
   render() {

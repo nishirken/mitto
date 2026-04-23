@@ -24,14 +24,15 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - Colocated CSS files, imported with `?inline`, scoped via `static styles = unsafeCSS(...)`
 - Order CSS selectors low→high specificity (stylelint `no-descending-specificity`)
 - Whole pixel values only — fractional px rounds unpredictably on e-ink
-- No `cursor: pointer` — touch-only device
+- No `cursor` properties at all — touch-only device
 
 ## Testing
 - `@open-wc/testing` with `happy-dom` environment
 - Select elements by `data-testid` using `tid()` helper from `src/test-utils.ts`
 - Use mocks if possible
-- Mocks in `src/api/__mocks__/`
+- Mocks colocated in `__mocks__/` directories next to the module being mocked
+- `vi.mock` factories: mock implementations must match the real method's signature
 
 ## Key Notes
-- `tsconfig.json`: `useDefineForClassFields: false` is critical for Lit decorators
+- `tsconfig.json`: `useDefineForClassFields: false` is critical for Lit decorators and prevents `private static` fields — use module-level variables instead
 - Pre-commit hook via simple-git-hooks → lint-staged (eslint --fix on .ts, stylelint --fix on .css)

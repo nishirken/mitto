@@ -19,5 +19,5 @@
   align-items: center;
   justify-content: center;
   color: var(--c-text-secondary);
-  font-size: var(--fs-preview);
+  font-size: var(--fs-body);
 }
