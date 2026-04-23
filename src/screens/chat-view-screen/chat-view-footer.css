@@ -1,5 +1,5 @@
 :host {
-  padding: var(--sp-4);
+  padding: var(--sp-4) var(--sp-16);
   border-top: var(--separator-solid);
   min-height: var(--bottom-bar-height);
   flex-shrink: 0;

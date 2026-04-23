@@ -28,7 +28,11 @@ export class ChatViewFooter extends LitElement {
     return html`
       <form @submit=${this._handleSubmit}>
         <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="chat-view.message-input"></mk-textarea>
-        <mk-icon-button bordered label="Send" type="submit" data-testid="chat-view.send-button">→</mk-icon-button>
+        <mk-icon-button bordered label="Send" type="submit" data-testid="chat-view.send-button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </mk-icon-button>
       </form>
     `;
   }

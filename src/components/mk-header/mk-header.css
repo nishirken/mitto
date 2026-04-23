@@ -7,7 +7,13 @@
   flex-shrink: 0;
 }
 
+header {
+  display: flex;
+  align-items: center;
+}
+
 .title {
+  margin: 0 var(--sp-8);
   flex: 1;
   min-width: 0;
   font-size: var(--fs-header);
