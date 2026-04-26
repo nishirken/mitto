@@ -6,11 +6,13 @@
   "scripts": {
     "start": "vite",
     "build": "tsc && vite build",
-    "build:apk": "tsc && vite build && cap sync android && cd android && ./gradlew assembleDebug",
+    "build:apk:debug": "tsc && vite build && cap sync android && cd android && ./gradlew assembleDebug",
+    "build:apk:release": "tsc && vite build && cap sync android && cd android && ./gradlew assembleRelease",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit && eslint src/ && stylelint 'src/**/*.css'",
     "lint:fix": "eslint src/ --fix && stylelint 'src/**/*.css' --fix",
+    "clean": "rm -rf dist android/app/build && cd android && ./gradlew clean",
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
