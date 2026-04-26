@@ -16,16 +16,6 @@ button {
   font-size: var(--icon-size);
 }
 
-button:active {
-  background: var(--c-black);
-  color: var(--c-white);
-}
-
-button:focus-visible {
-  outline: 2px solid var(--c-black);
-  outline-offset: 2px;
-}
-
 :host([bordered]) button {
   border: var(--border-solid);
   border-radius: var(--radius-bubble);

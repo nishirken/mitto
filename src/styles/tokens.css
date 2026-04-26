@@ -12,7 +12,7 @@
   --c-white: #fff;
   --c-gray-600: #555;     /* secondary text, timestamps */
   --c-gray-400: #888;     /* placeholders, disabled */
-  --c-gray-200: #ccc;     /* dotted separators */
+  --c-gray-200: #999;     /* dotted separators */
 
   /* Semantic aliases */
   --c-bg: var(--c-white);
@@ -32,10 +32,10 @@
   --font-family: 'Noto Sans', sans-serif;
   --fs-title: 24px;
   --fs-header: 22px;
-  --fs-name: 18px;
-  --fs-body: 16px;
-  --fs-caption: 13px;
-  --fs-badge: 12px;
+  --fs-name: 20px;
+  --fs-body: 18px;
+  --fs-caption: 14px;
+  --fs-badge: 13px;
   --fw-bold: 700;
   --fw-regular: 400;
   --lh-tight: 1.2;
