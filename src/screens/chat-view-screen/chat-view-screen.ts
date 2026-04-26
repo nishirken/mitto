@@ -18,7 +18,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   @property({ type: Number }) chatId = 0;
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
-  private _chatViewStore?: ChatViewStore;
+  private _chatViewStore!: ChatViewStore;
   @query('#messages') private _messagesContainer?: HTMLElement;
 
   connectedCallback() {
@@ -33,19 +33,37 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     );
     this._chatViewStore.init(this.chatId)
       .then(() => this.updateComplete)
-      .then(() => this._scrollToBottom());
+      .then(() => {
+        this._scrollToBottom();
+        this._messagesContainer?.addEventListener('scroll', this._handleScroll);
+      });
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._chatViewStore?.dispose();
+    this._messagesContainer?.removeEventListener('scroll', this._handleScroll);
   }
 
   private _scrollToBottom() {
     if (this._messagesContainer) {
-      console.log(this._messagesContainer.scrollTop, this._messagesContainer.scrollHeight);
       this._messagesContainer.scrollTop = this._messagesContainer.scrollHeight;
     }
+  }
+
+  private readonly _handleScroll = () => {
+    const container = this._messagesContainer;
+    if (!container || !this._chatViewStore) return;
+    if (container.scrollTop < 50) {
+      this._loadOlderMessages();
+    }
+  };
+
+  private async _loadOlderMessages() {
+    if (!this._chatViewStore) return;
+
+    await this._chatViewStore.loadMore();
+    await this.updateComplete;
   }
 
   private _onBack() {

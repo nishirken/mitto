@@ -14,6 +14,8 @@ export type MessageEntry = {
 
 export class ChatViewStore {
   readonly messages = signal<MessageEntry[]>([]);
+  readonly loading = signal(false);
+  readonly hasMore = signal(true);
 
   private _chatId = 0;
   private readonly _newMessageEvent = new NewMessage({});
@@ -55,6 +57,39 @@ export class ChatViewStore {
     }
 
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+  }
+
+  async loadMore(limit = 10): Promise<void> {
+    if (this.loading.get() || !this.hasMore.get()) return;
+
+    this.loading.set(true);
+    try {
+      const oldestId = this.messages.get()[0]?.id ?? 0;
+      const result = await this._client.invoke(
+        new telegram.Api.messages.GetHistory({
+          peer: this._chatId,
+          limit,
+          offsetId: oldestId,
+          addOffset: 0,
+        }),
+      );
+
+      const res = result as Api.messages.Messages;
+      if (res.messages) {
+        const mapped = res.messages
+          .filter((m): m is Api.Message => m instanceof telegram.Api.Message)
+          .map(mapMessage);
+        const sorted = mapped.sort((a, b) => a.id - b.id);
+        this.messages.set([...sorted, ...this.messages.get()]);
+        if (mapped.length < limit) {
+          this.hasMore.set(false);
+        }
+      } else {
+        this.hasMore.set(false);
+      }
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   async sendMessage(text: string): Promise<void> {

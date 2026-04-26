@@ -9,6 +9,7 @@ vi.mock('./chat-view-store');
 
 import './chat-view-screen';
 import type { ChatViewScreen } from './chat-view-screen';
+import { mockLoadMore } from './__mocks__/chat-view-store';
 
 function mockServices(): Services {
   return {
@@ -69,5 +70,20 @@ describe('chat-view-screen', () => {
     `, { parentNode: withContext(mockServices()) });
 
     expect(el.shadowRoot!.querySelector('chat-view-footer')).not.toBeNull();
+  });
+
+  it('calls loadMore when scrolled to top', async () => {
+    const el = await fixture<ChatViewScreen>(html`
+      <chat-view-screen
+        .chatId=${1}
+      ></chat-view-screen>
+    `, { parentNode: withContext(mockServices()) });
+    await el.updateComplete;
+
+    const container = el.shadowRoot!.querySelector('#messages')!;
+    Object.defineProperty(container, 'scrollTop', { value: 0, writable: true });
+    container.dispatchEvent(new Event('scroll'));
+
+    expect(mockLoadMore).toHaveBeenCalled();
   });
 });
