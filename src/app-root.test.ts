@@ -14,6 +14,23 @@ vi.mock('api/telegram-api-client', () => ({
   },
 }));
 
+vi.mock('./services/offline-storage', () => ({
+  OfflineStorage: {
+    create: vi.fn(async () => ({
+      getSession: vi.fn(async () => null),
+      setSession: vi.fn(async () => {}),
+      clearSession: vi.fn(async () => {}),
+      loadChats: vi.fn(async () => []),
+      saveChats: vi.fn(async () => {}),
+      upsertChat: vi.fn(async () => {}),
+      loadMessages: vi.fn(async () => []),
+      saveMessages: vi.fn(async () => {}),
+      upsertMessage: vi.fn(async () => {}),
+      clearCache: vi.fn(async () => {}),
+    })),
+  },
+}));
+
 vi.mock('./screens/chat-list-screen/chat-list-store', () => ({
   ChatListStore: function () {
     return { chats: signal([]), getChat: vi.fn(() => null), init: vi.fn(), dispose: vi.fn() };
@@ -47,6 +64,13 @@ vi.mock('./screens/auth/auth-store', async (importOriginal) => {
 import 'app-root';
 import type { AppRoot } from 'app-root';
 
+async function flushAsync(el: AppRoot): Promise<void> {
+  for (let i = 0; i < 5; i++) {
+    await Promise.resolve();
+    await el.updateComplete;
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockState.set('loading');
@@ -57,7 +81,7 @@ describe('app-root', () => {
     mockState.set('ready');
     window.location.hash = '#/chats';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
-    await el.updateComplete;
+    await flushAsync(el);
     expect(el.shadowRoot!.querySelector('chat-list-screen')).not.toBeNull();
   });
 
@@ -65,7 +89,7 @@ describe('app-root', () => {
     mockState.set('wait_phone');
     window.location.hash = '#/auth';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
-    await el.updateComplete;
+    await flushAsync(el);
     expect(el.shadowRoot!.querySelector('auth-screen')).not.toBeNull();
   });
 
@@ -73,7 +97,7 @@ describe('app-root', () => {
     mockState.set('ready');
     window.location.hash = '#/chat/1';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
-    await el.updateComplete;
+    await flushAsync(el);
     expect(el.shadowRoot!.querySelector('chat-view-screen')).not.toBeNull();
   });
 });

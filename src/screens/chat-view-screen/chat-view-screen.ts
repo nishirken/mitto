@@ -2,6 +2,7 @@ import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
+import { formatTimestamp } from 'utils/format-timestamp';
 import './chat-view-header';
 import './chat-view-footer';
 import './message-view';
@@ -30,6 +31,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     this._chatViewStore = new ChatViewStore(
       this.services.client,
       this.services.chatListStore,
+      this.services.offlineStorage,
     );
     this._chatViewStore.init(this.chatId)
       .then(() => this.updateComplete)
@@ -81,17 +83,19 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
     return html`
       <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
-      <div class="messages" id="messages">
-        ${messages.map(
-          (msg) => html`
-            <message-view
-              ?outgoing=${msg.isOutgoing}
-              .text=${msg.text}
-              .timestamp=${msg.formattedDate}
-            ></message-view>
-          `
-        )}
-      </div>
+      <scroll-container>
+        <div class="messages" id="messages">
+          ${messages.map(
+            (msg) => html`
+              <message-view
+                ?outgoing=${msg.isOutgoing}
+                .text=${msg.text}
+                .timestamp=${formatTimestamp(msg.date)}
+              ></message-view>
+            `
+          )}
+        </div>
+      </scroll-container>
       <chat-view-footer @send=${this._onSend}></chat-view-footer>
     `;
   }

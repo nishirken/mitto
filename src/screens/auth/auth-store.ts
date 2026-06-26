@@ -2,6 +2,7 @@ import { signal } from '@lit-labs/signals';
 import type { TelegramClient } from 'telegram';
 import telegram from 'telegram';
 import type { TelegramConfig } from 'types/telegram';
+import type { OfflineStorage } from 'services/offline-storage';
 
 export type AuthState =
   | 'loading'
@@ -20,6 +21,7 @@ export class TelegramAuthStore {
   constructor(
     private readonly _config: TelegramConfig,
     private readonly _client: TelegramClient,
+    private readonly _storage: OfflineStorage,
   ) {}
 
   /**
@@ -88,7 +90,7 @@ export class TelegramAuthStore {
       }
 
       const sessionString = this._client.session.save() as unknown as string;
-      localStorage.setItem('session', sessionString);
+      await this._storage.setSession(sessionString);
       this.state.set('ready');
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'errorMessage' in e && (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED') {
@@ -113,7 +115,8 @@ export class TelegramAuthStore {
 
   async logout(): Promise<void> {
     await this._client.invoke(new telegram.Api.auth.LogOut());
-    localStorage.removeItem('session');
+    await this._storage.clearSession();
+    await this._storage.clearCache();
     this.state.set('wait_phone');
   }
 }

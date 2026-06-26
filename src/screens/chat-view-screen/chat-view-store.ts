@@ -1,14 +1,16 @@
 import { signal } from '@lit-labs/signals';
 import type { TelegramClient, Api, events } from 'telegram';
 import telegram from 'telegram';
-import type { ChatListStore } from '../chat-list-screen/chat-list-store';
+import type { OfflineStorage, StoredMessage } from 'services/offline-storage';
+import { Timestamp } from '../../utils/flavour';
+import { ChatListStore } from '../../services/chat-list-store/chat-list-store';
 
 const { NewMessage } = telegram.events;
 
 export type MessageEntry = {
   id: number;
   text: string;
-  formattedDate: string;
+  date: Timestamp;
   isOutgoing: boolean;
 };
 
@@ -23,27 +25,23 @@ export class ChatViewStore {
   constructor(
     private readonly _client: TelegramClient,
     private readonly _chatListStore: ChatListStore,
+    private readonly _storage: OfflineStorage,
   ) {}
 
   async init(chatId: number, limit = 10) {
     this._chatId = chatId;
-    let chat = this._chatListStore.getChat(chatId);
 
-    if (!chat) {
-      const entity = await this._client.getEntity(chatId);
-      chat = {
-        id: chatId,
-        name: entityName(entity),
-        lastMessage: { id: 0, text: '' },
-        timestamp: '',
-        unreadCount: 0,
-      };
-      this._chatListStore.addChat(chat);
+    const cached = await this._storage.loadMessages(chatId);
+
+    if (cached.length > 0) {
+      this.messages.set(cached.map(toEntry));
     }
+
+    const chat = await this._chatListStore.getChatAsync(chatId);
 
     const result = await this._client.invoke(
       new telegram.Api.messages.GetHistory({
-        peer: chat.id,
+        peer: chat?.id,
         limit,
       }),
     );
@@ -52,8 +50,10 @@ export class ChatViewStore {
     if (res.messages) {
       const mapped = res.messages
         .filter((m): m is Api.Message => m instanceof telegram.Api.Message)
-        .map(mapMessage);
-      this.messages.set(mapped.sort((a, b) => a.id - b.id));
+        .map(mapMessage)
+        .sort((a, b) => a.id - b.id);
+      this.messages.set(mapped);
+      void this._storage.saveMessages(mapped.map((m) => toStored(chatId, m)));
     }
 
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
@@ -78,9 +78,10 @@ export class ChatViewStore {
       if (res.messages) {
         const mapped = res.messages
           .filter((m): m is Api.Message => m instanceof telegram.Api.Message)
-          .map(mapMessage);
-        const sorted = mapped.sort((a, b) => a.id - b.id);
-        this.messages.set([...sorted, ...this.messages.get()]);
+          .map(mapMessage)
+          .sort((a, b) => a.id - b.id);
+        this.messages.set([...mapped, ...this.messages.get()]);
+        void this._storage.saveMessages(mapped.map((m) => toStored(this._chatId, m)));
         if (mapped.length < limit) {
           this.hasMore.set(false);
         }
@@ -96,6 +97,7 @@ export class ChatViewStore {
     const msg = await this._client.sendMessage(this._chatId, { message: text });
     const entry = mapMessage(msg);
     this.messages.set([...this.messages.get(), entry]);
+    void this._storage.upsertMessage(toStored(this._chatId, entry));
   }
 
   dispose(): void {
@@ -108,43 +110,24 @@ export class ChatViewStore {
     if (chatId !== this._chatId) return;
 
     const entry = mapMessage(msg);
-    const current = this.messages.get();
-    this.messages.set([...current, entry]);
+    this.messages.set([...this.messages.get(), entry]);
+    void this._storage.upsertMessage(toStored(this._chatId, entry));
   };
-}
-
-function entityName(entity: Api.TypeEntityLike): string {
-  if (entity instanceof telegram.Api.User) {
-    return [entity.firstName, entity.lastName].filter(Boolean).join(' ') || 'Unknown';
-  }
-  if (entity instanceof telegram.Api.Chat || entity instanceof telegram.Api.Channel) {
-    return entity.title || 'Unknown';
-  }
-
-  return 'Unknown';
 }
 
 function mapMessage(msg: Api.Message): MessageEntry {
   return {
     id: msg.id,
     text: msg.message || '',
-    formattedDate: msg.date ? formatTimestamp(msg.date) : '',
+    date: msg.date ?? 0,
     isOutgoing: msg.out ?? false,
   };
 }
 
-function formatTimestamp(unix: number): string {
-  const date = new Date(unix * 1000);
-  const now = new Date();
-  const diffDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
-  );
+function toStored(chatId: number, entry: MessageEntry): StoredMessage {
+  return { chatId, id: entry.id, text: entry.text, date: entry.date, isOutgoing: entry.isOutgoing };
+}
 
-  if (diffDays === 0) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } else if (diffDays < 7) {
-    return date.toLocaleDateString([], { weekday: 'short' });
-  }
-
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+function toEntry(stored: StoredMessage): MessageEntry {
+  return { id: stored.id, text: stored.text, date: stored.date, isOutgoing: stored.isOutgoing };
 }

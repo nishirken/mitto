@@ -5,8 +5,11 @@ import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
+import { formatTimestamp } from 'utils/format-timestamp';
 import 'components/mk-header/mk-header';
 import 'components/mk-loading/mk-loading';
+import 'components/scroll-container/scroll-container';
+import type { PageChangeDetail } from 'components/scroll-container/scroll-container';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
 
@@ -27,9 +30,13 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
     this.services.chatListStore.dispose();
   }
 
-  private _onChatClick(chatId: number) {
+  private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
+    if (e.detail.isLast) void this.services.chatListStore.loadMore();
+  };
+
+  private _onChatClick = (chatId: number) => {
     navigate(`chat/${chatId}`);
-  }
+  };
 
   render() {
     const chats = this.services.chatListStore.chats.get();
@@ -38,23 +45,19 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
       <mk-header headline="Mitto">
         <span class="count" slot="end">${chats.length} chats</span>
       </mk-header>
-      ${chats.length === 0
-        ? html`<mk-loading></mk-loading>`
-        : html`
-          <div class="list">
-            ${chats.map(
-              (chat) => html`
-                <chat-item
-                  .name=${chat.name}
-                  .timestamp=${chat.timestamp}
-                  .preview=${chat.lastMessage.text}
-                  .unreadCount=${chat.unreadCount}
-                  @click=${() => this._onChatClick(chat.id)}
-                ></chat-item>
-              `
-            )}
-          </div>
-        `}
+      <scroll-container class="list" @pagechange=${this._onPageChange}>
+        ${chats.map(
+          (chat) => html`
+            <chat-item
+              .name=${chat.name}
+              .timestamp=${formatTimestamp(111111111111)}
+              .preview=${chat.topMessage?.text}
+              .unreadCount=${chat.unreadCount}
+              @click="${() => this._onChatClick(chat.id)}"
+            ></chat-item>
+          `
+        )}
+      </scroll-container>
     `;
   }
 }

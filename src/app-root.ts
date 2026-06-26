@@ -12,7 +12,8 @@ import 'screens/chat-view-screen/chat-view-screen';
 import 'components/mk-loading/mk-loading';
 import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
-import { ChatListStore } from './screens/chat-list-screen/chat-list-store';
+import { OfflineStorage } from './services/offline-storage';
+import { ChatListStore } from './services/chat-list-store/chat-list-store';
 
 const { TelegramClient, sessions: { StringSession } } = telegram;
 
@@ -25,31 +26,34 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   @state() private _route: Route = currentRoute();
   @provide({ context: servicesContext })
-  private readonly _services: Services;
+  @state()
+  private _services?: Services;
   private _unsubRoute?: () => void;
 
-  constructor() {
-    super();
-    const session = new StringSession(localStorage.getItem('session') ?? '');
+  async connectedCallback() {
+    super.connectedCallback();
+    this._route = currentRoute();
+    this._unsubRoute = onRouteChange((route) => {
+      this._route = route;
+    });
+
+    const storage = await OfflineStorage.create();
+
+    const session = new StringSession((await storage.getSession()) ?? '');
     const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
     const client = new TelegramClient(session, API_ID, API_HASH, {
       testServers: useTestDC,
     });
     const config = { apiId: API_ID, apiHash: API_HASH };
+
     this._services = {
       client,
-      authStore: new TelegramAuthStore(config, client),
-      chatListStore: new ChatListStore(client),
+      offlineStorage: storage,
+      authStore: new TelegramAuthStore(config, client, storage),
+      chatListStore: new ChatListStore(client, storage),
     };
-  }
 
-  connectedCallback() {
-    super.connectedCallback();
     this._services.authStore.init();
-    this._route = currentRoute();
-    this._unsubRoute = onRouteChange((route) => {
-      this._route = route;
-    });
   }
 
   disconnectedCallback() {
@@ -72,6 +76,10 @@ export class AppRoot extends SignalWatcher(LitElement) {
   }
 
   render() {
+    if (!this._services) {
+      return html`<mk-loading></mk-loading>`;
+    }
+
     const authState = this._services.authStore.state.get();
 
     if (authState === 'loading') {

@@ -22,6 +22,7 @@ function mockServices(): Services {
       sendCode: vi.fn(),
       session: { save: vi.fn() },
     } as unknown as Services['client'],
+    offlineStorage: {} as Services['offlineStorage'],
     authStore: {} as Services['authStore'],
     chatListStore: {
       chats: signal([]),
