@@ -1,5 +1,5 @@
 import { html, LitElement, unsafeCSS } from 'lit';
-import { customElement, eventOptions, query } from 'lit/decorators.js';
+import { customElement, query } from 'lit/decorators.js';
 import styles from './scroll-container.css?inline';
 
 export interface PageChangeDetail {
@@ -19,9 +19,9 @@ export class ScrollContainer extends LitElement {
   private _rafId = 0;
   private _ro?: ResizeObserver;
   private _mo?: MutationObserver;
-  private _startX: null | number = null;
+
   private _startY: null | number = null;
-  private _isScrolling: boolean = false;
+  private _isScrolling = false;
 
   protected firstUpdated(): void {
     this._ro = new ResizeObserver(() => this._rebuildMarkers());
@@ -38,17 +38,27 @@ export class ScrollContainer extends LitElement {
     if (this._rafId) cancelAnimationFrame(this._rafId);
   }
 
-  private _pageCount(): number {
+  get pageCount(): number {
     const ph = this._root.clientHeight;
     if (ph === 0) return 1;
 
     return Math.max(1, Math.ceil(this._root.scrollHeight / ph));
   }
 
+  scrollToLastPage(): void {
+    this._index = this.pageCount - 1;
+    this._scrollToCurrentPage();
+  }
+
+  scrollToPage(index: number): void {
+    this._index = Math.max(0, Math.min(index, this.pageCount - 1));
+    this._scrollToCurrentPage();
+  }
+
   private _rebuildMarkers(): void {
     const ph = this._root.clientHeight;
     if (ph === 0) return;
-    const count = this._pageCount();
+    const count = this.pageCount;
     this._markers.replaceChildren();
 
     for (let i = 0; i < count; i++) {
@@ -57,68 +67,54 @@ export class ScrollContainer extends LitElement {
       m.style.top = `${i * ph}px`;
       this._markers.appendChild(m);
     }
+
+    this._index = Math.max(0, Math.min(this._index, count - 1));
   }
 
   private _onPointerDown(e: PointerEvent): void {
-    this._startX = e.x;
     this._startY = e.y;
   }
 
-  private _onPointerMove = (e: PointerEvent): void => {
-    if (this._startX === null || this._startY === null) return;
+  private _onPointerMove(e: PointerEvent): void {
+    if (this._startY === null) return;
 
-    const diffY = e.y - this._startY;
-
-    if (Math.abs(diffY) > 50) {
+    if (Math.abs(e.y - this._startY) > 50) {
       this._isScrolling = true;
-      this._root.classList.add('scrollable');
-      document.getSelection()?.removeAllRanges();
     }
-  };
+  }
 
   private _onPointerUp = (e: PointerEvent): void => {
-    if (this._startY === null || this._startX === null) return;
+    if (this._startY === null) return;
 
     const diffY = e.y - this._startY;
 
     if (diffY > 50 && this._index > 0) {
       this._index--;
       this._scrollToCurrentPage();
-    } else if (diffY < -50 && this._index < this._pageCount()) {
+    } else if (diffY < -50 && this._index < this.pageCount) {
       this._index++;
       this._scrollToCurrentPage();
     }
+
+    if (this._isScrolling) {
+      this._startY = null;
+      this._isScrolling = false;
+    }
   };
 
-  @eventOptions({ capture: true })
-  private _onClick(e: Event): void {
-    if (this._isScrolling) {
-      e.stopPropagation();
-      this._isScrolling = false;
-      this._startY = null;
-      this._startX = null;
-      this._root.classList.add('scrollable');
-    }
-  }
-
   private _scrollToCurrentPage = (): void => {
-      const markers = this._markers.getElementsByClassName('marker') as HTMLCollectionOf<HTMLDivElement>; 
-      // When we scroll down, the marker is at the bottom of the current view.
-      // When we scroll up, the marker is at the top.
-      const markerToScroll = markers?.[this._index];
+      // Scroll by page height from live layout rather than reading a marker
+      // element: markers are rebuilt asynchronously by the observers, so right
+      // after content renders (e.g. scrolling to the bottom on init) the target
+      // marker may not exist yet, which would silently skip the scroll.
+      this._root.scrollTop = this._index * this._root.clientHeight;
 
-      if (!markerToScroll) return;
-
-      this._root.scrollTo({ top: markerToScroll.clientTop });
-      this._root.scrollTop = markerToScroll.offsetTop;
-
-      this.dispatchEvent(new CustomEvent<PageChangeDetail>('pagechange', { detail: { index: this._index, isFirst: this._index === 0, isLast: this._index === this._pageCount() - 1 } }));
+      this.dispatchEvent(new CustomEvent<PageChangeDetail>('pagechange', { detail: { index: this._index, isFirst: this._index === 0, isLast: this._index === this.pageCount - 1 } }));
   };
 
   protected render(): unknown {
     return html`<div
       class="root"
-      @click="${this._onClick}"
       @pointerdown="${this._onPointerDown}"
       @pointermove="${this._onPointerMove}"
       @pointerup="${this._onPointerUp}"

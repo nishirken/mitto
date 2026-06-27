@@ -7,11 +7,8 @@
 .root {
   position: relative;
   height: 100%;
-  overflow-y: auto;
-}
-
-.scrollable {
-  user-select: none;
+  overflow-y: hidden;
+  touch-action: none;
 }
 
 .markers {

@@ -73,7 +73,7 @@ describe('chat-view-screen', () => {
     expect(el.shadowRoot!.querySelector('chat-view-footer')).not.toBeNull();
   });
 
-  it('calls loadMore when scrolled to top', async () => {
+  it('calls loadMore when paged to the first (top) page', async () => {
     const el = await fixture<ChatViewScreen>(html`
       <chat-view-screen
         .chatId=${1}
@@ -81,9 +81,12 @@ describe('chat-view-screen', () => {
     `, { parentNode: withContext(mockServices()) });
     await el.updateComplete;
 
-    const container = el.shadowRoot!.querySelector('#messages')!;
-    Object.defineProperty(container, 'scrollTop', { value: 0, writable: true });
-    container.dispatchEvent(new Event('scroll'));
+    const container = el.shadowRoot!.querySelector('scroll-container')!;
+    container.dispatchEvent(
+      new CustomEvent('pagechange', {
+        detail: { index: 0, isFirst: true, isLast: false },
+      })
+    );
 
     expect(mockLoadMore).toHaveBeenCalled();
   });

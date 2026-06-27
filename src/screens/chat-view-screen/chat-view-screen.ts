@@ -6,6 +6,8 @@ import { formatTimestamp } from 'utils/format-timestamp';
 import './chat-view-header';
 import './chat-view-footer';
 import './message-view';
+import 'components/scroll-container/scroll-container';
+import type { ScrollContainer, PageChangeDetail } from 'components/scroll-container/scroll-container';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewStore } from './chat-view-store';
 import type { Services } from 'api/services-context';
@@ -20,7 +22,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   private _chatViewStore!: ChatViewStore;
-  @query('#messages') private _messagesContainer?: HTMLElement;
+  @query('scroll-container') private _scrollContainer?: ScrollContainer;
 
   connectedCallback() {
     super.connectedCallback();
@@ -33,39 +35,35 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       this.services.chatListStore,
       this.services.offlineStorage,
     );
-    this._chatViewStore.init(this.chatId)
-      .then(() => this.updateComplete)
-      .then(() => {
-        this._scrollToBottom();
-        this._messagesContainer?.addEventListener('scroll', this._handleScroll);
-      });
+    this._chatViewStore.init(this.chatId).then(() => this._scrollToBottom());
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._chatViewStore?.dispose();
-    this._messagesContainer?.removeEventListener('scroll', this._handleScroll);
   }
 
-  private _scrollToBottom() {
-    if (this._messagesContainer) {
-      this._messagesContainer.scrollTop = this._messagesContainer.scrollHeight;
-    }
+  private async _scrollToBottom() {
+    await this.updateComplete;
+    this._scrollContainer?.scrollToLastPage();
   }
 
-  private readonly _handleScroll = () => {
-    const container = this._messagesContainer;
-    if (!container || !this._chatViewStore) return;
-    if (container.scrollTop < 50) {
-      this._loadOlderMessages();
-    }
+  private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
+    if (e.detail.isFirst) void this._loadOlderMessages();
   };
 
   private async _loadOlderMessages() {
-    if (!this._chatViewStore) return;
+    const container = this._scrollContainer;
+    if (!this._chatViewStore || !container) return;
 
+    const prevCount = container.pageCount;
     await this._chatViewStore.loadMore();
     await this.updateComplete;
+    // Older messages prepend at the top and shift content down. The handler fires
+    // at the first page (index 0), so advance by the number of pages added to keep
+    // the same messages on screen instead of snapping back to the top.
+    const added = container.pageCount - prevCount;
+    if (added > 0) container.scrollToPage(added);
   }
 
   private _onBack() {
@@ -74,7 +72,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
   private _onSend(e: CustomEvent<string>) {
     this._chatViewStore?.sendMessage(e.detail);
-    this._scrollToBottom();
+    void this._scrollToBottom();
   }
 
   render() {
@@ -83,7 +81,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
     return html`
       <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
-      <scroll-container>
+      <scroll-container class="list" @pagechange=${this._onPageChange}>
         <div class="messages" id="messages">
           ${messages.map(
             (msg) => html`

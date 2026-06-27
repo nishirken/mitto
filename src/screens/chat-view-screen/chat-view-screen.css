@@ -4,13 +4,16 @@
   height: 100%;
 }
 
-.messages {
+.list {
   flex: 1;
+  min-height: 0;
+}
+
+.messages {
   padding: var(--sp-8) var(--page-px);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  overflow-y: auto;
 }
 
 .empty {
