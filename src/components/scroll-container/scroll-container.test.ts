@@ -7,13 +7,10 @@ async function nextFrame(): Promise<void> {
   await new Promise<void>((r) => requestAnimationFrame(() => r()));
 }
 
-function setSizes(el: HTMLElement, clientHeight: number, scrollHeight: number): void {
-  Object.defineProperty(el, 'clientHeight', { value: clientHeight, configurable: true });
-  Object.defineProperty(el, 'scrollHeight', { value: scrollHeight, configurable: true });
-}
-
-function setScrollTop(el: HTMLElement, value: number): void {
-  Object.defineProperty(el, 'scrollTop', { value, configurable: true });
+function setSizes(el: Element, clientHeight: number, scrollHeight: number): void {
+  const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
+  Object.defineProperty(root, 'clientHeight', { value: clientHeight, configurable: true });
+  Object.defineProperty(root, 'scrollHeight', { value: scrollHeight, configurable: true });
 }
 
 function lastDetail(handler: ReturnType<typeof vi.fn>): PageChangeDetail {
@@ -23,128 +20,123 @@ function lastDetail(handler: ReturnType<typeof vi.fn>): PageChangeDetail {
   return event.detail;
 }
 
+const queryByTestId = (el: Element, id: string): Element | null =>
+  el.querySelector(`[data-testid="${id}"]`);
+
+const renderItems = (count: number): ReturnType<typeof html>[] => {
+  return new Array(count).fill(1).map((_, i) => {
+    return html`<div data-testid="item:${i + 1}" style="height: 40px;">${i + 1}</div>`;
+  });
+};
+
+const renderComponent = async (count: number, onPageChange?: (e: CustomEvent<PageChangeDetail>) => void): Promise<ScrollContainer> => {
+  return fixture<ScrollContainer>(html`
+      <scroll-container @pagechange="${onPageChange}" data-testid="container">${renderItems(count)}</scroll-container>
+    `);
+} 
+
+// The pointer listeners live on `.root` inside the shadow root, and events do not
+// propagate down into shadow DOM — the gesture has to be dispatched there directly.
+function swipe(el: Element, start: number, end: number): void {
+  const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
+  const step = Math.sign(end - start) || 1;
+
+  root.dispatchEvent(new PointerEvent('pointerdown', { clientY: start }));
+  for (let i = start; i !== end; i += step) {
+    root.dispatchEvent(new PointerEvent('pointermove', { clientY: i }));
+  }
+  root.dispatchEvent(new PointerEvent('pointerup', { clientY: end }));
+}
+
+const scrollDown = (el: Element): void => swipe(el, 100, 20);
+const scrollUp = (el: Element): void => swipe(el, 20, 100);
+
 describe('scroll-container', () => {
   it('renders slotted content', async () => {
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container><span class="kid">hi</span></scroll-container>
-    `);
-
-    expect(el.querySelector('.kid')?.textContent).toBe('hi');
+    const el = await renderComponent(1);
+    expect(queryByTestId(el, 'item:1')).not.toBeNull();
   });
 
-  it('emits pagechange with isFirst when at top of multi-page content', async () => {
+  it('doesnt emit pagechange initially', async () => {
     const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
+    const el = await renderComponent(30, handler); 
+    setSizes(el, 300, 300);
     await nextFrame();
 
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-    setScrollTop(root, 0);
-    root.dispatchEvent(new Event('scroll'));
-    await nextFrame();
-
-    expect(handler).toHaveBeenCalledTimes(1);
-    expect(lastDetail(handler)).toEqual({ index: 0, isFirst: true, isLast: false });
+    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('emits pagechange on each page change', async () => {
+  // 300px viewport, 20 items * 40px = 800px of content — happy-dom does no layout, so
+  // scrollHeight has to be stated. ~7 items per page, ceil(800 / 300) = 3 pages.
+  it('emits pagechange with first page', async () => {
     const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
     await nextFrame();
 
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-
-    setScrollTop(root, 0);
-    root.dispatchEvent(new Event('scroll'));
-    await nextFrame();
-    handler.mockClear();
-
-    setScrollTop(root, 100);
-    root.dispatchEvent(new Event('scroll'));
+    scrollDown(el);
     await nextFrame();
 
     expect(handler).toHaveBeenCalledTimes(1);
     expect(lastDetail(handler)).toEqual({ index: 1, isFirst: false, isLast: false });
   });
 
+  it('emits pagechange with the zero page', async () => {
+    const handler = vi.fn();
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
+    await nextFrame();
+
+    scrollDown(el);
+    await nextFrame();
+
+    scrollUp(el);
+    await nextFrame();
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(lastDetail(handler)).toEqual({ index: 0, isFirst: true, isLast: false });
+  });
+
+  it('does not emit when scrolling up from the first page', async () => {
+    const handler = vi.fn();
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
+    await nextFrame();
+
+    scrollUp(el);
+    await nextFrame();
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('emits isLast when scrolled to the last page', async () => {
     const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
     await nextFrame();
 
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-
-    setScrollTop(root, 200);
-    root.dispatchEvent(new Event('scroll'));
+    scrollDown(el);
+    await nextFrame();
+    scrollDown(el);
     await nextFrame();
 
+    expect(handler).toHaveBeenCalledTimes(2);
     expect(lastDetail(handler)).toEqual({ index: 2, isFirst: false, isLast: true });
   });
 
-  it('coalesces multiple scrolls within the same frame', async () => {
+  it('does not emit when scrolling down from the last page', async () => {
     const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
     await nextFrame();
 
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-
-    setScrollTop(root, 100);
-    root.dispatchEvent(new Event('scroll'));
-    root.dispatchEvent(new Event('scroll'));
-    root.dispatchEvent(new Event('scroll'));
+    scrollDown(el);
+    await nextFrame();
+    scrollDown(el);
+    await nextFrame();
+    scrollDown(el);
     await nextFrame();
 
-    expect(handler).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not emit again when index does not change', async () => {
-    const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
-    await nextFrame();
-
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-    setScrollTop(root, 0);
-    root.dispatchEvent(new Event('scroll'));
-    await nextFrame();
-    handler.mockClear();
-
-    setScrollTop(root, 30);
-    root.dispatchEvent(new Event('scroll'));
-    await nextFrame();
-
-    expect(handler).not.toHaveBeenCalled();
-  });
-
-  it('stops emitting after disconnect', async () => {
-    const handler = vi.fn();
-    const el = await fixture<ScrollContainer>(html`
-      <scroll-container @pagechange=${handler}><div></div></scroll-container>
-    `);
-    await nextFrame();
-    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-    setSizes(root, 100, 300);
-
-    el.remove();
-    handler.mockClear();
-
-    setScrollTop(root, 100);
-    root.dispatchEvent(new Event('scroll'));
-    await nextFrame();
-
-    expect(handler).not.toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledTimes(2);
   });
 });

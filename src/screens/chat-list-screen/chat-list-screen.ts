@@ -12,34 +12,44 @@ import 'components/scroll-container/scroll-container';
 import type { PageChangeDetail } from 'components/scroll-container/scroll-container';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
+import { DialogListProjection } from './dialog-list-projection';
+import { DialogListSyncService } from './dialog-list-sync-service';
 
 @customElement('chat-list-screen')
 export class ChatListScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
+  private _dialogListProjection!: DialogListProjection;
+  private _dialogListSyncService!: DialogListSyncService;
 
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
 
   connectedCallback() {
     super.connectedCallback();
-    this.services.chatListStore.init();
+    this._dialogListSyncService = new DialogListSyncService(this.services.client, this.services.dialogRepository, this.services.messageRepository);
+    this._dialogListProjection = new DialogListProjection(this.services.database, this.services.databaseHub);
+    void this._dialogListSyncService.loadInitial().catch(() => {});
+    this._dialogListProjection.init().catch(() => {});
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.services.chatListStore.dispose();
+    this._dialogListSyncService.dispose();
+    this._dialogListProjection.dispose();
   }
 
   private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
-    if (e.detail.isLast) void this.services.chatListStore.loadMore();
+    if (e.detail.isLast) {
+      void this._dialogListSyncService.loadMore().catch(() => {});
+    }
   };
 
-  private _onChatClick = (chatId: number) => {
+  private _onChatClick = (chatId: string) => {
     navigate(`chat/${chatId}`);
   };
 
   render() {
-    const chats = this.services.chatListStore.chats.get();
+    const chats = this._dialogListProjection.chats.get();
 
     return html`
       <mk-header headline="Mitto">
@@ -50,7 +60,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
           (chat) => html`
             <chat-item
               .name=${chat.name}
-              .timestamp=${formatTimestamp(111111111111)}
+              .timestamp=${formatTimestamp(chat.date)}
               .preview=${chat.topMessage?.text}
               .unreadCount=${chat.unreadCount}
               @click="${() => this._onChatClick(chat.id)}"

@@ -1,3 +1,6 @@
+// happy-dom has no IndexedDB — install a real in-memory implementation for `idb`-backed code
+import 'fake-indexeddb/auto';
+
 // Polyfill ElementInternals for happy-dom which doesn't support it
 if (typeof HTMLElement.prototype.attachInternals !== 'function') {
   HTMLElement.prototype.attachInternals = function () {

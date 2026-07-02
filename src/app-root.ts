@@ -12,8 +12,10 @@ import 'screens/chat-view-screen/chat-view-screen';
 import 'components/mk-loading/mk-loading';
 import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
-import { OfflineStorage } from './services/offline-storage';
-import { ChatListStore } from './services/chat-list-store/chat-list-store';
+import { Database } from './services/database';
+import { MessageRepository } from './services/repositories/message/message-repository';
+import { DatabaseHub } from './services/database/database-hub';
+import { DialogRepository } from './services/repositories/dialog/dialog-repository';
 
 const { TelegramClient, sessions: { StringSession } } = telegram;
 
@@ -29,6 +31,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
   @state()
   private _services?: Services;
   private _unsubRoute?: () => void;
+  private _hasSession = false;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -37,20 +40,27 @@ export class AppRoot extends SignalWatcher(LitElement) {
       this._route = route;
     });
 
-    const storage = await OfflineStorage.create();
+    const storage = await Database.create();
+    const hub = new DatabaseHub();
 
-    const session = new StringSession((await storage.getSession()) ?? '');
+    const sessionString = (await storage.getSession()) ?? '';
+    this._hasSession = sessionString !== '';
+    const session = new StringSession(sessionString);
     const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
     const client = new TelegramClient(session, API_ID, API_HASH, {
       testServers: useTestDC,
     });
+    await client.connect();
     const config = { apiId: API_ID, apiHash: API_HASH };
+
 
     this._services = {
       client,
-      offlineStorage: storage,
+      database: storage,
+      databaseHub: hub,
       authStore: new TelegramAuthStore(config, client, storage),
-      chatListStore: new ChatListStore(client, storage),
+      dialogRepository: new DialogRepository(storage, hub),
+      messageRepository: new MessageRepository(storage, hub),
     };
 
     this._services.authStore.init();
@@ -67,7 +77,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
         return html`<chat-list-screen></chat-list-screen>`;
       case 'chat': {
         return html`<chat-view-screen
-          .chatId=${Number(this._route.params.id)}
+          .chatId=${this._route.params.id}
         ></chat-view-screen>`;
       }
       default:
@@ -77,23 +87,23 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   render() {
     if (!this._services) {
-      return html`<mk-loading></mk-loading>`;
+      return html``;
     }
 
     const authState = this._services.authStore.state.get();
-
-    if (authState === 'loading') {
-      return html`<mk-loading></mk-loading>`;
-    }
 
     if (authState === 'error') {
       return 'Something went wrong';
     }
 
-    if (authState !== 'ready') {
-      return html`<auth-screen></auth-screen>`;
+    if (authState === 'ready') {
+      return this._renderRoute();
     }
 
-    return this._renderRoute();
+    if (authState === 'loading') {
+      return this._hasSession ? html`` : html`<mk-loading></mk-loading>`;
+    }
+
+    return html`<auth-screen></auth-screen>`;
   }
 }

@@ -56,15 +56,15 @@ export class ScrollContainer extends LitElement {
   }
 
   private _rebuildMarkers(): void {
-    const ph = this._root.clientHeight;
-    if (ph === 0) return;
+    const clientHeight = this._root.clientHeight;
+    if (clientHeight === 0) return;
     const count = this.pageCount;
     this._markers.replaceChildren();
 
     for (let i = 0; i < count; i++) {
       const m = document.createElement('div');
       m.className = 'marker';
-      m.style.top = `${i * ph}px`;
+      m.style.top = `${i * clientHeight}px`;
       this._markers.appendChild(m);
     }
 
@@ -72,13 +72,13 @@ export class ScrollContainer extends LitElement {
   }
 
   private _onPointerDown(e: PointerEvent): void {
-    this._startY = e.y;
+    this._startY = e.clientY;
   }
 
   private _onPointerMove(e: PointerEvent): void {
     if (this._startY === null) return;
 
-    if (Math.abs(e.y - this._startY) > 50) {
+    if (Math.abs(e.clientY - this._startY) > 50) {
       this._isScrolling = true;
     }
   }
@@ -86,12 +86,12 @@ export class ScrollContainer extends LitElement {
   private _onPointerUp = (e: PointerEvent): void => {
     if (this._startY === null) return;
 
-    const diffY = e.y - this._startY;
+    const diffY = e.clientY - this._startY;
 
     if (diffY > 50 && this._index > 0) {
       this._index--;
       this._scrollToCurrentPage();
-    } else if (diffY < -50 && this._index < this.pageCount) {
+    } else if (diffY < -50 && this._index < this.pageCount - 1) {
       this._index++;
       this._scrollToCurrentPage();
     }
@@ -103,10 +103,6 @@ export class ScrollContainer extends LitElement {
   };
 
   private _scrollToCurrentPage = (): void => {
-      // Scroll by page height from live layout rather than reading a marker
-      // element: markers are rebuilt asynchronously by the observers, so right
-      // after content renders (e.g. scrolling to the bottom on init) the target
-      // marker may not exist yet, which would silently skip the scroll.
       this._root.scrollTop = this._index * this._root.clientHeight;
 
       this.dispatchEvent(new CustomEvent<PageChangeDetail>('pagechange', { detail: { index: this._index, isFirst: this._index === 0, isLast: this._index === this.pageCount - 1 } }));

@@ -1,47 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import { signal } from '@lit-labs/signals';
-import type { AuthState } from 'screens/auth/auth-store';
+import { mockAuthStore, mockClient, mockDatabase } from 'api/__mocks__/telegram-client';
 
-const mockState = signal<AuthState>('loading');
-const mockSend = vi.fn();
-const mockAddEventListener = vi.fn();
-const mockRemoveEventListener = vi.fn();
+// Partial mock: the sync services and mappers pull real `Api`/`events`/`utils` off the
+// same default export, and app-root needs a working `sessions.StringSession`.
+vi.mock('telegram', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('telegram')>();
 
-vi.mock('api/telegram-api-client', () => ({
-  TelegramApiClient: function () {
-    return { send: mockSend, addEventListener: mockAddEventListener, removeEventListener: mockRemoveEventListener };
-  },
-}));
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      TelegramClient: function () {
+        return mockClient;
+      },
+    },
+  };
+});
 
-vi.mock('./services/offline-storage', () => ({
-  OfflineStorage: {
-    create: vi.fn(async () => ({
-      getSession: vi.fn(async () => null),
-      setSession: vi.fn(async () => {}),
-      clearSession: vi.fn(async () => {}),
-      loadChats: vi.fn(async () => []),
-      saveChats: vi.fn(async () => {}),
-      upsertChat: vi.fn(async () => {}),
-      loadMessages: vi.fn(async () => []),
-      saveMessages: vi.fn(async () => {}),
-      upsertMessage: vi.fn(async () => {}),
-      clearCache: vi.fn(async () => {}),
-    })),
-  },
-}));
+vi.mock('./services/database', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./services/database')>();
 
-vi.mock('./screens/chat-list-screen/chat-list-store', () => ({
-  ChatListStore: function () {
-    return { chats: signal([]), getChat: vi.fn(() => null), init: vi.fn(), dispose: vi.fn() };
-  },
-}));
-
-vi.mock('./screens/chat-view-screen/chat-view-store', () => ({
-  ChatViewStore: function () {
-    return { messages: signal([]), init: vi.fn(async () => {}), dispose: vi.fn() };
-  },
-}));
+  return {
+    ...actual,
+    Database: { create: vi.fn(async () => mockDatabase) },
+  };
+});
 
 vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./screens/auth/auth-store')>();
@@ -49,14 +33,7 @@ vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   return {
     ...actual,
     TelegramAuthStore: function () {
-      return {
-        state: mockState,
-        init: vi.fn(),
-        dispose: vi.fn(),
-        sendPhoneNumber: vi.fn(),
-        sendAuthCode: vi.fn(),
-        resendCodeViaSms: vi.fn(),
-      };
+      return mockAuthStore;
     },
   };
 });
@@ -73,12 +50,12 @@ async function flushAsync(el: AppRoot): Promise<void> {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockState.set('loading');
+  mockAuthStore.state.set('loading');
 });
 
 describe('app-root', () => {
   it('renders chat-list-screen for #/chats', async () => {
-    mockState.set('ready');
+    mockAuthStore.state.set('ready');
     window.location.hash = '#/chats';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
@@ -86,7 +63,7 @@ describe('app-root', () => {
   });
 
   it('renders auth-screen for #/auth', async () => {
-    mockState.set('wait_phone');
+    mockAuthStore.state.set('wait_phone');
     window.location.hash = '#/auth';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
@@ -94,7 +71,7 @@ describe('app-root', () => {
   });
 
   it('renders chat-view-screen for #/chat/1', async () => {
-    mockState.set('ready');
+    mockAuthStore.state.set('ready');
     window.location.hash = '#/chat/1';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);

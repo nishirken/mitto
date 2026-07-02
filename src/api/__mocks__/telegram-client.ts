@@ -1,25 +1,46 @@
 import { vi } from 'vitest';
 import { signal } from '@lit-labs/signals';
+import telegram from 'telegram';
 import type { Services } from '../services-context';
 import type { AuthState, TelegramAuthStore } from '../../screens/auth/auth-store';
-import type { OfflineStorage } from '../../services/offline-storage';
+import type { Database } from '../../services/database';
+import { DatabaseHub } from '../../services/database/database-hub';
 
-export const mockOfflineStorage = {
+export const mockDatabase = {
   getSession: vi.fn(async () => null),
   setSession: vi.fn(async () => {}),
   clearSession: vi.fn(async () => {}),
-  loadChats: vi.fn(async () => []),
-  saveChats: vi.fn(async () => {}),
-  upsertChat: vi.fn(async () => {}),
+  putUsers: vi.fn(async () => {}),
+  putPeers: vi.fn(async () => {}),
+  putMessages: vi.fn(async () => {}),
+  putDialogs: vi.fn(async () => {}),
+  putAll: vi.fn(async () => {}),
+  applyDialogsBatch: vi.fn(async () => {}),
+  getUser: vi.fn(async () => undefined),
+  getUsers: vi.fn(async () => []),
+  getPeer: vi.fn(async () => undefined),
+  getPeers: vi.fn(async () => []),
+  getMessage: vi.fn(async () => undefined),
+  loadDialogs: vi.fn(async () => []),
+  getDialog: vi.fn(async () => undefined),
+  getDialogs: vi.fn(async () => []),
   loadMessages: vi.fn(async () => []),
-  saveMessages: vi.fn(async () => {}),
-  upsertMessage: vi.fn(async () => {}),
   clearCache: vi.fn(async () => {}),
-} as unknown as OfflineStorage;
+} as unknown as Database;
+
+const { Api } = telegram;
+
+/** Empty result so dialog sync completes as a no-op instead of throwing. */
+export const emptyDialogs = new Api.messages.Dialogs({
+  dialogs: [],
+  messages: [],
+  chats: [],
+  users: [],
+});
 
 export const mockClient: Record<string, unknown> = {
-  connect: vi.fn(),
-  invoke: vi.fn(),
+  connect: vi.fn(async () => true),
+  invoke: vi.fn(async () => emptyDialogs),
   addEventHandler: vi.fn(),
   removeEventHandler: vi.fn(),
   checkAuthorization: vi.fn(),
@@ -37,9 +58,20 @@ export const mockAuthStore = {
   logout: vi.fn(),
 } as unknown as TelegramAuthStore;
 
+export const mockDialogRepository = {
+  applyDialogsResponse: vi.fn(async () => {}),
+} as unknown as Services['dialogRepository'];
+
+export const mockMessageRepository = {
+  applyNewMessage: vi.fn(async () => {}),
+  applyMessagesResponse: vi.fn(async () => {}),
+} as unknown as Services['messageRepository'];
+
 export const mockServices: Services = {
   client: mockClient as unknown as Services['client'],
-  offlineStorage: mockOfflineStorage,
+  database: mockDatabase,
+  databaseHub: new DatabaseHub(),
   authStore: mockAuthStore,
-  chatListStore: {} as Services['chatListStore'],
+  dialogRepository: mockDialogRepository,
+  messageRepository: mockMessageRepository,
 };

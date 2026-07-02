@@ -9,38 +9,41 @@ import './message-view';
 import 'components/scroll-container/scroll-container';
 import type { ScrollContainer, PageChangeDetail } from 'components/scroll-container/scroll-container';
 import styles from './chat-view-screen.css?inline';
-import { ChatViewStore } from './chat-view-store';
+import { ChatViewProjection } from './chat-view-projection';
 import type { Services } from 'api/services-context';
 import { servicesContext } from 'api/services-context';
 import { consume } from '@lit/context';
+import type { PeerId } from 'services/database';
+import { DialogSyncService } from './dialog-sync-service';
 
 @customElement('chat-view-screen')
 export class ChatViewScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @property({ type: Number }) chatId = 0;
+  @property({ type: String }) chatId = '';
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
-  private _chatViewStore!: ChatViewStore;
+  private _chatViewProjection!: ChatViewProjection;
+  private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.chatId === 0) {
+
+    if (!this.chatId) {
       throw new Error('chatId property is required');
     }
 
-    this._chatViewStore = new ChatViewStore(
-      this.services.client,
-      this.services.chatListStore,
-      this.services.offlineStorage,
-    );
-    this._chatViewStore.init(this.chatId).then(() => this._scrollToBottom());
+    this._dialogSyncService = new DialogSyncService(this.services.client, this.services.messageRepository, this.services.database, this.chatId as PeerId);
+    this._chatViewProjection = new ChatViewProjection(this.services.database, this.services.databaseHub, this.chatId as PeerId);
+    this._chatViewProjection.init();
+    this._dialogSyncService.loadInitial().then(() => this._scrollToBottom());
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._chatViewStore?.dispose();
+    this._dialogSyncService?.dispose();
+    this._chatViewProjection?.dispose();
   }
 
   private async _scrollToBottom() {
@@ -54,14 +57,11 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
   private async _loadOlderMessages() {
     const container = this._scrollContainer;
-    if (!this._chatViewStore || !container) return;
+    if (!this._dialogSyncService || !container) return;
 
     const prevCount = container.pageCount;
-    await this._chatViewStore.loadMore();
+    await this._dialogSyncService.loadMore();
     await this.updateComplete;
-    // Older messages prepend at the top and shift content down. The handler fires
-    // at the first page (index 0), so advance by the number of pages added to keep
-    // the same messages on screen instead of snapping back to the top.
     const added = container.pageCount - prevCount;
     if (added > 0) container.scrollToPage(added);
   }
@@ -71,13 +71,16 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   }
 
   private _onSend(e: CustomEvent<string>) {
-    this._chatViewStore?.sendMessage(e.detail);
-    void this._scrollToBottom();
+    const message = e.detail.trim();
+    if (message) {
+      this._dialogSyncService?.sendMessage(e.detail);
+      void this._scrollToBottom();
+    }
   }
 
   render() {
-    const messages = this._chatViewStore?.messages.get() ?? [];
-    const contactName = this.services.chatListStore.getChat(this.chatId)?.name ?? '';
+    const messages = this._chatViewProjection.messages.get();
+    const contactName = this._chatViewProjection.peerName.get();
 
     return html`
       <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>

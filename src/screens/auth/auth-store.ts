@@ -2,7 +2,7 @@ import { signal } from '@lit-labs/signals';
 import type { TelegramClient } from 'telegram';
 import telegram from 'telegram';
 import type { TelegramConfig } from 'types/telegram';
-import type { OfflineStorage } from 'services/offline-storage';
+import type { Database } from 'services/database';
 
 export type AuthState =
   | 'loading'
@@ -21,7 +21,7 @@ export class TelegramAuthStore {
   constructor(
     private readonly _config: TelegramConfig,
     private readonly _client: TelegramClient,
-    private readonly _storage: OfflineStorage,
+    private readonly _storage: Database,
   ) {}
 
   /**
@@ -49,12 +49,40 @@ export class TelegramAuthStore {
   }
 
   async init(): Promise<void> {
+    // With a saved session, render from the offline cache immediately and verify
+    // connectivity in the background — otherwise a device with no internet lands on
+    // 'error' and the cache is never shown, defeating its purpose.
+    const hasSession = (await this._storage.getSession()) !== null;
+
+    if (hasSession) {
+      this.state.set('ready');
+      void this._verifySessionInBackground();
+
+      return;
+    }
+
+    // No session: authentication needs the network, so a failure here is terminal.
     try {
       await this._client.connect();
       const authorized = await this._client.checkAuthorization();
       this.state.set(authorized ? 'ready' : 'wait_phone');
     } catch {
       this.state.set('error');
+    }
+  }
+
+  /**
+   * Connects and confirms the saved session is still valid. Only a definitive
+   * "not authorized" response downgrades to the phone prompt; a network failure
+   * leaves us in the cached 'ready' state (offline mode).
+   */
+  private async _verifySessionInBackground(): Promise<void> {
+    try {
+      await this._client.connect();
+      const authorized = await this._client.checkAuthorization();
+      if (!authorized) this.state.set('wait_phone');
+    } catch {
+      // Offline or transient failure — keep showing cached data.
     }
   }
 
