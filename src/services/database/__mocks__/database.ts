@@ -1,7 +1,9 @@
 import type {
   Database,
+  MediaId,
   PeerId,
   StoredDialog,
+  StoredMedia,
   StoredMessage,
   StoredUser,
   UserId,
@@ -15,6 +17,7 @@ export class FakeDatabase {
   readonly users = new Map<string, StoredUser>();
   readonly messages = new Map<string, StoredMessage>();
   readonly dialogs = new Map<string, StoredDialog>();
+  readonly media = new Map<string, StoredMedia>();
 
   async putUsers(users: StoredUser[]): Promise<void> {
     for (const u of users) this.users.set(u.id, u);
@@ -26,6 +29,10 @@ export class FakeDatabase {
 
   async putDialogs(dialogs: StoredDialog[]): Promise<void> {
     for (const d of dialogs) this.dialogs.set(d.peerId, d);
+  }
+
+  async putMedia(media: StoredMedia[]): Promise<void> {
+    for (const m of media) this.media.set(m.id, m);
   }
 
   async putAll(
@@ -47,12 +54,28 @@ export class FakeDatabase {
     return ids.map((id) => this.users.get(id));
   }
 
+  async getPeer(id: PeerId): Promise<StoredUser | undefined> {
+    return this.users.get(id);
+  }
+
+  async getMedia(id: MediaId): Promise<StoredMedia | undefined> {
+    return this.media.get(id);
+  }
+
+  async getMediaItems(ids: MediaId[]): Promise<StoredMedia[]> {
+    return ids.map((id) => this.media.get(id)).filter(m => !!m) as StoredMedia[];
+  }
+
   async getMessage(chatId: PeerId, id: number): Promise<StoredMessage | undefined> {
     return this.messages.get(`${chatId}:${id}`);
   }
 
   async getDialog(peerId: PeerId): Promise<StoredDialog | undefined> {
     return this.dialogs.get(peerId);
+  }
+
+  async loadMessages(peerId: PeerId): Promise<StoredMessage[]> {
+    return [...this.messages.values()].filter((m) => m.peerId === peerId);
   }
 
   async loadDialogs(): Promise<StoredDialog[]> {

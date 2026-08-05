@@ -10,6 +10,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - `mk-*` prefix for design system components, full names for feature/screen components
 
 ## Coding
+- Do not add comments!
 - Prefer semantic HTML (`<form>`, `<label>`, `<button type="submit">`) over divs with click handlers
 - Use appropriate ARIA roles and attributes
 - Add `data-testid` attributes to interactive elements for testing

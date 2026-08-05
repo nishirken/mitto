@@ -50,6 +50,10 @@ export class ScrollContainer extends LitElement {
     this._scrollToCurrentPage();
   }
 
+  refresh(): void {
+    this._rebuildMarkers();
+  }
+
   scrollToPage(index: number): void {
     this._index = Math.max(0, Math.min(index, this.pageCount - 1));
     this._scrollToCurrentPage();

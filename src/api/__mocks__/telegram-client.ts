@@ -67,6 +67,16 @@ export const mockMessageRepository = {
   applyMessagesResponse: vi.fn(async () => {}),
 } as unknown as Services['messageRepository'];
 
+export const mockMediaRepository = {
+  applyMessagesMedia: vi.fn(async () => {}),
+  applyMedia: vi.fn(async () => null),
+} as unknown as Services['mediaRepository'];
+
+export const mockMediaFileService = {
+  url: vi.fn(async () => null),
+  dispose: vi.fn(),
+} as unknown as Services['mediaFileService'];
+
 export const mockServices: Services = {
   client: mockClient as unknown as Services['client'],
   database: mockDatabase,
@@ -74,4 +84,6 @@ export const mockServices: Services = {
   authStore: mockAuthStore,
   dialogRepository: mockDialogRepository,
   messageRepository: mockMessageRepository,
+  mediaRepository: mockMediaRepository,
+  mediaFileService: mockMediaFileService,
 };

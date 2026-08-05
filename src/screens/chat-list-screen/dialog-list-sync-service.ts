@@ -4,7 +4,6 @@ import telegram from 'telegram';
 import { Timestamp } from '../../utils/flavour';
 import { MessageId } from '../../services/database';
 import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
-import { toStoredMessage } from '../../services/repositories/message/mappers';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
 
 const { Api: A, events: Events, utils } = telegram;
@@ -143,8 +142,7 @@ private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | u
   }
 
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
-    const stored = toStoredMessage(event.message);
-    if (stored) void this._messageRepo.applyNewMessage(stored);
+    void this._messageRepo.applyMessage(event.message);
   };
 }
 

@@ -13,12 +13,32 @@
 }
 
 .message {
+  display: grid;
+  grid-template-columns: var(--sp-12) 1fr var(--sp-12);
+  row-gap: var(--sp-4);
   border: var(--border-thin);
   border-radius: var(--radius-bubble);
-  padding: var(--sp-8) var(--sp-12);
+  padding: var(--sp-8) 0;
   font-size: var(--fs-body);
   line-height: var(--lh-normal);
   overflow-wrap: break-word;
+}
+
+.message > * {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.text {
+  overflow-wrap: break-word;
+}
+
+media-attachment + .text,
+voice-player + .text {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-4);
+  border-top: var(--border-thin);
+  padding: var(--sp-8) var(--sp-12) 0;
 }
 
 :host(:not([outgoing])) .message {

@@ -1,5 +1,7 @@
-import { LitElement, html, unsafeCSS } from 'lit';
+import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import 'components/mk-icon/mk-icon';
+import type { IconType } from 'components/mk-icon/mk-icon';
 import styles from './mk-icon-button.css?inline';
 
 @customElement('mk-icon-button')
@@ -11,6 +13,7 @@ export class MkIconButton extends LitElement {
 
   @property({ type: String }) label = '';
   @property({ type: String }) type: 'button' | 'submit' | 'reset' = 'button';
+  @property({ type: String }) icon?: IconType;
   @property({ type: Boolean, reflect: true }) bordered = false;
 
   constructor() {
@@ -29,7 +32,7 @@ export class MkIconButton extends LitElement {
   render() {
     return html`
       <button type="button" aria-label=${this.label} @click=${this._onClick}>
-        <slot></slot>
+        ${this.icon ? html`<mk-icon .type=${this.icon}></mk-icon>` : nothing}
       </button>
     `;
   }

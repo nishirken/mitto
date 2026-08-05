@@ -5,7 +5,6 @@ import { Timestamp } from '../../utils/flavour';
 import { Database, MessageId, PeerId } from '../../services/database';
 import { toInputPeer } from '../../services/peer-key';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
-import { toStoredMessage } from '../../services/repositories/message/mappers';
 
 const { Api: A, events: Events } = telegram;
 
@@ -120,7 +119,7 @@ export class DialogSyncService {
       new A.messages.SendMessage({ message, peer: this._peer }),
     );
 
-    if (result instanceof A.UpdateShortMessage || result instanceof A.UpdateShortChatMessage || result instanceof A.UpdateShortSentMessage) {
+    if (result instanceof A.UpdateShortMessage || result instanceof A.UpdateShortSentMessage) {
       await this._repo.applyNewMessage({
         id: result.id,
         peerId: this._peerId!,
@@ -128,6 +127,18 @@ export class DialogSyncService {
         date: result.date,
         isOutgoing: true,
       });
+    }
+
+    if (result instanceof A.UpdateShort && result.update instanceof A.UpdateNewMessage) {
+      await this._repo.updateNewMessage(result.update);
+    }
+
+    if (result instanceof A.Updates) {
+      for (const update of result.updates) {
+        if (update instanceof A.UpdateNewMessage) {
+          await this._repo.updateNewMessage(update);
+        }
+      }
     }
   }
 
@@ -162,8 +173,7 @@ private _resolveOffset(result: MessagesResult): Offset | undefined {
   }
 
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
-    const stored = toStoredMessage(event.message);
-    if (stored) void this._repo.applyNewMessage(stored);
+    void this._repo.applyMessage(event.message);
   };
 }
 

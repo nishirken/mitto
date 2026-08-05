@@ -29,7 +29,25 @@ export type StoredUser = {
 
 export type StoredPeer = StoredUser;
 
-export type MediaType = 'photo' | 'video' | 'document' | 'sticker' | 'voice' | 'other';
+export type MediaType = 'photo' | 'video' | 'voice';
+
+export type MediaId = Flavour<string, 'MediaId'>; // 'photo:123'
+
+export type StoredMedia = {
+  id: MediaId;
+  type: MediaType;
+  fileId: string;
+  accessHash: string;
+  fileReference: Uint8Array;
+  dcId: number;
+  date: Timestamp;
+  thumbSize?: string;
+  mimeType?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  duration?: number;
+};
 
 export type StoredMessage = {
   peerId: PeerId;
@@ -38,6 +56,7 @@ export type StoredMessage = {
   text: string;
   date: Timestamp;
   isOutgoing: boolean;
+  mediaId?: MediaId;
 };
 
 export type StoredDialog = {
@@ -65,6 +84,10 @@ export interface MittoDB extends DBSchema {
   };
   dialogs: {
     key: PeerId;
-    value: StoredDialog; 
+    value: StoredDialog;
+  };
+  media: {
+    key: MediaId;
+    value: StoredMedia;
   };
 }

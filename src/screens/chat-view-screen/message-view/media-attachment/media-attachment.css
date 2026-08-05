@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+button {
+  font-family: var(--font-family);
+  color: var(--c-text);
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: var(--sp-4);
+  min-height: var(--tap-min);
+  font-size: var(--fs-caption);
+}
+
+.chip[disabled] {
+  color: var(--c-text-placeholder);
+}
+
+.photo {
+  display: block;
+  width: 100%;
+}
+
+img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

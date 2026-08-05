@@ -1,9 +1,11 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import {
     StoredPeer,
+  type MediaId,
   type MittoDB,
   type PeerId,
   type StoredDialog,
+  type StoredMedia,
   type StoredMessage,
   type StoredUser,
   type UserId,
@@ -23,6 +25,7 @@ export class Database {
         db.createObjectStore('users', { keyPath: 'id' });
         db.createObjectStore('messages', { keyPath: ['peerId', 'id'] });
         db.createObjectStore('dialogs', { keyPath: 'peerId' });
+        db.createObjectStore('media', { keyPath: 'id' });
       },
     });
 
@@ -63,6 +66,13 @@ export class Database {
     if (msgs.length === 0) return;
     const tx = this._db.transaction('messages', 'readwrite');
     await Promise.all(msgs.map((m) => tx.store.put(m)));
+    await tx.done;
+  }
+
+  async putMedia(media: StoredMedia[]): Promise<void> {
+    if (media.length === 0) return;
+    const tx = this._db.transaction('media', 'readwrite');
+    await Promise.all(media.map((m) => tx.store.put(m)));
     await tx.done;
   }
 
@@ -110,6 +120,19 @@ export class Database {
     return result;
   }
 
+  async getMedia(id: MediaId): Promise<StoredMedia | undefined> {
+    return this._db.get('media', id);
+  }
+
+  async getMediaItems(ids: MediaId[]): Promise<StoredMedia[]> {
+    if (ids.length === 0) return [];
+    const tx = this._db.transaction('media', 'readonly');
+    const result = await Promise.all(ids.map((id) => tx.store.get(id)));
+    await tx.done;
+
+    return result.filter(m => !!m) as StoredMedia[];
+  }
+
   async getMessage(peerId: PeerId, id: number): Promise<StoredMessage | undefined> {
     return this._db.get('messages', [peerId, id]);
   }
@@ -136,7 +159,7 @@ export class Database {
   }
 
   async clearCache(): Promise<void> {
-    const stores = ['users', 'messages', 'dialogs'] as const;
+    const stores = ['users', 'messages', 'dialogs', 'media'] as const;
     const tx = this._db.transaction(stores, 'readwrite');
     await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
     await tx.done;

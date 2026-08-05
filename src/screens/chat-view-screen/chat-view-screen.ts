@@ -1,11 +1,12 @@
-import { LitElement, html, unsafeCSS } from 'lit';
-import { customElement, property, query } from 'lit/decorators.js';
+import { LitElement, html, nothing, unsafeCSS } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
 import { formatTimestamp } from 'utils/format-timestamp';
 import './chat-view-header';
 import './chat-view-footer';
-import './message-view';
+import './message-view/message-view';
+import './media-viewer/media-viewer';
 import 'components/scroll-container/scroll-container';
 import type { ScrollContainer, PageChangeDetail } from 'components/scroll-container/scroll-container';
 import styles from './chat-view-screen.css?inline';
@@ -15,6 +16,7 @@ import { servicesContext } from 'api/services-context';
 import { consume } from '@lit/context';
 import type { PeerId } from 'services/database';
 import { DialogSyncService } from './dialog-sync-service';
+import type { MediaOpenDetail } from './message-view/media-attachment/media-attachment';
 
 @customElement('chat-view-screen')
 export class ChatViewScreen extends SignalWatcher(LitElement) {
@@ -26,6 +28,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   private _chatViewProjection!: ChatViewProjection;
   private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
+  @state() private _viewer?: MediaOpenDetail;
 
   connectedCallback() {
     super.connectedCallback();
@@ -70,6 +73,18 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     navigate('chats');
   }
 
+  private _onMediaOpen = (e: CustomEvent<MediaOpenDetail>): void => {
+    this._viewer = e.detail;
+  };
+
+  private _onMediaLoad = (): void => {
+    this._scrollContainer?.refresh();
+  };
+
+  private _onViewerClose = (): void => {
+    this._viewer = undefined;
+  };
+
   private _onSend(e: CustomEvent<string>) {
     const message = e.detail.trim();
     if (message) {
@@ -85,12 +100,18 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     return html`
       <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
       <scroll-container class="list" @pagechange=${this._onPageChange}>
-        <div class="messages" id="messages">
+        <div
+          class="messages"
+          id="messages"
+          @mediaopen=${this._onMediaOpen}
+          @mediaload=${this._onMediaLoad}
+        >
           ${messages.map(
             (msg) => html`
               <message-view
                 ?outgoing=${msg.isOutgoing}
                 .text=${msg.text}
+                .media=${msg.media}
                 .timestamp=${formatTimestamp(msg.date)}
               ></message-view>
             `
@@ -98,6 +119,13 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
         </div>
       </scroll-container>
       <chat-view-footer @send=${this._onSend}></chat-view-footer>
+      ${this._viewer
+        ? html`<media-viewer
+            .url=${this._viewer.url}
+            .type=${this._viewer.type}
+            @close=${this._onViewerClose}
+          ></media-viewer>`
+        : nothing}
     `;
   }
 }

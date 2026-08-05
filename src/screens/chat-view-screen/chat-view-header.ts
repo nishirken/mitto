@@ -17,11 +17,13 @@ export class ChatViewHeader extends LitElement {
   render() {
     return html`
       <mk-header>
-        <mk-icon-button bordered slot="start" label="Back" @click=${this._onBack}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-          </svg>
-        </mk-icon-button>
+        <mk-icon-button
+          bordered
+          slot="start"
+          icon="arrow-left"
+          label="Back"
+          @click=${this._onBack}
+        ></mk-icon-button>
         <span class="contact">${this.contactName}</span>
       </mk-header>
     `;

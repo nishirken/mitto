@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { DB_NAME, Database } from "./database";
 import { deleteDB } from 'idb';
-import { mockStoredDialog, mockStoredMessage, mockStoredUser } from "./database-schema.mocks";
-import { ChatId, MessageId, UserId } from "./database-schema";
+import { mockStoredDialog, mockStoredMedia, mockStoredMessage, mockStoredUser } from "./database-schema.mocks";
+import { ChatId, MediaId, MessageId, UserId } from "./database-schema";
 import { mergeUser } from "../repositories/user/mappers";
 
 describe('Database', () => {
@@ -67,6 +67,36 @@ describe('Database', () => {
     test('Get message', async () => {
       const message = await storage.getMessage('1' as ChatId, 1);
       expect(message).toEqual(messages[0]);
+    });
+  });
+
+  describe('Media', () => {
+    const media = [
+      mockStoredMedia({ id: 'photo:1' as MediaId, fileId: '1' }),
+      mockStoredMedia({
+        id: 'voice:2' as MediaId,
+        type: 'voice',
+        fileId: '2',
+        mimeType: 'audio/ogg',
+        size: 4096,
+        duration: 3,
+      }),
+    ];
+
+    beforeEach(async () => {
+      await storage.putMedia(media);
+    });
+
+    test('Get media', async () => {
+      const photo = await storage.getMedia('photo:1' as MediaId);
+      const voice = await storage.getMedia('voice:2' as MediaId);
+      expect(photo).toEqual(media[0]);
+      expect(voice).toEqual(media[1]);
+    });
+
+    test('Put media is a no-op when empty', async () => {
+      await storage.putMedia([]);
+      expect(await storage.getMedia('photo:1' as MediaId)).toEqual(media[0]);
     });
   });
 

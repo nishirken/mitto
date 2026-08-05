@@ -1,7 +1,9 @@
 import type {
+  MediaId,
   MessageId,
   PeerId,
   StoredDialog,
+  StoredMedia,
   StoredMessage,
   StoredUser,
   UserId,
@@ -31,6 +33,20 @@ export function mockStoredMessage(over: Partial<StoredMessage> = {}): StoredMess
     text: 'message',
     date: 0 as Timestamp,
     isOutgoing: false,
+    ...over,
+  };
+}
+
+export function mockStoredMedia(over: Partial<StoredMedia> = {}): StoredMedia {
+  return {
+    id: 'photo:1' as MediaId,
+    type: 'photo',
+    fileId: '1',
+    accessHash: '0',
+    fileReference: new Uint8Array([1, 2, 3]),
+    dcId: 2,
+    date: 0 as Timestamp,
+    thumbSize: 'x',
     ...over,
   };
 }

@@ -16,6 +16,8 @@ import { Database } from './services/database';
 import { MessageRepository } from './services/repositories/message/message-repository';
 import { DatabaseHub } from './services/database/database-hub';
 import { DialogRepository } from './services/repositories/dialog/dialog-repository';
+import { MediaRepository } from './services/repositories/media/media-repository';
+import { MediaFileService } from './services/media/media-file-service';
 
 const { TelegramClient, sessions: { StringSession } } = telegram;
 
@@ -54,13 +56,17 @@ export class AppRoot extends SignalWatcher(LitElement) {
     const config = { apiId: API_ID, apiHash: API_HASH };
 
 
+    const mediaRepository = new MediaRepository(storage);
+
     this._services = {
       client,
       database: storage,
       databaseHub: hub,
       authStore: new TelegramAuthStore(config, client, storage),
-      dialogRepository: new DialogRepository(storage, hub),
-      messageRepository: new MessageRepository(storage, hub),
+      dialogRepository: new DialogRepository(storage, hub, mediaRepository),
+      messageRepository: new MessageRepository(storage, hub, mediaRepository),
+      mediaRepository,
+      mediaFileService: new MediaFileService(client, storage),
     };
 
     this._services.authStore.init();

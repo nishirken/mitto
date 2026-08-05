@@ -1,5 +1,6 @@
 export type {
   StoredDialog,
+  StoredMedia,
   StoredMessage,
   StoredUser,
   UserId,
@@ -7,6 +8,7 @@ export type {
   ChatId,
   ChannelId,
   MessageId,
+  MediaId,
   MediaType,
   MetaKey,
 } from './database-schema';
