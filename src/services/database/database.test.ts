@@ -30,6 +30,32 @@ describe('Database', () => {
       const session = await storage.getSession();
       expect(session).toBeNull();
     });
+
+    test('settings default to null', async () => {
+      expect(await storage.getSettings()).toBeNull();
+    });
+
+    test('get settings', async () => {
+      const settings = {
+        conversations: { pagedScroll: true },
+        messages: { pagedScroll: false },
+      };
+      await storage.setSettings(settings);
+      expect(await storage.getSettings()).toEqual(settings);
+    });
+
+    test('settings and session coexist', async () => {
+      await storage.setSession("test_session");
+      await storage.setSettings({
+        conversations: { pagedScroll: false },
+        messages: { pagedScroll: true },
+      });
+      expect(await storage.getSession()).toBe('test_session');
+      expect(await storage.getSettings()).toEqual({
+        conversations: { pagedScroll: false },
+        messages: { pagedScroll: true },
+      });
+    });
   });
 
   describe('Users', () => {

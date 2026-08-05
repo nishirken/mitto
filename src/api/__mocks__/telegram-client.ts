@@ -5,11 +5,14 @@ import type { Services } from '../services-context';
 import type { AuthState, TelegramAuthStore } from '../../screens/auth/auth-store';
 import type { Database } from '../../services/database';
 import { DatabaseHub } from '../../services/database/database-hub';
+import { SettingsStore } from '../../services/settings/settings-store';
 
 export const mockDatabase = {
   getSession: vi.fn(async () => null),
   setSession: vi.fn(async () => {}),
   clearSession: vi.fn(async () => {}),
+  getSettings: vi.fn(async () => null),
+  setSettings: vi.fn(async () => {}),
   putUsers: vi.fn(async () => {}),
   putPeers: vi.fn(async () => {}),
   putMessages: vi.fn(async () => {}),
@@ -77,6 +80,8 @@ export const mockMediaFileService = {
   dispose: vi.fn(),
 } as unknown as Services['mediaFileService'];
 
+export const mockSettingsStore = new SettingsStore(mockDatabase);
+
 export const mockServices: Services = {
   client: mockClient as unknown as Services['client'],
   database: mockDatabase,
@@ -86,4 +91,5 @@ export const mockServices: Services = {
   messageRepository: mockMessageRepository,
   mediaRepository: mockMediaRepository,
   mediaFileService: mockMediaFileService,
+  settingsStore: mockSettingsStore,
 };

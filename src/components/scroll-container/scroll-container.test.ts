@@ -1,142 +1,103 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import './scroll-container';
-import type { PageChangeDetail, ScrollContainer } from './scroll-container';
+import type { ScrollContainer } from './scroll-container';
 
-async function nextFrame(): Promise<void> {
-  await new Promise<void>((r) => requestAnimationFrame(() => r()));
+async function mount(paged: boolean) {
+  const onTop = vi.fn();
+  const onBottom = vi.fn();
+  const el = await fixture<ScrollContainer>(html`
+    <scroll-container ?paged=${paged} .onTop=${onTop} .onBottom=${onBottom}>
+      <div data-testid="child" style="height: 800px"></div>
+    </scroll-container>
+  `);
+
+  return { el, onTop, onBottom };
 }
-
-function setSizes(el: Element, clientHeight: number, scrollHeight: number): void {
-  const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-  Object.defineProperty(root, 'clientHeight', { value: clientHeight, configurable: true });
-  Object.defineProperty(root, 'scrollHeight', { value: scrollHeight, configurable: true });
-}
-
-function lastDetail(handler: ReturnType<typeof vi.fn>): PageChangeDetail {
-  const calls = handler.mock.calls;
-  const event = calls[calls.length - 1]?.[0] as CustomEvent<PageChangeDetail>;
-
-  return event.detail;
-}
-
-const queryByTestId = (el: Element, id: string): Element | null =>
-  el.querySelector(`[data-testid="${id}"]`);
-
-const renderItems = (count: number): ReturnType<typeof html>[] => {
-  return new Array(count).fill(1).map((_, i) => {
-    return html`<div data-testid="item:${i + 1}" style="height: 40px;">${i + 1}</div>`;
-  });
-};
-
-const renderComponent = async (count: number, onPageChange?: (e: CustomEvent<PageChangeDetail>) => void): Promise<ScrollContainer> => {
-  return fixture<ScrollContainer>(html`
-      <scroll-container @pagechange="${onPageChange}" data-testid="container">${renderItems(count)}</scroll-container>
-    `);
-} 
-
-// The pointer listeners live on `.root` inside the shadow root, and events do not
-// propagate down into shadow DOM — the gesture has to be dispatched there directly.
-function swipe(el: Element, start: number, end: number): void {
-  const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
-  const step = Math.sign(end - start) || 1;
-
-  root.dispatchEvent(new PointerEvent('pointerdown', { clientY: start }));
-  for (let i = start; i !== end; i += step) {
-    root.dispatchEvent(new PointerEvent('pointermove', { clientY: i }));
-  }
-  root.dispatchEvent(new PointerEvent('pointerup', { clientY: end }));
-}
-
-const scrollDown = (el: Element): void => swipe(el, 100, 20);
-const scrollUp = (el: Element): void => swipe(el, 20, 100);
 
 describe('scroll-container', () => {
-  it('renders slotted content', async () => {
-    const el = await renderComponent(1);
-    expect(queryByTestId(el, 'item:1')).not.toBeNull();
+  it('renders the paged implementation when paged is set', async () => {
+    const { el } = await mount(true);
+
+    expect(el.shadowRoot!.querySelector('paged-scroll-container')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('infinite-scroll-container')).toBeNull();
   });
 
-  it('doesnt emit pagechange initially', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(30, handler); 
-    setSizes(el, 300, 300);
-    await nextFrame();
+  it('renders the infinite implementation by default', async () => {
+    const { el } = await mount(false);
 
-    expect(handler).not.toHaveBeenCalled();
+    expect(el.shadowRoot!.querySelector('infinite-scroll-container')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('paged-scroll-container')).toBeNull();
   });
 
-  // 300px viewport, 20 items * 40px = 800px of content — happy-dom does no layout, so
-  // scrollHeight has to be stated. ~7 items per page, ceil(800 / 300) = 3 pages.
-  it('emits pagechange with first page', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(20, handler);
-    setSizes(el, 300, 800);
-    await nextFrame();
+  it('projects its children through to the chosen implementation', async () => {
+    const { el } = await mount(true);
 
-    scrollDown(el);
-    await nextFrame();
-
-    expect(handler).toHaveBeenCalledTimes(1);
-    expect(lastDetail(handler)).toEqual({ index: 1, isFirst: false, isLast: false });
+    expect(el.querySelector('[data-testid="child"]')).not.toBeNull();
   });
 
-  it('emits pagechange with the zero page', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(20, handler);
-    setSizes(el, 300, 800);
-    await nextFrame();
+  it('forwards the threshold to the infinite implementation', async () => {
+    const el = await fixture<ScrollContainer>(
+      html`<scroll-container .threshold=${120}></scroll-container>`,
+    );
+    const inner = el.shadowRoot!.querySelector('infinite-scroll-container')!;
 
-    scrollDown(el);
-    await nextFrame();
-
-    scrollUp(el);
-    await nextFrame();
-
-    expect(handler).toHaveBeenCalledTimes(2);
-    expect(lastDetail(handler)).toEqual({ index: 0, isFirst: true, isLast: false });
+    expect(inner.threshold).toBe(120);
   });
 
-  it('does not emit when scrolling up from the first page', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(20, handler);
-    setSizes(el, 300, 800);
-    await nextFrame();
+  it('maps a first-page pagechange onto onTop', async () => {
+    const { el, onTop, onBottom } = await mount(true);
+    const inner = el.shadowRoot!.querySelector('paged-scroll-container')!;
 
-    scrollUp(el);
-    await nextFrame();
+    inner.dispatchEvent(
+      new CustomEvent('pagechange', { detail: { index: 0, isFirst: true, isLast: false } }),
+    );
 
-    expect(handler).not.toHaveBeenCalled();
+    expect(onTop).toHaveBeenCalledTimes(1);
+    expect(onBottom).not.toHaveBeenCalled();
   });
 
-  it('emits isLast when scrolled to the last page', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(20, handler);
-    setSizes(el, 300, 800);
-    await nextFrame();
+  it('maps a last-page pagechange onto onBottom', async () => {
+    const { el, onTop, onBottom } = await mount(true);
+    const inner = el.shadowRoot!.querySelector('paged-scroll-container')!;
 
-    scrollDown(el);
-    await nextFrame();
-    scrollDown(el);
-    await nextFrame();
+    inner.dispatchEvent(
+      new CustomEvent('pagechange', { detail: { index: 2, isFirst: false, isLast: true } }),
+    );
 
-    expect(handler).toHaveBeenCalledTimes(2);
-    expect(lastDetail(handler)).toEqual({ index: 2, isFirst: false, isLast: true });
+    expect(onBottom).toHaveBeenCalledTimes(1);
+    expect(onTop).not.toHaveBeenCalled();
   });
 
-  it('does not emit when scrolling down from the last page', async () => {
-    const handler = vi.fn();
-    const el = await renderComponent(20, handler);
-    setSizes(el, 300, 800);
-    await nextFrame();
+  it('fires neither callback for a middle page', async () => {
+    const { el, onTop, onBottom } = await mount(true);
+    const inner = el.shadowRoot!.querySelector('paged-scroll-container')!;
 
-    scrollDown(el);
-    await nextFrame();
-    scrollDown(el);
-    await nextFrame();
-    scrollDown(el);
-    await nextFrame();
+    inner.dispatchEvent(
+      new CustomEvent('pagechange', { detail: { index: 1, isFirst: false, isLast: false } }),
+    );
 
-    expect(handler).toHaveBeenCalledTimes(2);
+    expect(onTop).not.toHaveBeenCalled();
+    expect(onBottom).not.toHaveBeenCalled();
+  });
+
+  it('delegates scrollToBottom to the paged implementation', async () => {
+    const { el } = await mount(true);
+    const inner = el.shadowRoot!.querySelector('paged-scroll-container')!;
+    const spy = vi.spyOn(inner, 'scrollToLastPage');
+
+    el.scrollToBottom();
+
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('delegates scrollToBottom to the infinite implementation', async () => {
+    const { el } = await mount(false);
+    const inner = el.shadowRoot!.querySelector('infinite-scroll-container')!;
+    const spy = vi.spyOn(inner, 'scrollToBottom');
+
+    el.scrollToBottom();
+
+    expect(spy).toHaveBeenCalled();
   });
 });

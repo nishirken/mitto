@@ -8,7 +8,7 @@ import './chat-view-footer';
 import './message-view/message-view';
 import './media-viewer/media-viewer';
 import 'components/scroll-container/scroll-container';
-import type { ScrollContainer, PageChangeDetail } from 'components/scroll-container/scroll-container';
+import type { ScrollContainer } from 'components/scroll-container/scroll-container';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewProjection } from './chat-view-projection';
 import type { Services } from 'api/services-context';
@@ -51,11 +51,11 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
   private async _scrollToBottom() {
     await this.updateComplete;
-    this._scrollContainer?.scrollToLastPage();
+    this._scrollContainer?.scrollToBottom();
   }
 
-  private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
-    if (e.detail.isFirst) void this._loadOlderMessages();
+  private _onTop = (): void => {
+    void this._loadOlderMessages();
   };
 
   private async _loadOlderMessages() {
@@ -99,7 +99,11 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
 
     return html`
       <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
-      <scroll-container class="list" @pagechange=${this._onPageChange}>
+      <scroll-container
+        class="list"
+        ?paged=${this.services.settingsStore.pagedScroll('messages')}
+        .onTop=${this._onTop}
+      >
         <div
           class="messages"
           id="messages"

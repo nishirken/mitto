@@ -9,6 +9,7 @@ import styles from './app-root.css?inline';
 import 'screens/auth/auth-screen';
 import 'screens/chat-list-screen/chat-list-screen';
 import 'screens/chat-view-screen/chat-view-screen';
+import 'screens/settings-screen/settings-screen';
 import 'components/mk-loading/mk-loading';
 import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
@@ -18,6 +19,7 @@ import { DatabaseHub } from './services/database/database-hub';
 import { DialogRepository } from './services/repositories/dialog/dialog-repository';
 import { MediaRepository } from './services/repositories/media/media-repository';
 import { MediaFileService } from './services/media/media-file-service';
+import { SettingsStore } from './services/settings/settings-store';
 
 const { TelegramClient, sessions: { StringSession } } = telegram;
 
@@ -57,6 +59,8 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
 
     const mediaRepository = new MediaRepository(storage);
+    const settingsStore = new SettingsStore(storage);
+    await settingsStore.init();
 
     this._services = {
       client,
@@ -67,6 +71,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
       messageRepository: new MessageRepository(storage, hub, mediaRepository),
       mediaRepository,
       mediaFileService: new MediaFileService(client, storage),
+      settingsStore,
     };
 
     this._services.authStore.init();
@@ -86,6 +91,8 @@ export class AppRoot extends SignalWatcher(LitElement) {
           .chatId=${this._route.params.id}
         ></chat-view-screen>`;
       }
+      case 'settings':
+        return html`<settings-screen></settings-screen>`;
       default:
         return html`<mk-loading></mk-loading>`;
     }

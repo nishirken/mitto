@@ -2,8 +2,11 @@ import { openDB, type IDBPDatabase } from 'idb';
 import {
     StoredPeer,
   type MediaId,
+  type MetaKey,
+  type MetaValue,
   type MittoDB,
   type PeerId,
+  type StoredSettings,
   type StoredDialog,
   type StoredMedia,
   type StoredMessage,
@@ -37,12 +40,16 @@ export class Database {
     this._db.close();
   }
 
-  // --- session ---------------------------------------------------------------
+  // --- meta ------------------------------------------------------------------
+
+  private async _getMeta<K extends MetaKey>(key: K): Promise<MetaValue[K] | undefined> {
+    const rec = await this._db.get('meta', key);
+
+    return rec?.value as MetaValue[K] | undefined;
+  }
 
   async getSession(): Promise<string | null> {
-    const rec = await this._db.get('meta', 'session');
-
-    return rec?.value ?? null;
+    return (await this._getMeta('session')) ?? null;
   }
 
   async setSession(value: string): Promise<void> {
@@ -51,6 +58,14 @@ export class Database {
 
   async clearSession(): Promise<void> {
     await this._db.delete('meta', 'session');
+  }
+
+  async getSettings(): Promise<StoredSettings | null> {
+    return (await this._getMeta('settings')) ?? null;
+  }
+
+  async setSettings(value: StoredSettings): Promise<void> {
+    await this._db.put('meta', { key: 'settings', value });
   }
 
   // --- normalized writes -----------------------------------------------------

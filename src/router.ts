@@ -8,6 +8,7 @@ export type RouteChangeCallback = (route: Route) => void;
 export function parseHash(hash: string): Route | null {
   const path = hash.replace(/^#\/?/, '');
   if (path === 'chats') return { name: 'chats', params: {} };
+  if (path === 'settings') return { name: 'settings', params: {} };
   const chatMatch = path.match(/^chat\/(.+)$/);
   if (chatMatch) return { name: 'chat', params: { id: chatMatch[1] } };
 

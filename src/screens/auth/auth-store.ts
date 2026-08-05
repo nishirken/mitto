@@ -141,10 +141,29 @@ export class TelegramAuthStore {
     }
   }
 
-  async logout(): Promise<void> {
-    await this._client.invoke(new telegram.Api.auth.LogOut());
+  /**
+   * Revokes the authorization server-side, then drops everything held locally. Resolves
+   * false and leaves the session untouched when the request fails, so a device that
+   * can't reach Telegram stays signed in rather than keeping a live authorization the
+   * user believes is gone.
+   *
+   * The caller is expected to reload the app on success: `auth.logOut` invalidates the
+   * auth key, and gramjs ignores the resulting AUTH_KEY_UNREGISTERED on the main sender,
+   * so this client instance can no longer be used to sign back in.
+   */
+  async logout(): Promise<boolean> {
+    try {
+      await this._invoke(() => this._client.invoke(new telegram.Api.auth.LogOut()));
+    } catch {
+      this.state.set('error');
+
+      return false;
+    }
+
     await this._storage.clearSession();
     await this._storage.clearCache();
     this.state.set('wait_phone');
+
+    return true;
   }
 }

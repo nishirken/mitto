@@ -10,6 +10,7 @@ const paths: Record<IconType, string> = {
   image: 'M21 15l-5-5L5 21',
   play: 'M8 5v14l11-7z',
   pause: 'M7 5h4v14H7zM13 5h4v14h-4z',
+  settings: 'M3 8h4M11 8h10M3 16h10M17 16h4',
 };
 
 const mount = (type: IconType) => fixture<MkIcon>(html`<mk-icon type=${type}></mk-icon>`);

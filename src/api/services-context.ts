@@ -7,6 +7,7 @@ import { DatabaseHub } from '../services/database/database-hub';
 import { DialogRepository } from '../services/repositories/dialog/dialog-repository';
 import { MediaRepository } from '../services/repositories/media/media-repository';
 import { MediaFileService } from '../services/media/media-file-service';
+import { SettingsStore } from '../services/settings/settings-store';
 
 export type Services = {
   client: TelegramClient;
@@ -17,6 +18,7 @@ export type Services = {
   messageRepository: MessageRepository;
   mediaRepository: MediaRepository;
   mediaFileService: MediaFileService;
+  settingsStore: SettingsStore;
 };
 
 export const servicesContext = createContext<Services>('services');

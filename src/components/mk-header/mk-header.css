@@ -10,10 +10,13 @@
 header {
   display: flex;
   align-items: center;
+  gap: var(--sp-8);
+  flex: 1;
+  min-width: 0;
 }
 
 .title {
-  margin: 0 var(--sp-8);
+  margin: 0;
   flex: 1;
   min-width: 0;
   font-size: var(--fs-header);

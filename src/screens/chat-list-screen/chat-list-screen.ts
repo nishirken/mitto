@@ -7,9 +7,9 @@ import type { Services } from 'api/services-context';
 import { navigate } from 'router';
 import { formatTimestamp } from 'utils/format-timestamp';
 import 'components/mk-header/mk-header';
+import 'components/mk-icon-button/mk-icon-button';
 import 'components/mk-loading/mk-loading';
 import 'components/scroll-container/scroll-container';
-import type { PageChangeDetail } from 'components/scroll-container/scroll-container';
 import './chat-item';
 import styles from './chat-list-screen.css?inline';
 import { DialogListProjection } from './dialog-list-projection';
@@ -38,14 +38,16 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
     this._dialogListProjection.dispose();
   }
 
-  private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
-    if (e.detail.isLast) {
-      void this._dialogListSyncService.loadMore().catch(() => {});
-    }
+  private _onBottom = (): void => {
+    void this._dialogListSyncService.loadMore().catch(() => {});
   };
 
   private _onChatClick = (chatId: string) => {
     navigate(`chat/${chatId}`);
+  };
+
+  private _onSettingsClick = () => {
+    navigate('settings');
   };
 
   render() {
@@ -54,8 +56,20 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
     return html`
       <mk-header headline="Mitto">
         <span class="count" slot="end">${chats.length} chats</span>
+        <mk-icon-button
+          bordered
+          slot="end"
+          icon="settings"
+          label="Settings"
+          data-testid="chat-list.settings-button"
+          @click=${this._onSettingsClick}
+        ></mk-icon-button>
       </mk-header>
-      <scroll-container class="list" @pagechange=${this._onPageChange}>
+      <scroll-container
+        class="list"
+        ?paged=${this.services.settingsStore.pagedScroll('conversations')}
+        .onBottom=${this._onBottom}
+      >
         ${chats.map(
           (chat) => html`
             <chat-item

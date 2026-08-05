@@ -1,134 +1,79 @@
 import { html, LitElement, unsafeCSS } from 'lit';
-import { customElement, query } from 'lit/decorators.js';
+import { customElement, property, query } from 'lit/decorators.js';
+import './paged-scroll-container';
+import './infinite-scroll-container';
+import type { PageChangeDetail, PagedScrollContainer } from './paged-scroll-container';
+import type { InfiniteScrollContainer } from './infinite-scroll-container';
 import styles from './scroll-container.css?inline';
-
-export interface PageChangeDetail {
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-}
 
 @customElement('scroll-container')
 export class ScrollContainer extends LitElement {
   static styles = unsafeCSS(styles);
 
-  @query('.root') private _root!: HTMLElement;
-  @query('.markers') private _markers!: HTMLElement;
+  @property({ type: Boolean, reflect: true }) paged = false;
+  @property({ type: Number }) threshold = 50;
+  @property({ attribute: false }) onTop?: () => void;
+  @property({ attribute: false }) onBottom?: () => void;
 
-  private _index = 0;
-  private _rafId = 0;
-  private _ro?: ResizeObserver;
-  private _mo?: MutationObserver;
-
-  private _startY: null | number = null;
-  private _isScrolling = false;
-
-  protected firstUpdated(): void {
-    this._ro = new ResizeObserver(() => this._rebuildMarkers());
-    this._ro.observe(this._root);
-    this._mo = new MutationObserver(() => this._rebuildMarkers());
-    this._mo.observe(this, { childList: true, subtree: true, characterData: true });
-    this._rebuildMarkers();
-  }
-
-  disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this._ro?.disconnect();
-    this._mo?.disconnect();
-    if (this._rafId) cancelAnimationFrame(this._rafId);
-  }
+  @query('paged-scroll-container') private _paged?: PagedScrollContainer | null;
+  @query('infinite-scroll-container') private _infinite?: InfiniteScrollContainer | null;
 
   get pageCount(): number {
-    const ph = this._root.clientHeight;
-    if (ph === 0) return 1;
-
-    return Math.max(1, Math.ceil(this._root.scrollHeight / ph));
-  }
-
-  scrollToLastPage(): void {
-    this._index = this.pageCount - 1;
-    this._scrollToCurrentPage();
-  }
-
-  refresh(): void {
-    this._rebuildMarkers();
+    return this._paged?.pageCount ?? 1;
   }
 
   scrollToPage(index: number): void {
-    this._index = Math.max(0, Math.min(index, this.pageCount - 1));
-    this._scrollToCurrentPage();
+    this._paged?.scrollToPage(index);
   }
 
-  private _rebuildMarkers(): void {
-    const clientHeight = this._root.clientHeight;
-    if (clientHeight === 0) return;
-    const count = this.pageCount;
-    this._markers.replaceChildren();
+  scrollToBottom(): void {
+    if (this._paged) {
+      this._paged.scrollToLastPage();
 
-    for (let i = 0; i < count; i++) {
-      const m = document.createElement('div');
-      m.className = 'marker';
-      m.style.top = `${i * clientHeight}px`;
-      this._markers.appendChild(m);
+      return;
     }
 
-    this._index = Math.max(0, Math.min(this._index, count - 1));
+    this._infinite?.scrollToBottom();
   }
 
-  private _onPointerDown(e: PointerEvent): void {
-    this._startY = e.clientY;
+  scrollToTop(): void {
+    if (this._paged) {
+      this._paged.scrollToPage(0);
+
+      return;
+    }
+
+    this._infinite?.scrollToTop();
   }
 
-  private _onPointerMove(e: PointerEvent): void {
-    if (this._startY === null) return;
-
-    if (Math.abs(e.clientY - this._startY) > 50) {
-      this._isScrolling = true;
-    }
+  refresh(): void {
+    this._paged?.refresh();
   }
 
-  private _onPointerUp = (e: PointerEvent): void => {
-    if (this._startY === null) return;
-
-    const diffY = e.clientY - this._startY;
-
-    if (diffY > 50 && this._index > 0) {
-      this._index--;
-      this._scrollToCurrentPage();
-    } else if (diffY < -50 && this._index < this.pageCount - 1) {
-      this._index++;
-      this._scrollToCurrentPage();
-    }
-
-    if (this._isScrolling) {
-      this._startY = null;
-      this._isScrolling = false;
-    }
-  };
-
-  private _scrollToCurrentPage = (): void => {
-      this._root.scrollTop = this._index * this._root.clientHeight;
-
-      this.dispatchEvent(new CustomEvent<PageChangeDetail>('pagechange', { detail: { index: this._index, isFirst: this._index === 0, isLast: this._index === this.pageCount - 1 } }));
+  private _onPageChange = (e: CustomEvent<PageChangeDetail>): void => {
+    if (e.detail.isFirst) this.onTop?.();
+    if (e.detail.isLast) this.onBottom?.();
   };
 
   protected render(): unknown {
-    return html`<div
-      class="root"
-      @pointerdown="${this._onPointerDown}"
-      @pointermove="${this._onPointerMove}"
-      @pointerup="${this._onPointerUp}"
+    if (this.paged) {
+      return html`<paged-scroll-container @pagechange="${this._onPageChange}">
+        <slot></slot>
+      </paged-scroll-container>`;
+    }
+
+    return html`<infinite-scroll-container
+      .threshold="${this.threshold}"
+      .onTop="${this.onTop}"
+      .onBottom="${this.onBottom}"
     >
-    <div class="markers"></div><slot></slot></div>`;
+      <slot></slot>
+    </infinite-scroll-container>`;
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
     'scroll-container': ScrollContainer;
-  }
-
-  interface HTMLElementEventMap {
-    pagechange: CustomEvent<PageChangeDetail>;
   }
 }

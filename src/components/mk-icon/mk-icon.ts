@@ -2,7 +2,7 @@ import { LitElement, html, unsafeCSS, type TemplateResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import styles from './mk-icon.css?inline';
 
-export type IconType = 'arrow-up' | 'arrow-left' | 'close' | 'image' | 'play' | 'pause';
+export type IconType = 'arrow-up' | 'arrow-left' | 'close' | 'image' | 'play' | 'pause' | 'settings';
 
 const icons: Record<IconType, TemplateResult> = {
   'arrow-up': html`
@@ -67,6 +67,21 @@ const icons: Record<IconType, TemplateResult> = {
   pause: html`
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+    </svg>
+  `,
+  settings: html`
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 8h4M11 8h10M3 16h10M17 16h4" />
+      <circle cx="9" cy="8" r="2" />
+      <circle cx="15" cy="16" r="2" />
     </svg>
   `,
 };

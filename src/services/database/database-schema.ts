@@ -10,8 +10,24 @@ export type PeerId = UserId | ChatId | ChannelId;
 
 export type MessageId = Flavour<number, 'MessageId'>;
 
-export type MetaKey = 'session';
+export type MetaKey = 'session' | 'settings';
 export type Session = Flavour<string, 'session'>;
+
+export type ScrollSettings = { pagedScroll: boolean };
+
+export type StoredSettings = {
+  conversations: ScrollSettings;
+  messages: ScrollSettings;
+};
+
+// Settings live in `meta` as a single 'settings' row: one small document that is read
+// once at startup and rewritten whole, so it needs neither its own store nor a migration.
+export type MetaValue = {
+  session: Session;
+  settings: StoredSettings;
+};
+
+export type MetaRecord = { [K in MetaKey]: { key: K; value: MetaValue[K] } }[MetaKey];
 
 // --- Normalized projections (persisted; never store raw Api.* objects) -------
 
@@ -72,7 +88,7 @@ export type StoredDialog = {
 export interface MittoDB extends DBSchema {
   meta: {
     key: MetaKey;
-    value: { key: MetaKey; value: Session };
+    value: MetaRecord;
   };
   users: {
     key: UserId;
