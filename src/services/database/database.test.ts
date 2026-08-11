@@ -7,7 +7,7 @@ import {
   mockStoredMessage,
   mockStoredUser,
 } from './database-schema.mocks';
-import { ChatId, MediaId, MessageId, UserId } from './database-schema';
+import type { ChatId, MediaId, MessageId, UserId } from './database-schema';
 import { mergeUser } from '../repositories/user/mappers';
 
 describe('Database', () => {

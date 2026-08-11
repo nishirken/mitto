@@ -32,12 +32,8 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "complexity": {
-        "useArrowFunction": "off"
-      },
       "style": {
-        "noNonNullAssertion": "off",
-        "useImportType": "off"
+        "noNonNullAssertion": "off"
       }
     }
   },

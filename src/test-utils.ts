@@ -1,4 +1,4 @@
-import { LitElement } from 'lit';
+import type { LitElement } from 'lit';
 
 export const tid = (el: LitElement, id: string) =>
   el.shadowRoot!.querySelector(`[data-testid="${id}"]`);

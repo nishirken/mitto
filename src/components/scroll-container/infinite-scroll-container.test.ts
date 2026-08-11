@@ -42,7 +42,7 @@ describe('infinite-scroll-container', () => {
       html`<infinite-scroll-container></infinite-scroll-container>`,
     );
 
-    expect(el.threshold).toBe(50);
+    expect(el.threshold).toBe(100);
   });
 
   it('does not fire either callback before any scrolling', async () => {

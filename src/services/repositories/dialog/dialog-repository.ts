@@ -1,16 +1,22 @@
 import type { Api } from 'telegram';
-import { DatabaseHub } from '../../database/database-hub';
-import { Database, MessageId, PeerId } from '../../database';
+import type { DatabaseHub } from '../../database/database-hub';
+import type { IDatabase, MessageId, PeerId } from '../../database';
 import { mapDialogsResponse } from './mappers';
 import { mergeUser } from '../user/mappers';
-import { MediaRepository } from '../media/media-repository';
+import type { IMediaRepository } from '../media/media-repository';
+
+export interface IDialogRepository {
+  applyDialogsResponse(result: Api.messages.Dialogs | Api.messages.DialogsSlice): Promise<void>;
+  applyReadInbox(peerId: PeerId, maxId: MessageId, stillUnreadCount: number): Promise<void>;
+  applyReadOutbox(peerId: PeerId, maxId: MessageId): Promise<void>;
+}
 
 // Writes to the database
-export class DialogRepository {
+export class DialogRepository implements IDialogRepository {
   constructor(
-    private readonly _storage: Database,
+    private readonly _storage: IDatabase,
     private readonly _hub: DatabaseHub,
-    private readonly _media: MediaRepository,
+    private readonly _media: IMediaRepository,
   ) {}
 
   async applyDialogsResponse(

@@ -1,23 +1,23 @@
 import { createContext } from '@lit/context';
 import type { TelegramClient } from 'telegram';
-import { TelegramAuthStore } from '../screens/auth/auth-store';
-import { Database } from '../services/database';
-import { MessageRepository } from '../services/repositories/message/message-repository';
-import { DatabaseHub } from '../services/database/database-hub';
-import { DialogRepository } from '../services/repositories/dialog/dialog-repository';
-import { MediaRepository } from '../services/repositories/media/media-repository';
-import { MediaFileService } from '../services/media/media-file-service';
-import { SettingsStore } from '../services/settings/settings-store';
+import type { IAuthStore } from '../screens/auth/auth-store';
+import type { IDatabase } from '../services/database';
+import type { IMessageRepository } from '../services/repositories/message/message-repository';
+import type { DatabaseHub } from '../services/database/database-hub';
+import type { IDialogRepository } from '../services/repositories/dialog/dialog-repository';
+import type { IMediaRepository } from '../services/repositories/media/media-repository';
+import type { IMediaFileService } from '../services/media/media-file-service';
+import type { SettingsStore } from '../services/settings/settings-store';
 
 export type Services = {
   client: TelegramClient;
-  database: Database;
+  database: IDatabase;
   databaseHub: DatabaseHub;
-  authStore: TelegramAuthStore;
-  dialogRepository: DialogRepository;
-  messageRepository: MessageRepository;
-  mediaRepository: MediaRepository;
-  mediaFileService: MediaFileService;
+  authStore: IAuthStore;
+  dialogRepository: IDialogRepository;
+  messageRepository: IMessageRepository;
+  mediaRepository: IMediaRepository;
+  mediaFileService: IMediaFileService;
   settingsStore: SettingsStore;
 };
 

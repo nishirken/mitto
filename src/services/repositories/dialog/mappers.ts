@@ -1,12 +1,7 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
 import type { Timestamp } from 'utils/flavour';
-import {
-  type MessageId,
-  type StoredDialog,
-  type StoredMessage,
-  type StoredUser,
-} from '../../database';
+import type { MessageId, StoredDialog, StoredMessage, StoredUser } from '../../database';
 import { peerKey } from '../../peer-key';
 import { toStoredUser } from '../user/mappers';
 import { isNotNull } from '../../../utils/guards';

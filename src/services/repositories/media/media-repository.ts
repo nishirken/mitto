@@ -1,13 +1,18 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import { Database, StoredMedia, type MediaId } from '../../database';
+import type { IDatabase, StoredMedia, MediaId } from '../../database';
 import { toStoredMedia } from './mappers';
 
 const { Api: A } = telegram;
 
 // Maps and writes message media to the database
-export class MediaRepository {
-  constructor(private readonly _storage: Database) {}
+export interface IMediaRepository {
+  applyMessagesMedia(messages: Api.TypeMessage[]): Promise<void>;
+  applyMedia(media: Api.TypeMessageMedia): Promise<MediaId | null>;
+}
+
+export class MediaRepository implements IMediaRepository {
+  constructor(private readonly _storage: IDatabase) {}
 
   async applyMessagesMedia(messages: Api.TypeMessage[]): Promise<void> {
     const media = new Map<MediaId, StoredMedia>();

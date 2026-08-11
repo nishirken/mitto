@@ -1,6 +1,6 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import { StoredUser } from '../../database';
+import type { StoredUser } from '../../database';
 import { peerKey } from '../../peer-key';
 
 const { Api: A } = telegram;

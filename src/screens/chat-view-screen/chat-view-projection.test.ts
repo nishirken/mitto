@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { createFakeStorage, FakeDatabase } from '../../services/database/__mocks__/database';
+import { createFakeStorage, type FakeDatabase } from '../../services/database/__mocks__/database';
 import { DatabaseHub } from '../../services/database/database-hub';
 import {
   mockStoredDialog,
   mockStoredMedia,
   mockStoredMessage,
 } from '../../services/database/database-schema.mocks';
-import { MediaId, MessageId, PeerId } from '../../services/database/database-schema';
-import { Database } from '../../services/database';
+import type { MediaId, MessageId, PeerId } from '../../services/database/database-schema';
+import type { Database } from '../../services/database';
 import { ChatViewProjection, isMessageRead, toMessageListItem } from './chat-view-projection';
 
 const peerId = 'user:1' as PeerId;

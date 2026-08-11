@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { createFakeStorage, FakeDatabase } from '../../database/__mocks__/database';
+import { createFakeStorage, type FakeDatabase } from '../../database/__mocks__/database';
 import { DatabaseHub } from '../../database/database-hub';
 import { mockStoredDialog } from '../../database/database-schema.mocks';
-import { Database, MessageId, PeerId } from '../../database';
+import type { Database, MessageId, PeerId } from '../../database';
 import { MediaRepository } from '../media/media-repository';
 import { DialogRepository } from './dialog-repository';
 

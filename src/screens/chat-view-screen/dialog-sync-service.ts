@@ -1,11 +1,11 @@
 import { signal, type Signal } from '@lit-labs/signals';
 import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
-import { Timestamp } from '../../utils/flavour';
-import { Database, MessageId, PeerId } from '../../services/database';
+import type { Timestamp } from '../../utils/flavour';
+import type { IDatabase, MessageId, PeerId } from '../../services/database';
 import { peerKey, toInputPeer } from '../../services/peer-key';
-import { MessageRepository } from '../../services/repositories/message/message-repository';
-import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
+import type { IMessageRepository } from '../../services/repositories/message/message-repository';
+import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
 
 const { Api: A, events: Events } = telegram;
 
@@ -29,9 +29,9 @@ export class DialogSyncService {
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _repo: MessageRepository,
-    private readonly _dialogRepo: DialogRepository,
-    private readonly _db: Database,
+    private readonly _repo: IMessageRepository,
+    private readonly _dialogRepo: IDialogRepository,
+    private readonly _db: IDatabase,
     private readonly _peerId: PeerId,
   ) {}
 

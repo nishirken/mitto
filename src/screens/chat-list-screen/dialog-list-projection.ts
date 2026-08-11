@@ -1,6 +1,6 @@
 import type { Timestamp } from 'utils/flavour';
-import { Database, PeerId } from 'services/database';
-import {
+import type { IDatabase, PeerId } from 'services/database';
+import type {
   StoredDialog,
   StoredMessage,
   StoredPeer,
@@ -9,7 +9,7 @@ import {
 } from 'services/database/database-schema';
 import { isUser } from 'services/peer-key';
 import { signal } from '@lit-labs/signals';
-import { DatabaseHub } from '../../services/database/database-hub';
+import type { DatabaseHub } from '../../services/database/database-hub';
 
 export type ChatListItem = {
   id: PeerId;
@@ -60,7 +60,7 @@ export class DialogListProjection {
   private _dialogReadUnsub?: () => void;
 
   constructor(
-    private readonly _db: Database,
+    private readonly _db: IDatabase,
     private readonly _hub: DatabaseHub,
   ) {}
 

@@ -1,8 +1,8 @@
 import { computed, signal } from '@lit-labs/signals';
-import { Timestamp } from 'utils/flavour';
-import { Database, MessageId, PeerId } from '../../services/database';
-import { DatabaseHub } from '../../services/database/database-hub';
-import {
+import type { Timestamp } from 'utils/flavour';
+import type { IDatabase, MessageId, PeerId } from '../../services/database';
+import type { DatabaseHub } from '../../services/database/database-hub';
+import type {
   MediaId,
   StoredMedia,
   StoredMessage,
@@ -97,7 +97,7 @@ export class ChatViewProjection {
   private _readMarkersLoaded?: Promise<void>;
 
   constructor(
-    private readonly _db: Database,
+    private readonly _db: IDatabase,
     private readonly _hub: DatabaseHub,
     private readonly _peerId: PeerId,
   ) {}

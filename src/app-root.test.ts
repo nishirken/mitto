@@ -1,19 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import { mockAuthStore, mockClient, mockDatabase } from 'api/__mocks__/telegram-client';
+import { mockAuthStore, mockDatabase } from 'api/__mocks__/telegram-client';
 
 // Partial mock: the sync services and mappers pull real `Api`/`events`/`utils` off the
 // same default export, and app-root needs a working `sessions.StringSession`.
 vi.mock('telegram', async (importOriginal) => {
   const actual = await importOriginal<typeof import('telegram')>();
 
+  // Declared inline rather than imported from `api/__mocks__/telegram-client`: that module
+  // imports `telegram` itself (for `emptyDialogs`), so pulling it in here would re-enter
+  // this factory and deadlock. app-root only needs the constructor to succeed — it never
+  // asserts on the client — so a bare constructible stub is enough.
+  const emptyDialogs = new actual.default.Api.messages.Dialogs({
+    dialogs: [],
+    messages: [],
+    chats: [],
+    users: [],
+  });
+
+  class MockTelegramClient {
+    connect = vi.fn(async () => true);
+    disconnect = vi.fn(async () => {});
+    invoke = vi.fn(async () => emptyDialogs);
+    addEventHandler = vi.fn(() => {});
+    removeEventHandler = vi.fn(() => {});
+    checkAuthorization = vi.fn(async () => true);
+    sendCode = vi.fn(() => {});
+    downloadFile = vi.fn(async () => null);
+    session = { save: vi.fn(() => '') };
+  }
+
   return {
     ...actual,
     default: {
       ...actual.default,
-      TelegramClient: function () {
-        return mockClient;
-      },
+      TelegramClient: MockTelegramClient,
     },
   };
 });
@@ -29,12 +50,11 @@ vi.mock('./services/database', async (importOriginal) => {
 
 vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./screens/auth/auth-store')>();
+  const { MockAuthStore } = await import('api/__mocks__/telegram-client');
 
   return {
     ...actual,
-    TelegramAuthStore: function () {
-      return mockAuthStore;
-    },
+    TelegramAuthStore: MockAuthStore,
   };
 });
 

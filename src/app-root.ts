@@ -2,7 +2,7 @@ import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { provide } from '@lit/context';
-import { Route, currentRoute, onRouteChange } from 'router';
+import { type Route, currentRoute, onRouteChange } from 'router';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import styles from './app-root.css?inline';

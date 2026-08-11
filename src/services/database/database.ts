@@ -1,24 +1,54 @@
 import { openDB, type IDBPDatabase } from 'idb';
-import {
+import type {
   StoredPeer,
-  type MediaId,
-  type MetaKey,
-  type MetaValue,
-  type MittoDB,
-  type PeerId,
-  type StoredSettings,
-  type StoredDialog,
-  type StoredMedia,
-  type StoredMessage,
-  type StoredUser,
-  type UserId,
+  MediaId,
+  MetaKey,
+  MetaValue,
+  MittoDB,
+  PeerId,
+  StoredSettings,
+  StoredDialog,
+  StoredMedia,
+  StoredMessage,
+  StoredUser,
+  UserId,
 } from './database-schema';
 import { isUser } from '../peer-key';
 
 export const DB_NAME = 'mitto';
 export const DB_VERSION = 1;
 
-export class Database {
+export interface IDatabase {
+  close(): void;
+  getSession(): Promise<string | null>;
+  setSession(value: string): Promise<void>;
+  clearSession(): Promise<void>;
+  getSettings(): Promise<StoredSettings | null>;
+  setSettings(value: StoredSettings): Promise<void>;
+  putUsers(users: StoredUser[]): Promise<void>;
+  putMessages(msgs: StoredMessage[]): Promise<void>;
+  putMedia(media: StoredMedia[]): Promise<void>;
+  putDialogs(dialogs: StoredDialog[]): Promise<void>;
+  putAll(
+    users: StoredUser[],
+    mergeUser: (x: StoredUser, y: StoredUser) => StoredUser,
+    messages: StoredMessage[],
+    dialogs: StoredDialog[],
+  ): Promise<void>;
+  getUser(id: UserId): Promise<StoredUser | undefined>;
+  getPeer(id: PeerId): Promise<StoredPeer | undefined>;
+  getUsers(ids: UserId[]): Promise<(StoredUser | undefined)[]>;
+  getMedia(id: MediaId): Promise<StoredMedia | undefined>;
+  getMediaItems(ids: MediaId[]): Promise<StoredMedia[]>;
+  getMessage(peerId: PeerId, id: number): Promise<StoredMessage | undefined>;
+  loadDialogs(): Promise<StoredDialog[]>;
+  getDialog(peerId: PeerId): Promise<StoredDialog | undefined>;
+  getDialogs(ids: PeerId[]): Promise<StoredDialog[]>;
+  loadMessages(peerId: PeerId): Promise<StoredMessage[]>;
+  clearCache(): Promise<void>;
+}
+
+export class Database implements IDatabase {
   private constructor(private readonly _db: IDBPDatabase<MittoDB>) {}
 
   static async create(): Promise<Database> {

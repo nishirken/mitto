@@ -33,7 +33,15 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - Select elements by `data-testid` using `tid()` helper from `src/test-utils.ts`
 - Use mocks if possible
 - Mocks colocated in `__mocks__/` directories next to the module being mocked
-- `vi.mock` factories: mock implementations must match the real method's signature
+
+### Writing mocks
+- Services expose an interface (`IAuthStore`, `IDatabase`, `IDialogRepository`, …) next to the class; the class `implements` it. Concrete classes have private fields, so a mock can never `implements` them directly — the interface is what ties mock and impl together
+- Mocks are classes, never object literals: `export class MockX implements IX {}` plus `export const mockX = new MockX()`. A literal needs `as unknown as X`, which silently rots as the real API changes
+- A mock standing in for something the code under test calls with `new` **must be constructible** — arrow functions have no `[[Construct]]` and throw `TypeError: … is not a constructor`. This surfaces as an unrelated assertion failure when the throw happens inside an async `connectedCallback`
+- Share members at module level when the code under test constructs its own instance, so `new MockX()` and the exported `mockX` observe the same spies (`useDefineForClassFields: false` rules out `private static`)
+- `vi.fn()` needs an explicit body — write `vi.fn(() => {})`; the bare form's inferred type can't be named under `declaration: true`
+- Never import `api/__mocks__/telegram-client` inside a `vi.mock('telegram')` factory — that module imports `telegram` itself, so the factory re-enters and deadlocks with no output. Build what you need from the factory's `actual` instead
+- `vi.mock` factories are hoisted above imports: reference imported values via `await import(...)` inside the factory, never from the module scope
 
 ## Key Notes
 - `tsconfig.json`: `useDefineForClassFields: false` is critical for Lit decorators and prevents `private static` fields — use module-level variables instead

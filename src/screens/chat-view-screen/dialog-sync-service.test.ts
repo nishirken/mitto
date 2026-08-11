@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import telegram from 'telegram';
 import type { Api as ApiTypes, events, TelegramClient } from 'telegram';
-import { createFakeStorage, FakeDatabase } from '../../services/database/__mocks__/database';
+import { createFakeStorage, type FakeDatabase } from '../../services/database/__mocks__/database';
 import { DatabaseHub } from '../../services/database/database-hub';
-import { Database, PeerId } from '../../services/database';
+import type { Database, PeerId } from '../../services/database';
 import { mockStoredDialog, mockStoredUser } from '../../services/database/database-schema.mocks';
 import { MediaRepository } from '../../services/repositories/media/media-repository';
 import { MessageRepository } from '../../services/repositories/message/message-repository';

@@ -1,7 +1,7 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
 import type { ChannelId, ChatId, PeerId, UserId } from './database';
-import { StoredPeer } from './database/database-schema';
+import type { StoredPeer } from './database/database-schema';
 
 export type PeerKind = 'user' | 'chat' | 'channel';
 

@@ -1,7 +1,7 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import styles from './message-view.css?inline';
-import { MessageMedia } from '../chat-view-projection';
+import type { MessageMedia } from '../chat-view-projection';
 import './media-attachment/media-attachment';
 import './voice-player/voice-player';
 import 'components/mk-icon/mk-icon';

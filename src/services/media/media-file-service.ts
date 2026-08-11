@@ -1,17 +1,22 @@
 import type { TelegramClient } from 'telegram';
-import type { Database, MediaId, StoredMedia } from '../database';
+import type { IDatabase, MediaId, StoredMedia } from '../database';
 import { toInputLocation } from './input-location';
 
 const PHOTO_MIME = 'image/jpeg';
 
 // Downloads media files on demand and hands out object URLs, kept in memory only
-export class MediaFileService {
+export interface IMediaFileService {
+  url(id: MediaId): Promise<string | null>;
+  dispose(): void;
+}
+
+export class MediaFileService implements IMediaFileService {
   private readonly _urls = new Map<MediaId, string>();
   private readonly _pending = new Map<MediaId, Promise<string | null>>();
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _storage: Database,
+    private readonly _storage: IDatabase,
   ) {}
 
   async url(id: MediaId): Promise<string | null> {

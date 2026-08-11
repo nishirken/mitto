@@ -1,4 +1,4 @@
-import { MessageId, PeerId } from './database-schema';
+import type { MessageId, PeerId } from './database-schema';
 
 export type EventType = 'newDialogs' | 'newMessage' | 'newMessages' | 'dialogRead';
 export type EventData = {

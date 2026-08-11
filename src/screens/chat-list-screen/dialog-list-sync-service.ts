@@ -1,10 +1,10 @@
 import { signal, type Signal } from '@lit-labs/signals';
 import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
-import { Timestamp } from '../../utils/flavour';
-import { MessageId } from '../../services/database';
-import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
-import { MessageRepository } from '../../services/repositories/message/message-repository';
+import type { Timestamp } from '../../utils/flavour';
+import type { MessageId } from '../../services/database';
+import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
+import type { IMessageRepository } from '../../services/repositories/message/message-repository';
 import { peerKey } from '../../services/peer-key';
 
 const { Api: A, events: Events, utils } = telegram;
@@ -28,8 +28,8 @@ export class DialogListSyncService {
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _dialogRepo: DialogRepository,
-    private readonly _messageRepo: MessageRepository,
+    private readonly _dialogRepo: IDialogRepository,
+    private readonly _messageRepo: IMessageRepository,
   ) {}
 
   get loading(): Signal.State<boolean> {

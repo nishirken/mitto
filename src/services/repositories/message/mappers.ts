@@ -1,6 +1,6 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import { type MessageId, type StoredMessage } from '../../database';
+import type { MessageId, StoredMessage } from '../../database';
 import { peerKey } from '../../peer-key';
 import { mediaKey } from '../media/mappers';
 

@@ -11,9 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit && biome check src/",
-    "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "format:check": "biome format src/",
     "clean": "rm -rf dist android/app/build && cd android && ./gradlew clean",
     "prepare": "simple-git-hooks"
   },
