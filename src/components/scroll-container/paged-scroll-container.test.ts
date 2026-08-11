@@ -29,11 +29,14 @@ const renderItems = (count: number): ReturnType<typeof html>[] => {
   });
 };
 
-const renderComponent = async (count: number, onPageChange?: (e: CustomEvent<PageChangeDetail>) => void): Promise<PagedScrollContainer> => {
+const renderComponent = async (
+  count: number,
+  onPageChange?: (e: CustomEvent<PageChangeDetail>) => void,
+): Promise<PagedScrollContainer> => {
   return fixture<PagedScrollContainer>(html`
       <paged-scroll-container @pagechange="${onPageChange}" data-testid="container">${renderItems(count)}</paged-scroll-container>
     `);
-} 
+};
 
 // The pointer listeners live on `.root` inside the shadow root, and events do not
 // propagate down into shadow DOM — the gesture has to be dispatched there directly.
@@ -66,7 +69,7 @@ describe('paged-scroll-container', () => {
 
   it('doesnt emit pagechange initially', async () => {
     const handler = vi.fn();
-    const el = await renderComponent(30, handler); 
+    const el = await renderComponent(30, handler);
     setSizes(el, 300, 300);
     await nextFrame();
 

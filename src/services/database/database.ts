@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import {
-    StoredPeer,
+  StoredPeer,
   type MediaId,
   type MetaKey,
   type MetaValue,
@@ -107,10 +107,10 @@ export class Database {
     const tx = this._db.transaction(['users', 'messages', 'dialogs'], 'readwrite');
     await Promise.all([
       ...users.map(async (u) => {
-      const existing = await tx.objectStore('users').get(u.id);
+        const existing = await tx.objectStore('users').get(u.id);
 
-      return tx.objectStore('users').put(existing ? mergeUser(existing, u) : u);
-    }),
+        return tx.objectStore('users').put(existing ? mergeUser(existing, u) : u);
+      }),
       ...messages.map((m) => tx.objectStore('messages').put(m)),
       ...dialogs.map((d) => tx.objectStore('dialogs').put(d)),
     ]);
@@ -145,7 +145,7 @@ export class Database {
     const result = await Promise.all(ids.map((id) => tx.store.get(id)));
     await tx.done;
 
-    return result.filter(m => !!m) as StoredMedia[];
+    return result.filter((m) => !!m) as StoredMedia[];
   }
 
   async getMessage(peerId: PeerId, id: number): Promise<StoredMessage | undefined> {
@@ -161,12 +161,12 @@ export class Database {
   }
 
   async getDialogs(ids: PeerId[]): Promise<StoredDialog[]> {
-  if (ids.length === 0) return [];
-  const tx = this._db.transaction('dialogs', 'readonly');
-  const result = await Promise.all(ids.map((id) => tx.store.get(id)));
-  await tx.done;
+    if (ids.length === 0) return [];
+    const tx = this._db.transaction('dialogs', 'readonly');
+    const result = await Promise.all(ids.map((id) => tx.store.get(id)));
+    await tx.done;
 
-  return result.filter(d => !!d) as StoredDialog[];
+    return result.filter((d) => !!d) as StoredDialog[];
   }
 
   async loadMessages(peerId: PeerId): Promise<StoredMessage[]> {

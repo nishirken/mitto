@@ -23,9 +23,7 @@ describe('message-view', () => {
   });
 
   test('renders media without an empty text row', async () => {
-    const el = await fixture<MessageView>(
-      html`<message-view .media=${photo}></message-view>`,
-    );
+    const el = await fixture<MessageView>(html`<message-view .media=${photo}></message-view>`);
 
     expect(tid(el, 'message-view.media')).not.toBeNull();
     expect(tid(el, 'message-view.text')).toBeNull();

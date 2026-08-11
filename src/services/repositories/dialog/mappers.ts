@@ -14,7 +14,10 @@ import { toStoredMessage } from '../message/mappers';
 
 const { Api: A } = telegram;
 
-export function toStoredDialog(d: Api.Dialog, topMessageDate: Timestamp = 0 as Timestamp): StoredDialog {
+export function toStoredDialog(
+  d: Api.Dialog,
+  topMessageDate: Timestamp = 0 as Timestamp,
+): StoredDialog {
   return {
     peerId: peerKey(d.peer),
     topMessageId: d.topMessage as MessageId,
@@ -47,4 +50,3 @@ export function mapDialogsResponse(
 
   return { users, messages, dialogs };
 }
-

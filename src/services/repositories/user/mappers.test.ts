@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from 'vitest';
 import telegram from 'telegram';
-import { mergeUser, toStoredUser } from "./mappers";
-import { StoredUser } from "../../database";
+import { mergeUser, toStoredUser } from './mappers';
+import { StoredUser } from '../../database';
 
 const { Api } = telegram;
 const big = (n: string) => n as unknown as BigInteger;

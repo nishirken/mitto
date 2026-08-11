@@ -33,7 +33,9 @@ export class InfiniteScrollContainer extends LitElement {
     if (!this._root) return;
 
     this._root.scrollTop =
-      el.getBoundingClientRect().top - this._root.getBoundingClientRect().top + this._root.scrollTop;
+      el.getBoundingClientRect().top -
+      this._root.getBoundingClientRect().top +
+      this._root.scrollTop;
 
     const { scrollTop, scrollHeight, clientHeight } = this._root;
     this._wasAtTop = scrollTop <= this.threshold;

@@ -72,7 +72,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
           hint="International format"
           required=${true}
           .value=${this._phone}
-          @input=${(e: Event) => this._phone = (e.target as MkInput).value}
+          @input=${(e: Event) => (this._phone = (e.target as MkInput).value)}
         ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
         <mk-button data-testid="submit" @click=${this._onSubmitPhone} ?disabled=${this._loading} type="submit">
@@ -96,17 +96,21 @@ export class AuthScreen extends SignalWatcher(LitElement) {
           maxlength="5"
           type="tel"
           .value=${this._code}
-          @input=${(e: Event) => this._code = (e.target as MkInput).value}
+          @input=${(e: Event) => (this._code = (e.target as MkInput).value)}
         ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
         <mk-button data-testid="submit" type="submit" ?disabled=${this._loading}>
           ${this._loading ? 'Verifying...' : 'Continue'}
         </mk-button>
-        ${isSmsAvailable ? html`
+        ${
+          isSmsAvailable
+            ? html`
           <mk-button variant="secondary" ?disabled=${this._loading} @click=${this._onResendViaSms}>
             Use SMS instead
           </mk-button>
-        ` : ''}
+        `
+            : ''
+        }
       </form>
     `;
   }

@@ -67,7 +67,9 @@ export class PagedScrollContainer extends LitElement {
   }
 
   private _offsetTop(el: Element): number {
-    return el.getBoundingClientRect().top - this._root.getBoundingClientRect().top + this._root.scrollTop;
+    return (
+      el.getBoundingClientRect().top - this._root.getBoundingClientRect().top + this._root.scrollTop
+    );
   }
 
   private _onSlotChange = (): void => {
@@ -124,9 +126,17 @@ export class PagedScrollContainer extends LitElement {
   };
 
   private _scrollToCurrentPage = (): void => {
-      this._root.scrollTop = this._index * this._root.clientHeight;
+    this._root.scrollTop = this._index * this._root.clientHeight;
 
-      this.dispatchEvent(new CustomEvent<PageChangeDetail>('pagechange', { detail: { index: this._index, isFirst: this._index === 0, isLast: this._index === this.pageCount - 1 } }));
+    this.dispatchEvent(
+      new CustomEvent<PageChangeDetail>('pagechange', {
+        detail: {
+          index: this._index,
+          isFirst: this._index === 0,
+          isLast: this._index === this.pageCount - 1,
+        },
+      }),
+    );
   };
 
   protected render(): unknown {

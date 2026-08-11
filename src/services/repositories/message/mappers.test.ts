@@ -1,8 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import telegram from 'telegram';
-import {
-  toStoredMessage,
-} from './mappers';
+import { toStoredMessage } from './mappers';
 
 const { Api } = telegram;
 const big = (n: string) => n as unknown as BigInteger;

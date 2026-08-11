@@ -1,8 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import telegram from 'telegram';
-import {
-  mapDialogsResponse,
-} from './mappers';
+import { mapDialogsResponse } from './mappers';
 
 const { Api } = telegram;
 const big = (n: string) => n as unknown as BigInteger;
@@ -34,6 +32,5 @@ describe('Dialog', () => {
     expect(mapped.messages[0]?.peerId).toBe('user:123');
     expect(mapped.dialogs[0]?.peerId).toBe('user:123');
     expect(mapped.dialogs[0]?.topMessageId).toBe(5);
+  });
 });
-})
-

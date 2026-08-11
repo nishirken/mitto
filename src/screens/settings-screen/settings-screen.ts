@@ -26,7 +26,10 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
   };
 
   private _onConversationsChange = (e: Event) => {
-    void this.services.settingsStore.setPagedScroll('conversations', (e.target as MkCheckbox).checked);
+    void this.services.settingsStore.setPagedScroll(
+      'conversations',
+      (e.target as MkCheckbox).checked,
+    );
   };
 
   private _onMessagesChange = (e: Event) => {

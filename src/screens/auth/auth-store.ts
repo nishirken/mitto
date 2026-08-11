@@ -121,7 +121,12 @@ export class TelegramAuthStore {
       await this._storage.setSession(sessionString);
       this.state.set('ready');
     } catch (e: unknown) {
-      if (e && typeof e === 'object' && 'errorMessage' in e && (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED') {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'errorMessage' in e &&
+        (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED'
+      ) {
         this.state.set('wait_password');
       } else {
         throw e;

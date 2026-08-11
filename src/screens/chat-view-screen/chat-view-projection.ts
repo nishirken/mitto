@@ -2,12 +2,24 @@ import { computed, signal } from '@lit-labs/signals';
 import { Timestamp } from 'utils/flavour';
 import { Database, MessageId, PeerId } from '../../services/database';
 import { DatabaseHub } from '../../services/database/database-hub';
-import { MediaId, StoredMedia, StoredMessage, StoredPeer } from '../../services/database/database-schema';
+import {
+  MediaId,
+  StoredMedia,
+  StoredMessage,
+  StoredPeer,
+} from '../../services/database/database-schema';
 import { isUser } from '../../services/peer-key';
 
 export type MessageMedia =
   | { id: MediaId; type: 'photo'; size?: number; width?: number; height?: number }
-  | { id: MediaId; type: 'video'; size?: number; width?: number; height?: number; duration?: number }
+  | {
+      id: MediaId;
+      type: 'video';
+      size?: number;
+      width?: number;
+      height?: number;
+      duration?: number;
+    }
   | { id: MediaId; type: 'voice'; size?: number; duration?: number };
 
 export type MessageListItem = {
@@ -74,7 +86,8 @@ export class ChatViewProjection {
   readonly peer = signal<StoredPeer | null>(null);
   readonly peerName = computed(() => {
     const p = this.peer.get();
-    if (p && isUser(p?.id)) return [p.firstName, p.lastName].filter(Boolean).join(' ') ?? p.username ?? 'Unknown';
+    if (p && isUser(p?.id))
+      return [p.firstName, p.lastName].filter(Boolean).join(' ') ?? p.username ?? 'Unknown';
 
     return '';
   });
@@ -87,7 +100,7 @@ export class ChatViewProjection {
     private readonly _db: Database,
     private readonly _hub: DatabaseHub,
     private readonly _peerId: PeerId,
-   ) {}
+  ) {}
 
   async init(): Promise<void> {
     this._readMarkersLoaded = this._loadReadMarkers();
@@ -98,7 +111,7 @@ export class ChatViewProjection {
       void this._handleNewMessage(id, peerId);
     });
     this._newMessagesUnsub = this._hub.subscribe('newMessages', () => {
-      void this._db.loadMessages(this._peerId).then(msgs => this._applyMessages(msgs));
+      void this._db.loadMessages(this._peerId).then((msgs) => this._applyMessages(msgs));
     });
     this._dialogReadUnsub = this._hub.subscribe('dialogRead', (peerId) => {
       if (this._peerId !== peerId) {
@@ -123,10 +136,10 @@ export class ChatViewProjection {
   }
 
   private async _handleNewMessage(id: MessageId, peerId: PeerId): Promise<void> {
-      const message = await this._db.getMessage(peerId, id);
-      if (message) {
-        await this._applyMessages([message]);
-      }
+    const message = await this._db.getMessage(peerId, id);
+    if (message) {
+      await this._applyMessages([message]);
+    }
   }
 
   private async _applyMessages(messages: StoredMessage[]): Promise<void> {
@@ -175,4 +188,3 @@ export class ChatViewProjection {
     this._dialogReadUnsub?.();
   }
 }
-

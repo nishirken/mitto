@@ -49,9 +49,14 @@ describe('DialogSyncService', () => {
 
     client = {
       addEventHandler: vi.fn(),
-      invoke: vi.fn(async () => new Api.messages.Messages({
-        messages: [], chats: [], users: [],
-      })),
+      invoke: vi.fn(
+        async () =>
+          new Api.messages.Messages({
+            messages: [],
+            chats: [],
+            users: [],
+          }),
+      ),
     };
 
     const hub = new DatabaseHub();
@@ -82,13 +87,15 @@ describe('DialogSyncService', () => {
   test('advances the inbox marker when the chat is read elsewhere', async () => {
     const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
 
-    handler(new Api.UpdateReadHistoryInbox({
-      peer: new Api.PeerUser({ userId: big('1') }),
-      maxId: 42,
-      stillUnreadCount: 0,
-      pts: 1,
-      ptsCount: 1,
-    }));
+    handler(
+      new Api.UpdateReadHistoryInbox({
+        peer: new Api.PeerUser({ userId: big('1') }),
+        maxId: 42,
+        stillUnreadCount: 0,
+        pts: 1,
+        ptsCount: 1,
+      }),
+    );
     await flush();
 
     expect(fake.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });
@@ -97,12 +104,14 @@ describe('DialogSyncService', () => {
   test('advances the outbox marker when the peer reads our messages', async () => {
     const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
 
-    handler(new Api.UpdateReadHistoryOutbox({
-      peer: new Api.PeerUser({ userId: big('1') }),
-      maxId: 7,
-      pts: 1,
-      ptsCount: 1,
-    }));
+    handler(
+      new Api.UpdateReadHistoryOutbox({
+        peer: new Api.PeerUser({ userId: big('1') }),
+        maxId: 7,
+        pts: 1,
+        ptsCount: 1,
+      }),
+    );
     await flush();
 
     expect(fake.dialogs.get(peerId)).toMatchObject({ readOutboxMaxId: 7 });
@@ -112,9 +121,13 @@ describe('DialogSyncService', () => {
     const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
     const peer = new Api.PeerUser({ userId: big('1') });
 
-    handler(new Api.UpdateReadHistoryInbox({ peer, maxId: 42, stillUnreadCount: 0, pts: 1, ptsCount: 1 }));
+    handler(
+      new Api.UpdateReadHistoryInbox({ peer, maxId: 42, stillUnreadCount: 0, pts: 1, ptsCount: 1 }),
+    );
     await flush();
-    handler(new Api.UpdateReadHistoryInbox({ peer, maxId: 10, stillUnreadCount: 5, pts: 2, ptsCount: 1 }));
+    handler(
+      new Api.UpdateReadHistoryInbox({ peer, maxId: 10, stillUnreadCount: 5, pts: 2, ptsCount: 1 }),
+    );
     await flush();
 
     expect(fake.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });

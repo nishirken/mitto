@@ -15,7 +15,9 @@ export class MkTextarea extends LitElement {
   @property({ type: Number }) rows = 1;
 
   @property({ type: String })
-  get value() { return this._value; }
+  get value() {
+    return this._value;
+  }
   set value(v: string) {
     this._value = v;
     this._internals.setFormValue(v);

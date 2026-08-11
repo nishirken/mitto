@@ -21,9 +21,11 @@ export class ChatItem extends LitElement {
         </div>
         <div class="bottom">
           <span class="preview">${this.preview}</span>
-          ${this.unreadCount > 0
-            ? html`<mk-badge class="badge" .count=${this.unreadCount}></mk-badge>`
-            : nothing}
+          ${
+            this.unreadCount > 0
+              ? html`<mk-badge class="badge" .count=${this.unreadCount}></mk-badge>`
+              : nothing
+          }
         </div>
       </div>
     `;

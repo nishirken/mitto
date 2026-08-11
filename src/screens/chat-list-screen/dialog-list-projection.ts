@@ -1,6 +1,12 @@
 import type { Timestamp } from 'utils/flavour';
 import { Database, PeerId } from 'services/database';
-import { StoredDialog, StoredMessage, StoredPeer, StoredUser, UserId } from 'services/database/database-schema';
+import {
+  StoredDialog,
+  StoredMessage,
+  StoredPeer,
+  StoredUser,
+  UserId,
+} from 'services/database/database-schema';
 import { isUser } from 'services/peer-key';
 import { signal } from '@lit-labs/signals';
 import { DatabaseHub } from '../../services/database/database-hub';
@@ -16,7 +22,7 @@ export type ChatListItem = {
 
 function peerName(peer: StoredPeer): string {
   if ('firstName' in peer || 'lastName' in peer) {
-    return [peer.firstName, peer.lastName].filter(Boolean).join(' '); 
+    return [peer.firstName, peer.lastName].filter(Boolean).join(' ');
   }
   if ('username' in peer && typeof peer.username === 'string') return peer.username;
   if ('title' in peer && typeof peer.title === 'string') return peer.title;
@@ -26,16 +32,18 @@ function peerName(peer: StoredPeer): string {
 
 export function toChatListItem(
   dialog: StoredDialog,
-  peer: StoredPeer, 
+  peer: StoredPeer,
   topMessage?: StoredMessage,
 ): ChatListItem {
   return {
     id: dialog.peerId,
     name: peerName(peer),
-    topMessage: topMessage ? {
-      text: topMessage.text,
-      isOutgoing: topMessage.isOutgoing,
-    } : undefined,
+    topMessage: topMessage
+      ? {
+          text: topMessage.text,
+          isOutgoing: topMessage.isOutgoing,
+        }
+      : undefined,
     date: dialog.date,
     unreadCount: dialog.unreadCount,
     pinned: dialog.pinned,
@@ -98,7 +106,7 @@ export class DialogListProjection {
       const peerId = dialog.peerId;
 
       if (!isUser(peerId)) continue;
-      
+
       const topMessage = await this._db.getMessage(peerId, dialog.topMessageId);
 
       if (!this._users.has(peerId)) {

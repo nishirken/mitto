@@ -16,7 +16,9 @@ export class MkCheckbox extends LitElement {
   @property({ type: Boolean, reflect: true }) disabled = false;
 
   @property({ type: Boolean, reflect: true })
-  get checked() { return this._checked; }
+  get checked() {
+    return this._checked;
+  }
   set checked(v: boolean) {
     this._checked = v;
     this._internals.setFormValue(v ? 'on' : null);

@@ -22,7 +22,9 @@ beforeEach(() => {
 
 describe('auth-screen', () => {
   it('calls sendPhoneNumber on phone submit', async () => {
-    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, { parentNode: withContext() });
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
     const input = tid(el, 'phone-input') as MkInput;
     const phoneNumber = '+1234567890';
     input.value = phoneNumber;
@@ -36,7 +38,9 @@ describe('auth-screen', () => {
   });
 
   it('shows code input after auth state changes to wait_code', async () => {
-    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, { parentNode: withContext() });
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
 
     mockAuthStore.state.set({ type: 'wait_code', isSmsAvailable: false });
     await el.updateComplete;
@@ -47,9 +51,12 @@ describe('auth-screen', () => {
 
   it('calls sendAuthCode on code submit', async () => {
     mockAuthStore.state.set({ type: 'wait_code', isSmsAvailable: false });
-    const el = await fixture<AuthScreen>(html`
+    const el = await fixture<AuthScreen>(
+      html`
       <auth-screen></auth-screen>
-    `, { parentNode: withContext() });
+    `,
+      { parentNode: withContext() },
+    );
 
     const input = tid(el, 'code-input') as MkInput;
     input.value = '12345';

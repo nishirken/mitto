@@ -38,8 +38,18 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       throw new Error('chatId property is required');
     }
 
-    this._dialogSyncService = new DialogSyncService(this.services.client, this.services.messageRepository, this.services.dialogRepository, this.services.database, this.chatId as PeerId);
-    this._chatViewProjection = new ChatViewProjection(this.services.database, this.services.databaseHub, this.chatId as PeerId);
+    this._dialogSyncService = new DialogSyncService(
+      this.services.client,
+      this.services.messageRepository,
+      this.services.dialogRepository,
+      this.services.database,
+      this.chatId as PeerId,
+    );
+    this._chatViewProjection = new ChatViewProjection(
+      this.services.database,
+      this.services.databaseHub,
+      this.chatId as PeerId,
+    );
     this._chatViewProjection.init();
     this._dialogSyncService.loadInitial();
   }
@@ -146,18 +156,20 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
                 .media=${msg.media}
                 .timestamp=${formatTimestamp(msg.date)}
               ></message-view>
-            `
+            `,
           )}
         </div>
       </scroll-container>
       <chat-view-footer @send=${this._onSend}></chat-view-footer>
-      ${this._viewer
-        ? html`<media-viewer
+      ${
+        this._viewer
+          ? html`<media-viewer
             .url=${this._viewer.url}
             .type=${this._viewer.type}
             @close=${this._onViewerClose}
           ></media-viewer>`
-        : nothing}
+          : nothing
+      }
     `;
   }
 }

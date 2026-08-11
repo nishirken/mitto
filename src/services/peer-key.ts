@@ -1,11 +1,6 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import type {
-  ChannelId,
-  ChatId,
-  PeerId,
-  UserId,
-} from './database';
+import type { ChannelId, ChatId, PeerId, UserId } from './database';
 import { StoredPeer } from './database/database-schema';
 
 export type PeerKind = 'user' | 'chat' | 'channel';
@@ -66,7 +61,10 @@ export function toInputPeer(peer: StoredPeer): Api.TypeInputPeer {
   const bi = telegram.helpers.returnBigInt;
 
   if (kind === 'user') {
-    return new telegram.Api.InputPeerUser({ userId: bi(id), accessHash: bi(peer.accessHash ?? '0') });
+    return new telegram.Api.InputPeerUser({
+      userId: bi(id),
+      accessHash: bi(peer.accessHash ?? '0'),
+    });
   }
   if (kind === 'channel') {
     return new telegram.Api.InputPeerChannel({

@@ -21,7 +21,10 @@ import { MediaRepository } from './services/repositories/media/media-repository'
 import { MediaFileService } from './services/media/media-file-service';
 import { SettingsStore } from './services/settings/settings-store';
 
-const { TelegramClient, sessions: { StringSession } } = telegram;
+const {
+  TelegramClient,
+  sessions: { StringSession },
+} = telegram;
 
 const API_ID = 30808228;
 const API_HASH = '4e1cb190f78eea34a15a55b685e48b07';
@@ -56,7 +59,6 @@ export class AppRoot extends SignalWatcher(LitElement) {
     });
     await client.connect();
     const config = { apiId: API_ID, apiHash: API_HASH };
-
 
     const mediaRepository = new MediaRepository(storage);
     const settingsStore = new SettingsStore(storage);

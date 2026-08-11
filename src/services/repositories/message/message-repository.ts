@@ -5,7 +5,6 @@ import { toStoredUser } from '../user/mappers';
 import { MediaRepository } from '../media/media-repository';
 import { toStoredMessage } from './mappers';
 
-
 // Writes messages to the database
 export class MessageRepository {
   constructor(
@@ -46,18 +45,16 @@ export class MessageRepository {
   }
 
   async applyMessagesResponse(
-    result: Api.messages.Messages | Api.messages.MessagesSlice
+    result: Api.messages.Messages | Api.messages.MessagesSlice,
   ): Promise<void> {
-    const messages = result.messages.map(toStoredMessage).filter(m => !!m);
+    const messages = result.messages.map(toStoredMessage).filter((m) => !!m);
     await this._media.applyMessagesMedia(result.messages);
     await this._storage.putMessages(messages);
-    await this._storage.putUsers(result.users.map(toStoredUser).filter(u => !!u));
+    await this._storage.putUsers(result.users.map(toStoredUser).filter((u) => !!u));
     this._hub.notify('newMessages', messages);
   }
 
-  async updateNewMessage(
-    result: Api.UpdateNewMessage
-  ): Promise<void> {
+  async updateNewMessage(result: Api.UpdateNewMessage): Promise<void> {
     await this.applyMessage(result.message);
   }
 }

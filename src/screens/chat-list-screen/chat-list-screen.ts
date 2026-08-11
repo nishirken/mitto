@@ -26,8 +26,15 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
 
   connectedCallback() {
     super.connectedCallback();
-    this._dialogListSyncService = new DialogListSyncService(this.services.client, this.services.dialogRepository, this.services.messageRepository);
-    this._dialogListProjection = new DialogListProjection(this.services.database, this.services.databaseHub);
+    this._dialogListSyncService = new DialogListSyncService(
+      this.services.client,
+      this.services.dialogRepository,
+      this.services.messageRepository,
+    );
+    this._dialogListProjection = new DialogListProjection(
+      this.services.database,
+      this.services.databaseHub,
+    );
     void this._dialogListSyncService.loadInitial().catch(() => {});
     this._dialogListProjection.init().catch(() => {});
   }
@@ -79,7 +86,7 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
               .unreadCount=${chat.unreadCount}
               @click="${() => this._onChatClick(chat.id)}"
             ></chat-item>
-          `
+          `,
         )}
       </scroll-container>
     `;

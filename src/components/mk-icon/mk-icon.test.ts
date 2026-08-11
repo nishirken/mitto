@@ -21,10 +21,7 @@ describe('mk-icon', () => {
   test.each(Object.entries(paths))('renders a distinct glyph for %s', async (type, d) => {
     const el = await mount(type as IconType);
 
-    expect(el.shadowRoot!.querySelector('path')).toHaveProperty(
-      'attributes.d.value',
-      d,
-    );
+    expect(el.shadowRoot!.querySelector('path')).toHaveProperty('attributes.d.value', d);
   });
 
   test('hides the glyph from assistive technology', async () => {

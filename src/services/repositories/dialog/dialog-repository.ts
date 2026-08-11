@@ -21,7 +21,10 @@ export class DialogRepository {
     await this._media.applyMessagesMedia(result.messages);
     await this._storage.putAll(users, mergeUser, messages, dialogs);
 
-    this._hub.notify('newDialogs', dialogs.map((d) => d.peerId));
+    this._hub.notify(
+      'newDialogs',
+      dialogs.map((d) => d.peerId),
+    );
   }
 
   async applyReadInbox(peerId: PeerId, maxId: MessageId, stillUnreadCount: number): Promise<void> {
@@ -29,7 +32,9 @@ export class DialogRepository {
 
     if (!dialog || maxId <= dialog.readInboxMaxId) return;
 
-    await this._storage.putDialogs([{ ...dialog, readInboxMaxId: maxId, unreadCount: stillUnreadCount }]);
+    await this._storage.putDialogs([
+      { ...dialog, readInboxMaxId: maxId, unreadCount: stillUnreadCount },
+    ]);
 
     this._hub.notify('dialogRead', peerId);
   }

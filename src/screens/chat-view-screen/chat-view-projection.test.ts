@@ -111,7 +111,9 @@ describe('ChatViewProjection', () => {
   });
 
   test('fulfills media for a single new message', async () => {
-    await fake.putMedia([mockStoredMedia({ id: 'voice:9' as MediaId, type: 'voice', duration: 3 })]);
+    await fake.putMedia([
+      mockStoredMedia({ id: 'voice:9' as MediaId, type: 'voice', duration: 3 }),
+    ]);
     await fake.putMessages([
       mockStoredMessage({ peerId, id: 5 as MessageId, mediaId: 'voice:9' as MediaId }),
     ]);
@@ -167,7 +169,14 @@ describe('ChatViewProjection read state', () => {
     await flush();
 
     const readById = new Map(projection.messages.get().map((m) => [m.id, m.isRead]));
-    expect(readById).toEqual(new Map([[1, true], [2, true], [3, false], [4, false]]));
+    expect(readById).toEqual(
+      new Map([
+        [1, true],
+        [2, true],
+        [3, false],
+        [4, false],
+      ]),
+    );
   });
 
   test('points at the oldest unread incoming message', async () => {
@@ -198,9 +207,7 @@ describe('ChatViewProjection read state', () => {
     await flush();
     expect(projection.messages.get()[0].isRead).toBe(false);
 
-    await fake.putDialogs([
-      mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId }),
-    ]);
+    await fake.putDialogs([mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId })]);
     hub.notify('dialogRead', peerId);
     await flush();
 
@@ -214,9 +221,7 @@ describe('ChatViewProjection read state', () => {
     hub.notify('newMessages', []);
     await flush();
 
-    await fake.putDialogs([
-      mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId }),
-    ]);
+    await fake.putDialogs([mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId })]);
     hub.notify('dialogRead', 'user:2' as PeerId);
     await flush();
 

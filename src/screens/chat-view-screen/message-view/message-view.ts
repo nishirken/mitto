@@ -54,9 +54,11 @@ export class MessageView extends LitElement {
     return html`
       <span class="message">
         ${this._renderMedia}
-        ${this.text
-          ? html`<span class="text" data-testid="message-view.text">${this.text}</span>`
-          : nothing}
+        ${
+          this.text
+            ? html`<span class="text" data-testid="message-view.text">${this.text}</span>`
+            : nothing
+        }
       </span>
       <span class="msg-time">${this.timestamp}${this._renderStatus}</span>
     `;
