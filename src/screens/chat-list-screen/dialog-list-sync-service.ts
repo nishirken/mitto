@@ -1,10 +1,11 @@
 import { signal, type Signal } from '@lit-labs/signals';
 import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
-import { Timestamp } from '../../utils/flavour';
-import { MessageId } from '../../services/database';
-import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
-import { MessageRepository } from '../../services/repositories/message/message-repository';
+import type { Timestamp } from '../../utils/flavour';
+import type { MessageId } from '../../services/database';
+import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
+import type { IMessageRepository } from '../../services/repositories/message/message-repository';
+import { peerKey } from '../../services/peer-key';
 
 const { Api: A, events: Events, utils } = telegram;
 
@@ -20,13 +21,15 @@ export class DialogListSyncService {
   private readonly _loading = signal(false);
   private readonly _hasMore = signal(false);
   private readonly _newMessageEvent = new Events.NewMessage({});
-  private _totalCount: number = 0;
+  private readonly _incomingReadEvent = new Events.Raw({
+    types: [A.UpdateReadHistoryInbox],
+  });
   private _offset?: Offset;
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _dialogRepo: DialogRepository,
-    private readonly _messageRepo: MessageRepository,
+    private readonly _dialogRepo: IDialogRepository,
+    private readonly _messageRepo: IMessageRepository,
   ) {}
 
   get loading(): Signal.State<boolean> {
@@ -39,6 +42,8 @@ export class DialogListSyncService {
 
   async loadInitial(limit = 20): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.addEventHandler(this._handleReadEvent, this._incomingReadEvent);
+
     this._loading.set(true);
 
     try {
@@ -58,8 +63,6 @@ export class DialogListSyncService {
       } else if (result instanceof A.messages.DialogsNotModified) {
         return;
       }
-
-      this._totalCount += result.dialogs.length;
 
       await this._dialogRepo.applyDialogsResponse(result);
 
@@ -87,10 +90,8 @@ export class DialogListSyncService {
       );
 
       if (result instanceof A.messages.Dialogs) {
-        this._totalCount += result.dialogs.length;
         this._hasMore.set(false);
       } else if (result instanceof A.messages.DialogsSlice) {
-        this._totalCount += result.dialogs.length;
         this._hasMore.set(result.dialogs.length < limit);
       } else if (result instanceof A.messages.DialogsNotModified) {
         return;
@@ -106,30 +107,31 @@ export class DialogListSyncService {
 
   dispose(): void {
     this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.removeEventHandler(this._handleReadEvent, this._incomingReadEvent);
   }
 
-private _resolveOffset(result: DialogsResult): Offset | undefined {
-  const { dialogs } = result;
+  private _resolveOffset(result: DialogsResult): Offset | undefined {
+    const { dialogs } = result;
 
     // find a dialog with offset we can build for, continue pagination from this dialog
-  for (let i = dialogs.length - 1; i >= 0; i--) {
+    for (let i = dialogs.length - 1; i >= 0; i--) {
       const dialog = dialogs[i];
       if (dialog instanceof A.DialogFolder) continue;
       const offset = this._offsetFromDialog(result, dialog);
       if (offset) return offset;
+    }
   }
+
+  private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | undefined {
+    const topMessageId: MessageId = dialog.topMessage;
+    const topMessage = result.messages.find((m) => m.id === topMessageId);
+    if (!topMessage || topMessage instanceof A.MessageEmpty) return undefined;
+
+    const fullPeer = findFullPeer(result, dialog.peer);
+    if (!fullPeer) return undefined;
+
+    return { date: topMessage.date, id: topMessageId, peer: utils.getInputPeer(fullPeer) };
   }
-
-private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | undefined {
-  const topMessageId: MessageId = dialog.topMessage;
-  const topMessage = result.messages.find((m) => m.id === topMessageId);
-  if (!topMessage || topMessage instanceof A.MessageEmpty) return undefined;
-
-  const fullPeer = findFullPeer(result, dialog.peer);
-  if (!fullPeer) return undefined;
-
-  return { date: topMessage.date, id: topMessageId, peer: utils.getInputPeer(fullPeer) };
-}
 
   private _advanceCursor(result: DialogsResult): void {
     const offset = this._resolveOffset(result);
@@ -144,6 +146,16 @@ private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | u
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
     void this._messageRepo.applyMessage(event.message);
   };
+
+  private _handleReadEvent = (update: Api.TypeUpdate): void => {
+    if (update instanceof A.UpdateReadHistoryInbox) {
+      void this._dialogRepo.applyReadInbox(
+        peerKey(update.peer),
+        update.maxId,
+        update.stillUnreadCount,
+      );
+    }
+  };
 }
 
 function findFullPeer(
@@ -157,5 +169,7 @@ function findFullPeer(
     return result.chats.find((c) => c.id.toString() === peer.chatId.toString());
   }
 
-  return result.chats.find((c) => c.id.toString() === (peer as Api.PeerChannel).channelId.toString());
+  return result.chats.find(
+    (c) => c.id.toString() === (peer as Api.PeerChannel).channelId.toString(),
+  );
 }

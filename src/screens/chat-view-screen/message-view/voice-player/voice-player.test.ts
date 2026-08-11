@@ -11,9 +11,14 @@ const voice = { id: 'voice:1' as MediaId, type: 'voice', duration: 3 } satisfies
 
 async function mount(url: string | null = 'blob:voice') {
   const play = vi.fn(async () => {});
-  vi.spyOn(window, 'Audio').mockImplementation(function () {
-    return { play, pause: vi.fn(), addEventListener: vi.fn() } as unknown as HTMLAudioElement;
-  });
+
+  class MockAudio {
+    play = play;
+    pause = vi.fn(() => {});
+    addEventListener = vi.fn(() => {});
+  }
+
+  vi.spyOn(window, 'Audio').mockImplementation(MockAudio as unknown as typeof Audio);
 
   const mediaFileService = { url: vi.fn(async () => url) };
   const el = await fixture<VoicePlayer>(html`<voice-player .media=${voice}></voice-player>`);

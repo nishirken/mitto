@@ -91,9 +91,7 @@ describe('Media', () => {
 
   test('projects a video document', () => {
     const media = new Api.MessageMediaDocument({
-      document: document([
-        new Api.DocumentAttributeVideo({ duration: 12, w: 640, h: 480 }),
-      ]),
+      document: document([new Api.DocumentAttributeVideo({ duration: 12, w: 640, h: 480 })]),
     });
 
     expect(toStoredMedia(media)).toMatchObject({
@@ -112,9 +110,7 @@ describe('Media', () => {
 
   test('projects a voice document', () => {
     const media = new Api.MessageMediaDocument({
-      document: document([
-        new Api.DocumentAttributeAudio({ voice: true, duration: 7 }),
-      ]),
+      document: document([new Api.DocumentAttributeAudio({ voice: true, duration: 7 })]),
     });
 
     expect(toStoredMedia(media)).toMatchObject({

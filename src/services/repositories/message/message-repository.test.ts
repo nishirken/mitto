@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import telegram from 'telegram';
-import { createFakeStorage, FakeDatabase } from '../../database/__mocks__/database';
+import { createFakeStorage, type FakeDatabase } from '../../database/__mocks__/database';
 import { DatabaseHub } from '../../database/database-hub';
-import { Database, MediaId, MessageId, PeerId } from '../../database';
+import type { Database, MediaId, MessageId, PeerId } from '../../database';
 import { MediaRepository } from '../media/media-repository';
 import { MessageRepository } from './message-repository';
 

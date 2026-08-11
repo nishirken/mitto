@@ -100,4 +100,26 @@ describe('scroll-container', () => {
 
     expect(spy).toHaveBeenCalled();
   });
+
+  it('delegates scrollToElement to the paged implementation', async () => {
+    const { el } = await mount(true);
+    const inner = el.shadowRoot!.querySelector('paged-scroll-container')!;
+    const spy = vi.spyOn(inner, 'scrollToElement');
+    const child = el.querySelector('[data-testid="child"]')!;
+
+    el.scrollToElement(child);
+
+    expect(spy).toHaveBeenCalledWith(child);
+  });
+
+  it('delegates scrollToElement to the infinite implementation', async () => {
+    const { el } = await mount(false);
+    const inner = el.shadowRoot!.querySelector('infinite-scroll-container')!;
+    const spy = vi.spyOn(inner, 'scrollToElement');
+    const child = el.querySelector('[data-testid="child"]')!;
+
+    el.scrollToElement(child);
+
+    expect(spy).toHaveBeenCalledWith(child);
+  });
 });

@@ -29,11 +29,14 @@ const renderItems = (count: number): ReturnType<typeof html>[] => {
   });
 };
 
-const renderComponent = async (count: number, onPageChange?: (e: CustomEvent<PageChangeDetail>) => void): Promise<PagedScrollContainer> => {
+const renderComponent = async (
+  count: number,
+  onPageChange?: (e: CustomEvent<PageChangeDetail>) => void,
+): Promise<PagedScrollContainer> => {
   return fixture<PagedScrollContainer>(html`
       <paged-scroll-container @pagechange="${onPageChange}" data-testid="container">${renderItems(count)}</paged-scroll-container>
     `);
-} 
+};
 
 // The pointer listeners live on `.root` inside the shadow root, and events do not
 // propagate down into shadow DOM — the gesture has to be dispatched there directly.
@@ -51,6 +54,13 @@ function swipe(el: Element, start: number, end: number): void {
 const scrollDown = (el: Element): void => swipe(el, 100, 20);
 const scrollUp = (el: Element): void => swipe(el, 20, 100);
 
+// happy-dom does no layout, so the rects the offset maths reads have to be stated.
+function setTops(el: Element, target: Element, rootTop: number, targetTop: number): void {
+  const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
+  root.getBoundingClientRect = () => ({ top: rootTop }) as DOMRect;
+  target.getBoundingClientRect = () => ({ top: targetTop }) as DOMRect;
+}
+
 describe('paged-scroll-container', () => {
   it('renders slotted content', async () => {
     const el = await renderComponent(1);
@@ -59,7 +69,7 @@ describe('paged-scroll-container', () => {
 
   it('doesnt emit pagechange initially', async () => {
     const handler = vi.fn();
-    const el = await renderComponent(30, handler); 
+    const el = await renderComponent(30, handler);
     setSizes(el, 300, 300);
     await nextFrame();
 
@@ -138,5 +148,47 @@ describe('paged-scroll-container', () => {
     await nextFrame();
 
     expect(handler).toHaveBeenCalledTimes(2);
+  });
+
+  it('scrolls to the page holding a given element', async () => {
+    const handler = vi.fn();
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
+    await nextFrame();
+
+    const target = queryByTestId(el, 'item:16')!;
+    setTops(el, target, 0, 600);
+    el.scrollToElement(target);
+
+    expect(lastDetail(handler)).toEqual({ index: 2, isFirst: false, isLast: true });
+  });
+
+  it('accounts for the current scroll offset when locating an element', async () => {
+    const handler = vi.fn();
+    const el = await renderComponent(20, handler);
+    setSizes(el, 300, 800);
+    await nextFrame();
+
+    const root = el.shadowRoot!.querySelector('.root') as HTMLElement;
+    root.scrollTop = 600;
+
+    const target = queryByTestId(el, 'item:9')!;
+    setTops(el, target, 0, -280);
+    el.scrollToElement(target);
+
+    expect(lastDetail(handler)).toEqual({ index: 1, isFirst: false, isLast: false });
+  });
+
+  it('ignores a scroll request before the viewport has a height', async () => {
+    const handler = vi.fn();
+    const el = await renderComponent(20, handler);
+    setSizes(el, 0, 800);
+    await nextFrame();
+
+    const target = queryByTestId(el, 'item:16')!;
+    setTops(el, target, 0, 600);
+    el.scrollToElement(target);
+
+    expect(handler).not.toHaveBeenCalled();
   });
 });

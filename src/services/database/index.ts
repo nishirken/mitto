@@ -14,4 +14,5 @@ export type {
   MediaType,
   MetaKey,
 } from './database-schema';
+export type { IDatabase } from './database';
 export { Database, DB_NAME, DB_VERSION } from './database';

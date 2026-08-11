@@ -10,9 +10,9 @@
    * ============================================ */
   --c-black: #000;
   --c-white: #fff;
-  --c-gray-600: #555;     /* secondary text, timestamps */
-  --c-gray-400: #888;     /* placeholders, disabled */
-  --c-gray-200: #999;     /* dotted separators */
+  --c-gray-600: #555; /* secondary text, timestamps */
+  --c-gray-400: #888; /* placeholders, disabled */
+  --c-gray-200: #999; /* dotted separators */
 
   /* Semantic aliases */
   --c-bg: var(--c-white);
@@ -29,7 +29,7 @@
   /* ============================================
    * TYPOGRAPHY
    * ============================================ */
-  --font-family: 'Noto Sans', sans-serif;
+  --font-family: "Noto Sans", sans-serif;
   --fs-title: 24px;
   --fs-header: 22px;
   --fs-name: 20px;

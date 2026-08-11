@@ -25,9 +25,11 @@ export class MediaViewer extends LitElement {
           @click=${this._onClose}
         ></mk-icon-button>
       </div>
-      ${this.type === 'photo'
-        ? html`<img src=${this.url} alt="Photo" data-testid="media-viewer.photo" />`
-        : html`<video src=${this.url} data-testid="media-viewer.video" controls autoplay></video>`}
+      ${
+        this.type === 'photo'
+          ? html`<img src=${this.url} alt="Photo" data-testid="media-viewer.photo" />`
+          : html`<video src=${this.url} data-testid="media-viewer.video" controls autoplay></video>`
+      }
     `;
   }
 }

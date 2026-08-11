@@ -1,9 +1,14 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { DB_NAME, Database } from "./database";
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { DB_NAME, Database } from './database';
 import { deleteDB } from 'idb';
-import { mockStoredDialog, mockStoredMedia, mockStoredMessage, mockStoredUser } from "./database-schema.mocks";
-import { ChatId, MediaId, MessageId, UserId } from "./database-schema";
-import { mergeUser } from "../repositories/user/mappers";
+import {
+  mockStoredDialog,
+  mockStoredMedia,
+  mockStoredMessage,
+  mockStoredUser,
+} from './database-schema.mocks';
+import type { ChatId, MediaId, MessageId, UserId } from './database-schema';
+import { mergeUser } from '../repositories/user/mappers';
 
 describe('Database', () => {
   let storage: Database;
@@ -19,13 +24,13 @@ describe('Database', () => {
 
   describe('Meta', () => {
     test('get session', async () => {
-      await storage.setSession("test_session");
+      await storage.setSession('test_session');
       const session = await storage.getSession();
       expect(session).toBe('test_session');
     });
 
     test('clear session', async () => {
-      await storage.setSession("test_session");
+      await storage.setSession('test_session');
       await storage.clearSession();
       const session = await storage.getSession();
       expect(session).toBeNull();
@@ -45,7 +50,7 @@ describe('Database', () => {
     });
 
     test('settings and session coexist', async () => {
-      await storage.setSession("test_session");
+      await storage.setSession('test_session');
       await storage.setSettings({
         conversations: { pagedScroll: false },
         messages: { pagedScroll: true },
@@ -59,15 +64,11 @@ describe('Database', () => {
   });
 
   describe('Users', () => {
-    const users = [
-      mockStoredUser({ id: '1' as UserId }),
-      mockStoredUser({ id: '2' as UserId })
-    ];
+    const users = [mockStoredUser({ id: '1' as UserId }), mockStoredUser({ id: '2' as UserId })];
 
     beforeEach(async () => {
       await storage.putUsers(users);
     });
-
 
     test('Get users', async () => {
       const _users = await storage.getUsers(['1', '2']);
@@ -146,12 +147,7 @@ describe('Database', () => {
     const users = [mockStoredUser({ id: '1' as UserId })];
     const messages = [mockStoredMessage({ id: 1 as MessageId, peerId: '1' as ChatId })];
     const dialogs = [mockStoredDialog({ peerId: '1' as ChatId })];
-    await storage.putAll(
-      users,
-      mergeUser,
-      messages,
-      dialogs,
-    );
+    await storage.putAll(users, mergeUser, messages, dialogs);
     const _users = await storage.getUsers(['1']);
     const _message = await storage.getMessage('1', 1);
     const _dialog = await storage.getDialog('1');

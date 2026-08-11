@@ -1,5 +1,5 @@
 import { signal } from '@lit-labs/signals';
-import type { Database, StoredSettings } from 'services/database';
+import type { IDatabase, StoredSettings } from 'services/database';
 
 export const DEFAULT_SETTINGS: StoredSettings = {
   conversations: { pagedScroll: false },
@@ -11,7 +11,7 @@ export type SettingsSection = keyof StoredSettings;
 export class SettingsStore {
   readonly settings = signal<StoredSettings>(DEFAULT_SETTINGS);
 
-  constructor(private readonly _storage: Database) {}
+  constructor(private readonly _storage: IDatabase) {}
 
   async init(): Promise<void> {
     const stored = await this._storage.getSettings();

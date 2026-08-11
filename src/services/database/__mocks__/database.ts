@@ -37,7 +37,7 @@ export class FakeDatabase {
 
   async putAll(
     users: StoredUser[],
-    mergeUser: (x: StoredUser, y: StoredUser) => StoredUser,
+    _mergeUser: (x: StoredUser, y: StoredUser) => StoredUser,
     messages: StoredMessage[],
     dialogs: StoredDialog[],
   ): Promise<void> {
@@ -63,7 +63,7 @@ export class FakeDatabase {
   }
 
   async getMediaItems(ids: MediaId[]): Promise<StoredMedia[]> {
-    return ids.map((id) => this.media.get(id)).filter(m => !!m) as StoredMedia[];
+    return ids.map((id) => this.media.get(id)).filter((m) => !!m) as StoredMedia[];
   }
 
   async getMessage(chatId: PeerId, id: number): Promise<StoredMessage | undefined> {
@@ -72,6 +72,10 @@ export class FakeDatabase {
 
   async getDialog(peerId: PeerId): Promise<StoredDialog | undefined> {
     return this.dialogs.get(peerId);
+  }
+
+  async getDialogs(ids: PeerId[]): Promise<StoredDialog[]> {
+    return ids.map((id) => this.dialogs.get(id)).filter((d) => !!d) as StoredDialog[];
   }
 
   async loadMessages(peerId: PeerId): Promise<StoredMessage[]> {

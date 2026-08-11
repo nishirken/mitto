@@ -32,6 +32,7 @@
             pnpm
             jdk21
             androidSdk
+            biome
           ];
 
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";

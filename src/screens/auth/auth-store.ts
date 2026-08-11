@@ -1,8 +1,8 @@
-import { signal } from '@lit-labs/signals';
+import { signal, type Signal } from '@lit-labs/signals';
 import type { TelegramClient } from 'telegram';
 import telegram from 'telegram';
 import type { TelegramConfig } from 'types/telegram';
-import type { Database } from 'services/database';
+import type { IDatabase } from 'services/database';
 
 export type AuthState =
   | 'loading'
@@ -12,7 +12,17 @@ export type AuthState =
   | 'wait_password'
   | 'ready';
 
-export class TelegramAuthStore {
+export interface IAuthStore {
+  readonly state: Signal.State<AuthState>;
+  init(): Promise<void>;
+  dispose(): void;
+  sendPhoneNumber(phone: string): Promise<void>;
+  sendAuthCode(code: string): Promise<void>;
+  resendCodeViaSms(): Promise<void>;
+  logout(): Promise<boolean>;
+}
+
+export class TelegramAuthStore implements IAuthStore {
   readonly state = signal<AuthState>('loading');
 
   private _phoneNumber = '';
@@ -21,7 +31,7 @@ export class TelegramAuthStore {
   constructor(
     private readonly _config: TelegramConfig,
     private readonly _client: TelegramClient,
-    private readonly _storage: Database,
+    private readonly _storage: IDatabase,
   ) {}
 
   /**
@@ -121,7 +131,12 @@ export class TelegramAuthStore {
       await this._storage.setSession(sessionString);
       this.state.set('ready');
     } catch (e: unknown) {
-      if (e && typeof e === 'object' && 'errorMessage' in e && (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED') {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'errorMessage' in e &&
+        (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED'
+      ) {
         this.state.set('wait_password');
       } else {
         throw e;

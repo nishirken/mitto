@@ -23,9 +23,7 @@ describe('message-view', () => {
   });
 
   test('renders media without an empty text row', async () => {
-    const el = await fixture<MessageView>(
-      html`<message-view .media=${photo}></message-view>`,
-    );
+    const el = await fixture<MessageView>(html`<message-view .media=${photo}></message-view>`);
 
     expect(tid(el, 'message-view.media')).not.toBeNull();
     expect(tid(el, 'message-view.text')).toBeNull();
@@ -40,6 +38,26 @@ describe('message-view', () => {
     const text = tid(el, 'message-view.text')!;
 
     expect(media.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test('marks an outgoing message as sent until the peer reads it', async () => {
+    const el = await fixture<MessageView>(html`<message-view outgoing text="hi"></message-view>`);
+
+    expect(tid(el, 'message-view.status')).toHaveProperty('type', 'check');
+  });
+
+  test('marks an outgoing message as read once the peer reads it', async () => {
+    const el = await fixture<MessageView>(
+      html`<message-view outgoing read text="hi"></message-view>`,
+    );
+
+    expect(tid(el, 'message-view.status')).toHaveProperty('type', 'check-double');
+  });
+
+  test('omits the status mark on an incoming message', async () => {
+    const el = await fixture<MessageView>(html`<message-view read text="hi"></message-view>`);
+
+    expect(tid(el, 'message-view.status')).toBeNull();
   });
 
   test('renders a voice note with its own player', async () => {

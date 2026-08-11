@@ -1,6 +1,6 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import { type MediaId, type StoredMedia } from '../../database';
+import type { MediaId, StoredMedia } from '../../database';
 
 const { Api: A } = telegram;
 

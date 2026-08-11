@@ -29,6 +29,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
   @state() private _viewer?: MediaOpenDetail;
+  private _initialScrollDone = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -37,16 +38,51 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       throw new Error('chatId property is required');
     }
 
-    this._dialogSyncService = new DialogSyncService(this.services.client, this.services.messageRepository, this.services.database, this.chatId as PeerId);
-    this._chatViewProjection = new ChatViewProjection(this.services.database, this.services.databaseHub, this.chatId as PeerId);
+    this._dialogSyncService = new DialogSyncService(
+      this.services.client,
+      this.services.messageRepository,
+      this.services.dialogRepository,
+      this.services.database,
+      this.chatId as PeerId,
+    );
+    this._chatViewProjection = new ChatViewProjection(
+      this.services.database,
+      this.services.databaseHub,
+      this.chatId as PeerId,
+    );
     this._chatViewProjection.init();
-    this._dialogSyncService.loadInitial().then(() => this._scrollToBottom());
+    this._dialogSyncService.loadInitial();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._dialogSyncService?.dispose();
     this._chatViewProjection?.dispose();
+  }
+
+  protected updated() {
+    if (this._initialScrollDone || this._chatViewProjection.messages.get().length === 0) return;
+
+    this._initialScrollDone = true;
+    void this._scrollToFirstUnread();
+  }
+
+  private async _scrollToFirstUnread() {
+    await this.updateComplete;
+
+    const firstUnreadId = this._chatViewProjection.firstUnreadId.get();
+    const target =
+      firstUnreadId === undefined
+        ? null
+        : this.renderRoot.querySelector(`[data-message-id="${firstUnreadId}"]`);
+
+    if (target) {
+      this._scrollContainer?.scrollToElement(target);
+
+      return;
+    }
+
+    this._scrollContainer?.scrollToBottom();
   }
 
   private async _scrollToBottom() {
@@ -113,23 +149,27 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
           ${messages.map(
             (msg) => html`
               <message-view
+                data-message-id=${msg.id}
                 ?outgoing=${msg.isOutgoing}
+                ?read=${msg.isRead}
                 .text=${msg.text}
                 .media=${msg.media}
                 .timestamp=${formatTimestamp(msg.date)}
               ></message-view>
-            `
+            `,
           )}
         </div>
       </scroll-container>
       <chat-view-footer @send=${this._onSend}></chat-view-footer>
-      ${this._viewer
-        ? html`<media-viewer
+      ${
+        this._viewer
+          ? html`<media-viewer
             .url=${this._viewer.url}
             .type=${this._viewer.type}
             @close=${this._onViewerClose}
           ></media-viewer>`
-        : nothing}
+          : nothing
+      }
     `;
   }
 }

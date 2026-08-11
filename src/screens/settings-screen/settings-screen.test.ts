@@ -122,7 +122,9 @@ describe('settings-screen', () => {
   it('disables the button while signing out', async () => {
     let finish!: (ok: boolean) => void;
     vi.mocked(mockAuthStore.logout).mockReturnValue(
-      new Promise<boolean>((resolve) => { finish = resolve; }),
+      new Promise<boolean>((resolve) => {
+        finish = resolve;
+      }),
     );
     const el = await mount();
 

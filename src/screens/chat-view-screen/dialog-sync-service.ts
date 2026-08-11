@@ -1,10 +1,11 @@
 import { signal, type Signal } from '@lit-labs/signals';
 import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
-import { Timestamp } from '../../utils/flavour';
-import { Database, MessageId, PeerId } from '../../services/database';
-import { toInputPeer } from '../../services/peer-key';
-import { MessageRepository } from '../../services/repositories/message/message-repository';
+import type { Timestamp } from '../../utils/flavour';
+import type { IDatabase, MessageId, PeerId } from '../../services/database';
+import { peerKey, toInputPeer } from '../../services/peer-key';
+import type { IMessageRepository } from '../../services/repositories/message/message-repository';
+import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
 
 const { Api: A, events: Events } = telegram;
 
@@ -20,14 +21,17 @@ export class DialogSyncService {
   private readonly _loading = signal(false);
   private readonly _hasMore = signal(false);
   private readonly _newMessageEvent = new Events.NewMessage({});
-  private _totalCount: number = 0;
+  private readonly _readHistoryEvent = new Events.Raw({
+    types: [A.UpdateReadHistoryInbox, A.UpdateReadHistoryOutbox],
+  });
   private _peer?: Api.TypeInputPeer;
   private _offset?: Offset;
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _repo: MessageRepository,
-    private readonly _db: Database,
+    private readonly _repo: IMessageRepository,
+    private readonly _dialogRepo: IDialogRepository,
+    private readonly _db: IDatabase,
     private readonly _peerId: PeerId,
   ) {}
 
@@ -41,6 +45,7 @@ export class DialogSyncService {
 
   async loadInitial(limit = 20): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.addEventHandler(this._handleReadHistory, this._readHistoryEvent);
     this._loading.set(true);
 
     const peer = await this._db.getPeer(this._peerId);
@@ -67,8 +72,6 @@ export class DialogSyncService {
         return;
       }
 
-      this._totalCount += result.messages.length;
-
       await this._repo.applyMessagesResponse(result);
 
       this._advanceCursor(result);
@@ -90,15 +93,13 @@ export class DialogSyncService {
           limit,
           offsetDate: this._offset.date,
           offsetId: this._offset.id,
-          peer: this._offset.peer, 
-        })
+          peer: this._offset.peer,
+        }),
       );
 
       if (result instanceof A.messages.Messages) {
-        this._totalCount += result.messages.length;
         this._hasMore.set(false);
       } else if (result instanceof A.messages.MessagesSlice) {
-        this._totalCount += result.messages.length;
         this._hasMore.set(result.messages.length < limit);
       } else {
         return;
@@ -144,11 +145,12 @@ export class DialogSyncService {
 
   dispose(): void {
     this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.removeEventHandler(this._handleReadHistory, this._readHistoryEvent);
   }
 
-private _resolveOffset(result: MessagesResult): Offset | undefined {
-  if (!this._peer) return;
-  const { messages } = result;
+  private _resolveOffset(result: MessagesResult): Offset | undefined {
+    if (!this._peer) return;
+    const { messages } = result;
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
       if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
@@ -175,5 +177,18 @@ private _resolveOffset(result: MessagesResult): Offset | undefined {
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
     void this._repo.applyMessage(event.message);
   };
-}
 
+  private _handleReadHistory = (update: Api.TypeUpdate): void => {
+    if (update instanceof A.UpdateReadHistoryInbox) {
+      void this._dialogRepo.applyReadInbox(
+        peerKey(update.peer),
+        update.maxId as MessageId,
+        update.stillUnreadCount,
+      );
+    }
+
+    if (update instanceof A.UpdateReadHistoryOutbox) {
+      void this._dialogRepo.applyReadOutbox(peerKey(update.peer), update.maxId as MessageId);
+    }
+  };
+}
