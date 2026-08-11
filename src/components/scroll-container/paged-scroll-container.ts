@@ -59,6 +59,17 @@ export class PagedScrollContainer extends LitElement {
     this._scrollToCurrentPage();
   }
 
+  scrollToElement(el: Element): void {
+    const clientHeight = this._root?.clientHeight ?? 0;
+    if (clientHeight === 0) return;
+
+    this.scrollToPage(Math.floor(this._offsetTop(el) / clientHeight));
+  }
+
+  private _offsetTop(el: Element): number {
+    return el.getBoundingClientRect().top - this._root.getBoundingClientRect().top + this._root.scrollTop;
+  }
+
   private _onSlotChange = (): void => {
     this._rebuildMarkers();
   };

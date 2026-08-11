@@ -11,6 +11,8 @@ const paths: Record<IconType, string> = {
   play: 'M8 5v14l11-7z',
   pause: 'M7 5h4v14H7zM13 5h4v14h-4z',
   settings: 'M3 8h4M11 8h10M3 16h10M17 16h4',
+  check: 'M4 13l5 5L20 7',
+  'check-double': 'M1 13l5 5L17 7',
 };
 
 const mount = (type: IconType) => fixture<MkIcon>(html`<mk-icon type=${type}></mk-icon>`);

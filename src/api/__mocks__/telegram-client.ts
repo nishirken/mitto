@@ -63,11 +63,15 @@ export const mockAuthStore = {
 
 export const mockDialogRepository = {
   applyDialogsResponse: vi.fn(async () => {}),
+  applyReadInbox: vi.fn(async () => {}),
+  applyReadOutbox: vi.fn(async () => {}),
 } as unknown as Services['dialogRepository'];
 
 export const mockMessageRepository = {
+  applyMessage: vi.fn(async () => {}),
   applyNewMessage: vi.fn(async () => {}),
   applyMessagesResponse: vi.fn(async () => {}),
+  updateNewMessage: vi.fn(async () => {}),
 } as unknown as Services['messageRepository'];
 
 export const mockMediaRepository = {

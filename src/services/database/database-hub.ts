@@ -1,10 +1,11 @@
 import { MessageId, PeerId } from "./database-schema";
 
-export type EventType = 'newDialogs' | 'newMessage' | 'newMessages';
+export type EventType = 'newDialogs' | 'newMessage' | 'newMessages' | 'dialogRead';
 export type EventData = {
   newDialogs: PeerId[];
   newMessage: { peerId: PeerId; id: MessageId };
   newMessages: { peerId: PeerId; id: MessageId }[];
+  dialogRead: PeerId;
 };
 
 // Notifies about database changes

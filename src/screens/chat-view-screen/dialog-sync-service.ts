@@ -3,8 +3,9 @@ import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
 import { Timestamp } from '../../utils/flavour';
 import { Database, MessageId, PeerId } from '../../services/database';
-import { toInputPeer } from '../../services/peer-key';
+import { peerKey, toInputPeer } from '../../services/peer-key';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
+import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
 
 const { Api: A, events: Events } = telegram;
 
@@ -20,6 +21,9 @@ export class DialogSyncService {
   private readonly _loading = signal(false);
   private readonly _hasMore = signal(false);
   private readonly _newMessageEvent = new Events.NewMessage({});
+  private readonly _readHistoryEvent = new Events.Raw({
+    types: [A.UpdateReadHistoryInbox, A.UpdateReadHistoryOutbox],
+  });
   private _totalCount: number = 0;
   private _peer?: Api.TypeInputPeer;
   private _offset?: Offset;
@@ -27,6 +31,7 @@ export class DialogSyncService {
   constructor(
     private readonly _client: TelegramClient,
     private readonly _repo: MessageRepository,
+    private readonly _dialogRepo: DialogRepository,
     private readonly _db: Database,
     private readonly _peerId: PeerId,
   ) {}
@@ -41,6 +46,7 @@ export class DialogSyncService {
 
   async loadInitial(limit = 20): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.addEventHandler(this._handleReadHistory, this._readHistoryEvent);
     this._loading.set(true);
 
     const peer = await this._db.getPeer(this._peerId);
@@ -144,21 +150,22 @@ export class DialogSyncService {
 
   dispose(): void {
     this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.removeEventHandler(this._handleReadHistory, this._readHistoryEvent);
   }
 
-private _resolveOffset(result: MessagesResult): Offset | undefined {
-  if (!this._peer) return;
-  const { messages } = result;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
-        continue;
-      }
-      this._offset = {
-        id: message.id,
-        date: message.date,
-        peer: this._peer,
-      };
+  private _resolveOffset(result: MessagesResult): Offset | undefined {
+    if (!this._peer) return;
+    const { messages } = result;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
+          continue;
+        }
+        this._offset = {
+          id: message.id,
+          date: message.date,
+          peer: this._peer,
+        };
     }
   }
 
@@ -174,6 +181,20 @@ private _resolveOffset(result: MessagesResult): Offset | undefined {
 
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
     void this._repo.applyMessage(event.message);
+  };
+
+  private _handleReadHistory = (update: Api.TypeUpdate): void => {
+    if (update instanceof A.UpdateReadHistoryInbox) {
+      void this._dialogRepo.applyReadInbox(
+        peerKey(update.peer),
+        update.maxId as MessageId,
+        update.stillUnreadCount,
+      );
+    }
+
+    if (update instanceof A.UpdateReadHistoryOutbox) {
+      void this._dialogRepo.applyReadOutbox(peerKey(update.peer), update.maxId as MessageId);
+    }
   };
 }
 

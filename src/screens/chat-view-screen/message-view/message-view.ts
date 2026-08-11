@@ -4,12 +4,14 @@ import styles from './message-view.css?inline';
 import { MessageMedia } from '../chat-view-projection';
 import './media-attachment/media-attachment';
 import './voice-player/voice-player';
+import 'components/mk-icon/mk-icon';
 
 @customElement('message-view')
 export class MessageView extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property({ type: Boolean, reflect: true }) outgoing = false;
+  @property({ type: Boolean, reflect: true }) read = false;
   @property({ type: Object, attribute: false }) media?: MessageMedia;
   @property() text = '';
   @property() timestamp = '';
@@ -36,6 +38,18 @@ export class MessageView extends LitElement {
     return nothing;
   }
 
+  private get _renderStatus() {
+    if (!this.outgoing) return nothing;
+
+    return html`<mk-icon
+      class="status"
+      .type=${this.read ? 'check-double' : 'check'}
+      role="img"
+      aria-label=${this.read ? 'Read' : 'Sent'}
+      data-testid="message-view.status"
+    ></mk-icon>`;
+  }
+
   render() {
     return html`
       <span class="message">
@@ -44,7 +58,7 @@ export class MessageView extends LitElement {
           ? html`<span class="text" data-testid="message-view.text">${this.text}</span>`
           : nothing}
       </span>
-      <span class="msg-time">${this.timestamp}</span>
+      <span class="msg-time">${this.timestamp}${this._renderStatus}</span>
     `;
   }
 }

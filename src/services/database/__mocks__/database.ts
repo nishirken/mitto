@@ -74,6 +74,10 @@ export class FakeDatabase {
     return this.dialogs.get(peerId);
   }
 
+  async getDialogs(ids: PeerId[]): Promise<StoredDialog[]> {
+    return ids.map((id) => this.dialogs.get(id)).filter(d => !!d) as StoredDialog[];
+  }
+
   async loadMessages(peerId: PeerId): Promise<StoredMessage[]> {
     return [...this.messages.values()].filter((m) => m.peerId === peerId);
   }

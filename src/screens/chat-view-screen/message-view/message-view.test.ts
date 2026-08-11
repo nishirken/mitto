@@ -42,6 +42,26 @@ describe('message-view', () => {
     expect(media.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  test('marks an outgoing message as sent until the peer reads it', async () => {
+    const el = await fixture<MessageView>(html`<message-view outgoing text="hi"></message-view>`);
+
+    expect(tid(el, 'message-view.status')).toHaveProperty('type', 'check');
+  });
+
+  test('marks an outgoing message as read once the peer reads it', async () => {
+    const el = await fixture<MessageView>(
+      html`<message-view outgoing read text="hi"></message-view>`,
+    );
+
+    expect(tid(el, 'message-view.status')).toHaveProperty('type', 'check-double');
+  });
+
+  test('omits the status mark on an incoming message', async () => {
+    const el = await fixture<MessageView>(html`<message-view read text="hi"></message-view>`);
+
+    expect(tid(el, 'message-view.status')).toBeNull();
+  });
+
   test('renders a voice note with its own player', async () => {
     const voice: MessageMedia = { id: 'voice:1' as MediaId, type: 'voice', duration: 3 };
     const el = await fixture<MessageView>(html`<message-view .media=${voice}></message-view>`);

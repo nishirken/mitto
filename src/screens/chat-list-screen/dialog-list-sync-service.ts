@@ -5,6 +5,7 @@ import { Timestamp } from '../../utils/flavour';
 import { MessageId } from '../../services/database';
 import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
+import { peerKey } from '../../services/peer-key';
 
 const { Api: A, events: Events, utils } = telegram;
 
@@ -20,6 +21,9 @@ export class DialogListSyncService {
   private readonly _loading = signal(false);
   private readonly _hasMore = signal(false);
   private readonly _newMessageEvent = new Events.NewMessage({});
+  private readonly _incomingReadEvent = new Events.Raw({
+    types: [A.UpdateReadHistoryInbox],
+  });
   private _totalCount: number = 0;
   private _offset?: Offset;
 
@@ -39,6 +43,8 @@ export class DialogListSyncService {
 
   async loadInitial(limit = 20): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.addEventHandler(this._handleReadEvent, this._incomingReadEvent);
+
     this._loading.set(true);
 
     try {
@@ -106,6 +112,7 @@ export class DialogListSyncService {
 
   dispose(): void {
     this._client.removeEventHandler(this._handleNewMessage, this._newMessageEvent);
+    this._client.removeEventHandler(this._handleReadEvent, this._incomingReadEvent);
   }
 
 private _resolveOffset(result: DialogsResult): Offset | undefined {
@@ -143,6 +150,12 @@ private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | u
 
   private _handleNewMessage = (event: events.NewMessageEvent): void => {
     void this._messageRepo.applyMessage(event.message);
+  };
+
+  private _handleReadEvent = (update: Api.TypeUpdate): void => {
+    if (update instanceof A.UpdateReadHistoryInbox) {
+      void this._dialogRepo.applyReadInbox(peerKey(update.peer), update.maxId, update.stillUnreadCount);
+    }
   };
 }
 

@@ -46,6 +46,16 @@ export class ScrollContainer extends LitElement {
     this._infinite?.scrollToTop();
   }
 
+  scrollToElement(el: Element): void {
+    if (this._paged) {
+      this._paged.scrollToElement(el);
+
+      return;
+    }
+
+    this._infinite?.scrollToElement(el);
+  }
+
   refresh(): void {
     this._paged?.refresh();
   }

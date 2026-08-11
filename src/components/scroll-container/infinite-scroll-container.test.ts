@@ -99,4 +99,42 @@ describe('infinite-scroll-container', () => {
 
     expect(onTop).toHaveBeenCalledTimes(1);
   });
+
+  it('brings an element to the top of the viewport', async () => {
+    const { el } = await mount();
+    const node = root(el);
+    const target = el.querySelector('div')!;
+
+    node.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
+    target.getBoundingClientRect = () => ({ top: 320 }) as DOMRect;
+    el.scrollToElement(target);
+
+    expect(node.scrollTop).toBe(320);
+  });
+
+  it('adds the current scroll offset to the element position', async () => {
+    const { el } = await mount();
+    const node = root(el);
+    const target = el.querySelector('div')!;
+
+    node.scrollTop = 200;
+    node.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
+    target.getBoundingClientRect = () => ({ top: -120 }) as DOMRect;
+    el.scrollToElement(target);
+
+    expect(node.scrollTop).toBe(80);
+  });
+
+  it('does not re-announce the bottom it just scrolled into', async () => {
+    const { el, onBottom } = await mount();
+    const node = root(el);
+    const target = el.querySelector('div')!;
+
+    node.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
+    target.getBoundingClientRect = () => ({ top: 500 }) as DOMRect;
+    el.scrollToElement(target);
+    node.dispatchEvent(new Event('scroll'));
+
+    expect(onBottom).not.toHaveBeenCalled();
+  });
 });

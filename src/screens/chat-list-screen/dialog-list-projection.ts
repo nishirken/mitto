@@ -44,10 +44,12 @@ export function toChatListItem(
 
 export class DialogListProjection {
   readonly chats = signal<ChatListItem[]>([]);
-  private readonly _chats = new Map<UserId, ChatListItem>();
+  private readonly _chats = new Map<PeerId, ChatListItem>();
   private readonly _users = new Map<UserId, StoredUser>();
 
-  private _unsub?: () => void;
+  private _newDialogsUnsub?: () => void;
+  private _newMessageUnsub?: () => void;
+  private _dialogReadUnsub?: () => void;
 
   constructor(
     private readonly _db: Database,
@@ -55,9 +57,26 @@ export class DialogListProjection {
   ) {}
 
   async init(): Promise<void> {
-    this._unsub = this._hub.subscribe('newDialogs', async (peerIds) => {
+    this._newMessageUnsub = this._hub.subscribe('newMessage', async ({ peerId, id }) => {
+      const [dialog, peer, message] = await Promise.all([
+        this._db.getDialog(peerId),
+        this._db.getPeer(peerId),
+        this._db.getMessage(peerId, id),
+      ]);
+      if (dialog && message && peer) {
+        const chat = toChatListItem(dialog, peer, message);
+        this._chats.set(chat.id, chat);
+        this._emit();
+      }
+    });
+    this._newDialogsUnsub = this._hub.subscribe('newDialogs', async (peerIds) => {
       const dialogs = await this._db.getDialogs(peerIds);
       await this._updateChats(dialogs);
+    });
+
+    this._dialogReadUnsub = this._hub.subscribe('dialogRead', async (peerId) => {
+      const dialog = await this._db.getDialog(peerId);
+      if (dialog) await this._updateChats([dialog]);
     });
 
     const dialogs = await this._db.loadDialogs();
@@ -65,8 +84,13 @@ export class DialogListProjection {
   }
 
   dispose(): void {
-    this._unsub?.();
-    this._unsub = undefined;
+    this._newDialogsUnsub?.();
+    this._dialogReadUnsub?.();
+    this._newMessageUnsub?.();
+  }
+
+  private _emit(): void {
+    this.chats.set([...this._chats.values()].sort((a, b) => b.date - a.date));
   }
 
   private async _updateChats(dialogs: StoredDialog[]): Promise<void> {
@@ -85,6 +109,6 @@ export class DialogListProjection {
 
       this._chats.set(peerId, toChatListItem(dialog, this._users.get(peerId)!, topMessage));
     }
-    this.chats.set([...this._chats.values()].sort((a, b) => b.date - a.date));
+    this._emit();
   }
 }

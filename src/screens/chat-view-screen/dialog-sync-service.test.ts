@@ -1,17 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import telegram from 'telegram';
-import type { events, TelegramClient } from 'telegram';
+import type { Api as ApiTypes, events, TelegramClient } from 'telegram';
 import { createFakeStorage, FakeDatabase } from '../../services/database/__mocks__/database';
 import { DatabaseHub } from '../../services/database/database-hub';
 import { Database, PeerId } from '../../services/database';
-import { mockStoredUser } from '../../services/database/database-schema.mocks';
+import { mockStoredDialog, mockStoredUser } from '../../services/database/database-schema.mocks';
 import { MediaRepository } from '../../services/repositories/media/media-repository';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
+import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
 import { DialogSyncService } from './dialog-sync-service';
 
 const { Api } = telegram;
 const big = (n: string) => n as unknown as BigInteger;
 const peerId = 'user:1' as PeerId;
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function photoMessage() {
   return new Api.Message({
@@ -38,9 +40,12 @@ describe('DialogSyncService', () => {
   let client: { addEventHandler: ReturnType<typeof vi.fn>; invoke: ReturnType<typeof vi.fn> };
   let service: DialogSyncService;
 
+  const handlerFor = (index: number) => client.addEventHandler.mock.calls[index][0];
+
   beforeEach(async () => {
     ({ storage, fake } = createFakeStorage());
     await fake.putUsers([mockStoredUser({ id: 'user:1' })]);
+    await fake.putDialogs([mockStoredDialog({ peerId, unreadCount: 3 })]);
 
     client = {
       addEventHandler: vi.fn(),
@@ -49,19 +54,79 @@ describe('DialogSyncService', () => {
       })),
     };
 
-    const repo = new MessageRepository(storage, new DatabaseHub(), new MediaRepository(storage));
-    service = new DialogSyncService(client as unknown as TelegramClient, repo, storage, peerId);
+    const hub = new DatabaseHub();
+    const media = new MediaRepository(storage);
+    const repo = new MessageRepository(storage, hub, media);
+    const dialogRepo = new DialogRepository(storage, hub, media);
+    service = new DialogSyncService(
+      client as unknown as TelegramClient,
+      repo,
+      dialogRepo,
+      storage,
+      peerId,
+    );
     await service.loadInitial();
   });
 
   test('stores media for a message that arrives live', async () => {
-    const handler = client.addEventHandler.mock.calls[0][0] as (e: events.NewMessageEvent) => void;
+    const handler = handlerFor(0) as (e: events.NewMessageEvent) => void;
 
     handler({ message: photoMessage() } as events.NewMessageEvent);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flush();
 
     const message = await storage.getMessage(peerId, 5);
     expect(message?.mediaId).toBe('photo:10');
     expect(fake.media.get('photo:10')).toMatchObject({ type: 'photo', thumbSize: 'x' });
+  });
+
+  test('advances the inbox marker when the chat is read elsewhere', async () => {
+    const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
+
+    handler(new Api.UpdateReadHistoryInbox({
+      peer: new Api.PeerUser({ userId: big('1') }),
+      maxId: 42,
+      stillUnreadCount: 0,
+      pts: 1,
+      ptsCount: 1,
+    }));
+    await flush();
+
+    expect(fake.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });
+  });
+
+  test('advances the outbox marker when the peer reads our messages', async () => {
+    const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
+
+    handler(new Api.UpdateReadHistoryOutbox({
+      peer: new Api.PeerUser({ userId: big('1') }),
+      maxId: 7,
+      pts: 1,
+      ptsCount: 1,
+    }));
+    await flush();
+
+    expect(fake.dialogs.get(peerId)).toMatchObject({ readOutboxMaxId: 7 });
+  });
+
+  test('ignores a read update that moves the marker backwards', async () => {
+    const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
+    const peer = new Api.PeerUser({ userId: big('1') });
+
+    handler(new Api.UpdateReadHistoryInbox({ peer, maxId: 42, stillUnreadCount: 0, pts: 1, ptsCount: 1 }));
+    await flush();
+    handler(new Api.UpdateReadHistoryInbox({ peer, maxId: 10, stillUnreadCount: 5, pts: 2, ptsCount: 1 }));
+    await flush();
+
+    expect(fake.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });
+  });
+
+  test('never marks the history read on the server', async () => {
+    const handler = handlerFor(0) as (e: events.NewMessageEvent) => void;
+
+    handler({ message: photoMessage() } as events.NewMessageEvent);
+    await flush();
+
+    const invoked = client.invoke.mock.calls.map(([request]) => request);
+    expect(invoked.some((r) => r instanceof Api.messages.ReadHistory)).toBe(false);
   });
 });

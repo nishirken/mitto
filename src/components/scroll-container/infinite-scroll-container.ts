@@ -29,6 +29,17 @@ export class InfiniteScrollContainer extends LitElement {
     this._wasAtTop = true;
   }
 
+  scrollToElement(el: Element): void {
+    if (!this._root) return;
+
+    this._root.scrollTop =
+      el.getBoundingClientRect().top - this._root.getBoundingClientRect().top + this._root.scrollTop;
+
+    const { scrollTop, scrollHeight, clientHeight } = this._root;
+    this._wasAtTop = scrollTop <= this.threshold;
+    this._wasAtBottom = scrollHeight - scrollTop - clientHeight <= this.threshold;
+  }
+
   get scrollHeight(): number {
     return this._root?.scrollHeight ?? 0;
   }
