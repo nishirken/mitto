@@ -1,0 +1,6 @@
+# Revisions listed here are skipped by `git blame`.
+# Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# format everything with biome
+82871f536ea2665049cd427437593af95da17a2c
