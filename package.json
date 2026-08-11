@@ -10,8 +10,10 @@
     "build:apk:release": "tsc && vite build && cap sync android && cd android && ./gradlew assembleRelease",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "tsc --noEmit && eslint src/ && stylelint 'src/**/*.css'",
-    "lint:fix": "eslint src/ --fix && stylelint 'src/**/*.css' --fix",
+    "lint": "tsc --noEmit && biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "format:check": "biome format src/",
     "clean": "rm -rf dist android/app/build && cd android && ./gradlew clean",
     "prepare": "simple-git-hooks"
   },
@@ -19,8 +21,7 @@
     "pre-commit": "pnpm exec lint-staged"
   },
   "lint-staged": {
-    "src/**/*.ts": "eslint --no-warn-ignored --fix",
-    "src/**/*.css": "stylelint --fix"
+    "src/**/*.{ts,css}": "biome check --write --no-errors-on-unmatched"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
@@ -33,19 +34,14 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.2.0",
-    "@eslint/js": "^10.0.1",
     "@open-wc/testing": "^4.0.0",
     "@originjs/vite-plugin-commonjs": "^1.0.3",
-    "eslint": "^10.1.0",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.8.4",
     "lint-staged": "^16.4.0",
     "pino-pretty": "^13.1.3",
     "simple-git-hooks": "^2.13.1",
-    "stylelint": "^17.5.0",
-    "stylelint-config-standard": "^40.0.0",
     "typescript": "^7.0.2",
-    "typescript-eslint": "^8.57.1",
     "vite": "^8.0.1",
     "vitest": "^4.1.0"
   }

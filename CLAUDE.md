@@ -1,6 +1,6 @@
 # Mitto
 
-E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×480, 217 PPI). Lit web components, TypeScript, Vite, pnpm. Capacitor for Android APK bundling. gramjs (vendored bundle in `src/lib/telegram/`) for Telegram API. Vitest + @open-wc/testing + happy-dom for testing. ESLint + Stylelint for linting. Nix flake + direnv for dev environment.
+E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×480, 217 PPI). Lit web components, TypeScript, Vite, pnpm. Capacitor for Android APK bundling. gramjs (vendored bundle in `src/lib/telegram/`) for Telegram API. Vitest + @open-wc/testing + happy-dom for testing. Biome for linting and formatting (TS + CSS). Nix flake + direnv for dev environment.
 
 ## Conventions
 - Files: kebab-case (`chat-item.ts`, `chat-list-screen.ts`)
@@ -11,6 +11,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Coding
 - Do not add comments!
+- Blank line before every `return` — no longer linted, keep it by hand
 - Prefer semantic HTML (`<form>`, `<label>`, `<button type="submit">`) over divs with click handlers
 - Use appropriate ARIA roles and attributes
 - Add `data-testid` attributes to interactive elements for testing
@@ -23,7 +24,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Styles
 - Colocated CSS files, imported with `?inline`, scoped via `static styles = unsafeCSS(...)`
-- Order CSS selectors low→high specificity (stylelint `no-descending-specificity`)
+- Order CSS selectors low→high specificity (Biome `noDescendingSpecificity`)
 - Whole pixel values only — fractional px rounds unpredictably on e-ink
 - No `cursor` properties at all — touch-only device
 
@@ -36,4 +37,6 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Key Notes
 - `tsconfig.json`: `useDefineForClassFields: false` is critical for Lit decorators and prevents `private static` fields — use module-level variables instead
-- Pre-commit hook via simple-git-hooks → lint-staged (eslint --fix on .ts, stylelint --fix on .css)
+- Pre-commit hook via simple-git-hooks → lint-staged (`biome check --write` on .ts and .css)
+- `biome` comes from the Nix flake, not npm — the npm binary is dynamically linked and NixOS cannot run it
+- `biome.json` rejects comments; keep it strict JSON or it silently falls back to defaults

@@ -24,7 +24,6 @@ export class DialogListSyncService {
   private readonly _incomingReadEvent = new Events.Raw({
     types: [A.UpdateReadHistoryInbox],
   });
-  private _totalCount: number = 0;
   private _offset?: Offset;
 
   constructor(
@@ -65,8 +64,6 @@ export class DialogListSyncService {
         return;
       }
 
-      this._totalCount += result.dialogs.length;
-
       await this._dialogRepo.applyDialogsResponse(result);
 
       this._advanceCursor(result);
@@ -93,10 +90,8 @@ export class DialogListSyncService {
       );
 
       if (result instanceof A.messages.Dialogs) {
-        this._totalCount += result.dialogs.length;
         this._hasMore.set(false);
       } else if (result instanceof A.messages.DialogsSlice) {
-        this._totalCount += result.dialogs.length;
         this._hasMore.set(result.dialogs.length < limit);
       } else if (result instanceof A.messages.DialogsNotModified) {
         return;
@@ -115,28 +110,28 @@ export class DialogListSyncService {
     this._client.removeEventHandler(this._handleReadEvent, this._incomingReadEvent);
   }
 
-private _resolveOffset(result: DialogsResult): Offset | undefined {
-  const { dialogs } = result;
+  private _resolveOffset(result: DialogsResult): Offset | undefined {
+    const { dialogs } = result;
 
     // find a dialog with offset we can build for, continue pagination from this dialog
-  for (let i = dialogs.length - 1; i >= 0; i--) {
+    for (let i = dialogs.length - 1; i >= 0; i--) {
       const dialog = dialogs[i];
       if (dialog instanceof A.DialogFolder) continue;
       const offset = this._offsetFromDialog(result, dialog);
       if (offset) return offset;
+    }
   }
+
+  private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | undefined {
+    const topMessageId: MessageId = dialog.topMessage;
+    const topMessage = result.messages.find((m) => m.id === topMessageId);
+    if (!topMessage || topMessage instanceof A.MessageEmpty) return undefined;
+
+    const fullPeer = findFullPeer(result, dialog.peer);
+    if (!fullPeer) return undefined;
+
+    return { date: topMessage.date, id: topMessageId, peer: utils.getInputPeer(fullPeer) };
   }
-
-private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | undefined {
-  const topMessageId: MessageId = dialog.topMessage;
-  const topMessage = result.messages.find((m) => m.id === topMessageId);
-  if (!topMessage || topMessage instanceof A.MessageEmpty) return undefined;
-
-  const fullPeer = findFullPeer(result, dialog.peer);
-  if (!fullPeer) return undefined;
-
-  return { date: topMessage.date, id: topMessageId, peer: utils.getInputPeer(fullPeer) };
-}
 
   private _advanceCursor(result: DialogsResult): void {
     const offset = this._resolveOffset(result);
@@ -154,7 +149,11 @@ private _offsetFromDialog(result: DialogsResult, dialog: Api.Dialog): Offset | u
 
   private _handleReadEvent = (update: Api.TypeUpdate): void => {
     if (update instanceof A.UpdateReadHistoryInbox) {
-      void this._dialogRepo.applyReadInbox(peerKey(update.peer), update.maxId, update.stillUnreadCount);
+      void this._dialogRepo.applyReadInbox(
+        peerKey(update.peer),
+        update.maxId,
+        update.stillUnreadCount,
+      );
     }
   };
 }
@@ -170,5 +169,7 @@ function findFullPeer(
     return result.chats.find((c) => c.id.toString() === peer.chatId.toString());
   }
 
-  return result.chats.find((c) => c.id.toString() === (peer as Api.PeerChannel).channelId.toString());
+  return result.chats.find(
+    (c) => c.id.toString() === (peer as Api.PeerChannel).channelId.toString(),
+  );
 }

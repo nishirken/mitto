@@ -24,7 +24,6 @@ export class DialogSyncService {
   private readonly _readHistoryEvent = new Events.Raw({
     types: [A.UpdateReadHistoryInbox, A.UpdateReadHistoryOutbox],
   });
-  private _totalCount: number = 0;
   private _peer?: Api.TypeInputPeer;
   private _offset?: Offset;
 
@@ -73,8 +72,6 @@ export class DialogSyncService {
         return;
       }
 
-      this._totalCount += result.messages.length;
-
       await this._repo.applyMessagesResponse(result);
 
       this._advanceCursor(result);
@@ -96,15 +93,13 @@ export class DialogSyncService {
           limit,
           offsetDate: this._offset.date,
           offsetId: this._offset.id,
-          peer: this._offset.peer, 
-        })
+          peer: this._offset.peer,
+        }),
       );
 
       if (result instanceof A.messages.Messages) {
-        this._totalCount += result.messages.length;
         this._hasMore.set(false);
       } else if (result instanceof A.messages.MessagesSlice) {
-        this._totalCount += result.messages.length;
         this._hasMore.set(result.messages.length < limit);
       } else {
         return;
@@ -156,16 +151,16 @@ export class DialogSyncService {
   private _resolveOffset(result: MessagesResult): Offset | undefined {
     if (!this._peer) return;
     const { messages } = result;
-      for (let i = messages.length - 1; i >= 0; i--) {
-        const message = messages[i];
-        if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
-          continue;
-        }
-        this._offset = {
-          id: message.id,
-          date: message.date,
-          peer: this._peer,
-        };
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
+        continue;
+      }
+      this._offset = {
+        id: message.id,
+        date: message.date,
+        peer: this._peer,
+      };
     }
   }
 
@@ -197,4 +192,3 @@ export class DialogSyncService {
     }
   };
 }
-
