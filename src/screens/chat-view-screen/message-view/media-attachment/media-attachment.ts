@@ -1,7 +1,7 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
-import 'components/mk-icon/mk-icon';
+import 'mudita-ui';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { formatFileSize } from 'utils/format-file-size';

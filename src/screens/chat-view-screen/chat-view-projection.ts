@@ -79,6 +79,10 @@ export class ChatViewProjection {
 
     return first;
   });
+  private _resolveFirstMessages!: VoidFunction;
+  readonly firstMessages = new Promise<void>((resolve) => {
+    this._resolveFirstMessages = resolve;
+  });
   private readonly _messages = new Map<MessageId, StoredMessage>();
   private readonly _media = new Map<MediaId, StoredMedia>();
   private readonly _readInboxMaxId = signal(0 as MessageId);
@@ -180,6 +184,8 @@ export class ChatViewProjection {
         ),
       ),
     );
+
+    if (this._messages.size > 0) this._resolveFirstMessages();
   }
 
   dispose(): void {

@@ -37,7 +37,7 @@ describe('voice-player', () => {
   test('downloads and plays on tap, then shows pause', async () => {
     const { el, play, mediaFileService } = await mount();
 
-    (tid(el, 'voice.toggle') as HTMLElement).click();
+    tid(el, 'voice.toggle')!.click();
     await settled(el);
 
     expect(mediaFileService.url).toHaveBeenCalledWith('voice:1');
@@ -48,7 +48,7 @@ describe('voice-player', () => {
   test('stays on play when the file is unavailable', async () => {
     const { el, play } = await mount(null);
 
-    (tid(el, 'voice.toggle') as HTMLElement).click();
+    tid(el, 'voice.toggle')!.click();
     await settled(el);
 
     expect(play).not.toHaveBeenCalled();

@@ -1,6 +1,6 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import 'components/mk-icon-button/mk-icon-button';
+import 'mudita-ui';
 import styles from './media-viewer.css?inline';
 
 @customElement('media-viewer')

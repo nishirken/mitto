@@ -5,7 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@lit-labs/signals@0.2.0': dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f
+  '@lit-labs/signals@0.2.0':
+    hash: dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f
+    path: patches/@lit-labs__signals@0.2.0.patch
 
 importers:
 
@@ -29,16 +31,19 @@ importers:
       lit:
         specifier: ^3.3.2
         version: 3.3.2
+      mudita-ui:
+        specifier: github:nishirken/mudita-ui#1e675cf06a840bf724eb61effd498587f2bd5c2c
+        version: https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c(lit@3.3.2)
       signal-polyfill:
         specifier: ^0.2.2
         version: 0.2.2
     devDependencies:
       '@capacitor/cli':
         specifier: ^8.5.0
-        version: 8.5.0(supports-color@7.2.0)
+        version: 8.5.0
       '@open-wc/testing':
         specifier: ^4.0.0
-        version: 4.0.0(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)
+        version: 4.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@originjs/vite-plugin-commonjs':
         specifier: ^1.0.3
         version: 1.0.3
@@ -1520,6 +1525,12 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c:
+    resolution: {tarball: https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c}
+    version: 0.1.0
+    peerDependencies:
+      lit: ^3.0.0
+
   nanocolors@0.2.13:
     resolution: {integrity: sha512-0n3mSAQLPpGLV9ORXT5+C/D4mwew7Ebws69Hx4E2sgz2ZA5+32Q80B9tL8PbL7XHnRDiAxH/pnrUJ9a4fkTNTA==}
 
@@ -2159,17 +2170,17 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.5.0
 
-  '@capacitor/cli@8.5.0(supports-color@7.2.0)':
+  '@capacitor/cli@8.5.0':
     dependencies:
-      '@ionic/cli-framework-output': 2.2.8(supports-color@7.2.0)
-      '@ionic/utils-subprocess': 3.0.1(supports-color@7.2.0)
-      '@ionic/utils-terminal': 2.3.5(supports-color@7.2.0)
+      '@ionic/cli-framework-output': 2.2.8
+      '@ionic/utils-subprocess': 3.0.1
+      '@ionic/utils-terminal': 2.3.5
       commander: 12.1.0
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       env-paths: 2.2.1
       fs-extra: 11.3.4
       kleur: 4.1.5
-      native-run: 2.0.3(supports-color@7.2.0)
+      native-run: 2.0.3
       open: 8.4.2
       plist: 3.1.0
       prompts: 2.4.2
@@ -2211,72 +2222,72 @@ snapshots:
 
   '@hapi/bourne@3.0.0': {}
 
-  '@ionic/cli-framework-output@2.2.8(supports-color@7.2.0)':
+  '@ionic/cli-framework-output@2.2.8':
     dependencies:
-      '@ionic/utils-terminal': 2.3.5(supports-color@7.2.0)
-      debug: 4.4.3(supports-color@7.2.0)
+      '@ionic/utils-terminal': 2.3.5
+      debug: 4.4.3
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-array@2.1.6(supports-color@7.2.0)':
+  '@ionic/utils-array@2.1.6':
     dependencies:
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-fs@3.1.7(supports-color@7.2.0)':
+  '@ionic/utils-fs@3.1.7':
     dependencies:
       '@types/fs-extra': 8.1.5
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       fs-extra: 9.1.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-object@2.1.6(supports-color@7.2.0)':
+  '@ionic/utils-object@2.1.6':
     dependencies:
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-process@2.1.12(supports-color@7.2.0)':
+  '@ionic/utils-process@2.1.12':
     dependencies:
-      '@ionic/utils-object': 2.1.6(supports-color@7.2.0)
-      '@ionic/utils-terminal': 2.3.5(supports-color@7.2.0)
-      debug: 4.4.3(supports-color@7.2.0)
+      '@ionic/utils-object': 2.1.6
+      '@ionic/utils-terminal': 2.3.5
+      debug: 4.4.3
       signal-exit: 3.0.7
       tree-kill: 1.2.2
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-stream@3.1.7(supports-color@7.2.0)':
+  '@ionic/utils-stream@3.1.7':
     dependencies:
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-subprocess@3.0.1(supports-color@7.2.0)':
+  '@ionic/utils-subprocess@3.0.1':
     dependencies:
-      '@ionic/utils-array': 2.1.6(supports-color@7.2.0)
-      '@ionic/utils-fs': 3.1.7(supports-color@7.2.0)
-      '@ionic/utils-process': 2.1.12(supports-color@7.2.0)
-      '@ionic/utils-stream': 3.1.7(supports-color@7.2.0)
-      '@ionic/utils-terminal': 2.3.5(supports-color@7.2.0)
+      '@ionic/utils-array': 2.1.6
+      '@ionic/utils-fs': 3.1.7
+      '@ionic/utils-process': 2.1.12
+      '@ionic/utils-stream': 3.1.7
+      '@ionic/utils-terminal': 2.3.5
       cross-spawn: 7.0.6
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/utils-terminal@2.3.5(supports-color@7.2.0)':
+  '@ionic/utils-terminal@2.3.5':
     dependencies:
       '@types/slice-ansi': 4.0.0
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       signal-exit: 3.0.7
       slice-ansi: 4.0.0
       string-width: 4.2.3
@@ -2334,10 +2345,10 @@ snapshots:
       '@open-wc/dedupe-mixin': 2.0.1
       lit: 3.3.2
 
-  '@open-wc/semantic-dom-diff@0.20.1(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)':
+  '@open-wc/semantic-dom-diff@0.20.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       '@types/chai': 4.3.20
-      '@web/test-runner-commands': 0.9.0(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)
+      '@web/test-runner-commands': 0.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -2349,10 +2360,10 @@ snapshots:
       lit: 3.3.2
       lit-html: 3.3.2
 
-  '@open-wc/testing@4.0.0(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)':
+  '@open-wc/testing@4.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       '@esm-bundle/chai': 4.3.4-fix.0
-      '@open-wc/semantic-dom-diff': 0.20.1(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)
+      '@open-wc/semantic-dom-diff': 0.20.1(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@open-wc/testing-helpers': 3.0.1
       '@types/chai-dom': 1.11.3
       '@types/sinon-chai': 3.2.12
@@ -2704,7 +2715,7 @@ snapshots:
     dependencies:
       errorstacks: 2.4.1
 
-  '@web/dev-server-core@0.7.5(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)':
+  '@web/dev-server-core@0.7.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       '@types/koa': 2.15.0
       '@types/ws': 7.4.7
@@ -2715,10 +2726,10 @@ snapshots:
       get-stream: 6.0.1
       is-stream: 2.0.1
       isbinaryfile: 5.0.7
-      koa: 2.16.4(supports-color@7.2.0)
+      koa: 2.16.4
       koa-etag: 4.0.0
-      koa-send: 5.0.1(supports-color@7.2.0)
-      koa-static: 5.0.0(supports-color@7.2.0)
+      koa-send: 5.0.1
+      koa-static: 5.0.0
       lru-cache: 8.0.5
       mime-types: 2.1.35
       parse5: 6.0.1
@@ -2734,16 +2745,16 @@ snapshots:
       '@types/parse5': 6.0.3
       parse5: 6.0.1
 
-  '@web/test-runner-commands@0.9.0(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)':
+  '@web/test-runner-commands@0.9.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
-      '@web/test-runner-core': 0.13.4(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)
+      '@web/test-runner-core': 0.13.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       mkdirp: 1.0.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@web/test-runner-core@0.13.4(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)':
+  '@web/test-runner-core@0.13.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       '@babel/code-frame': 7.29.0
       '@types/babel__code-frame': 7.27.0
@@ -2753,7 +2764,7 @@ snapshots:
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
       '@web/browser-logs': 0.4.1
-      '@web/dev-server-core': 0.7.5(bufferutil@4.1.0)(supports-color@7.2.0)(utf-8-validate@5.0.10)
+      '@web/dev-server-core': 0.7.5(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       chokidar: 4.0.3
       cli-cursor: 3.1.0
       co-body: 6.2.0
@@ -2935,17 +2946,13 @@ snapshots:
 
   debounce@1.2.1: {}
 
-  debug@3.2.7(supports-color@7.2.0):
+  debug@3.2.7:
     dependencies:
       ms: 2.1.3
-    optionalDependencies:
-      supports-color: 7.2.0
 
-  debug@4.4.3(supports-color@7.2.0):
+  debug@4.4.3:
     dependencies:
       ms: 2.1.3
-    optionalDependencies:
-      supports-color: 7.2.0
 
   deep-equal@1.0.1: {}
 
@@ -3393,29 +3400,29 @@ snapshots:
     dependencies:
       etag: 1.8.1
 
-  koa-send@5.0.1(supports-color@7.2.0):
+  koa-send@5.0.1:
     dependencies:
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       http-errors: 1.8.1
       resolve-path: 1.4.0
     transitivePeerDependencies:
       - supports-color
 
-  koa-static@5.0.0(supports-color@7.2.0):
+  koa-static@5.0.0:
     dependencies:
-      debug: 3.2.7(supports-color@7.2.0)
-      koa-send: 5.0.1(supports-color@7.2.0)
+      debug: 3.2.7
+      koa-send: 5.0.1
     transitivePeerDependencies:
       - supports-color
 
-  koa@2.16.4(supports-color@7.2.0):
+  koa@2.16.4:
     dependencies:
       accepts: 1.3.8
       cache-content-type: 1.0.1
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookies: 0.9.1
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       delegates: 1.0.0
       depd: 2.0.0
       destroy: 1.2.0
@@ -3588,16 +3595,20 @@ snapshots:
 
   ms@2.1.3: {}
 
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c(lit@3.3.2):
+    dependencies:
+      lit: 3.3.2
+
   nanocolors@0.2.13: {}
 
   nanoid@3.3.11: {}
 
-  native-run@2.0.3(supports-color@7.2.0):
+  native-run@2.0.3:
     dependencies:
-      '@ionic/utils-fs': 3.1.7(supports-color@7.2.0)
-      '@ionic/utils-terminal': 2.3.5(supports-color@7.2.0)
+      '@ionic/utils-fs': 3.1.7
+      '@ionic/utils-terminal': 2.3.5
       bplist-parser: 0.3.2
-      debug: 4.4.3(supports-color@7.2.0)
+      debug: 4.4.3
       elementtree: 0.1.7
       ini: 4.1.3
       plist: 3.1.0

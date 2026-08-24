@@ -5,11 +5,8 @@ import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { navigate } from 'router';
-import 'components/mk-header/mk-header';
-import 'components/mk-icon-button/mk-icon-button';
-import 'components/mk-button/mk-button';
-import 'components/mk-checkbox/mk-checkbox';
-import type { MkCheckbox } from 'components/mk-checkbox/mk-checkbox';
+import 'mudita-ui';
+import type { MkCheckbox } from 'mudita-ui';
 import styles from './settings-screen.css?inline';
 
 @customElement('settings-screen')

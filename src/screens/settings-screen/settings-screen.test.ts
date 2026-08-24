@@ -12,8 +12,7 @@ import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
 import { tid } from 'test-utils';
 import './settings-screen';
 import type { SettingsScreen } from './settings-screen';
-import type { MkCheckbox } from 'components/mk-checkbox/mk-checkbox';
-import type { MkButton } from 'components/mk-button/mk-button';
+import type { MkButton, MkCheckbox } from 'mudita-ui';
 
 function withContext() {
   const provider = document.createElement('div');
@@ -25,9 +24,9 @@ function withContext() {
 const mount = () =>
   fixture<SettingsScreen>(html`<settings-screen></settings-screen>`, { parentNode: withContext() });
 
-const checkbox = (el: SettingsScreen, id: string) => tid(el, id) as MkCheckbox;
+const checkbox = (el: SettingsScreen, id: string) => tid<MkCheckbox>(el, id)!;
 
-const signOut = (el: SettingsScreen) => tid(el, 'settings.sign-out') as MkButton;
+const signOut = (el: SettingsScreen) => tid<MkButton>(el, 'settings.sign-out')!;
 
 const originalReload = window.location.reload;
 const reload = vi.fn<() => void>();
@@ -144,7 +143,7 @@ describe('settings-screen', () => {
   it('navigates back to the chat list', async () => {
     const el = await mount();
 
-    (tid(el, 'settings.back') as HTMLElement).click();
+    tid(el, 'settings.back')!.click();
 
     expect(window.location.hash).toBe('#/chats');
   });
