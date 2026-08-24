@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import telegram from 'telegram';
 import type { TelegramClient } from 'telegram';
-import type { Database } from 'services/database';
+import { MockDatabase } from 'services/database/__mocks__/database';
 import type { TelegramConfig } from 'types/telegram';
 import { TelegramAuthStore } from './auth-store';
 
@@ -15,11 +15,7 @@ function createStore() {
     checkAuthorization: vi.fn(async () => true),
   } as unknown as TelegramClient;
 
-  const storage = {
-    getSession: vi.fn(async () => null),
-    clearSession: vi.fn(async () => {}),
-    clearCache: vi.fn(async () => {}),
-  } as unknown as Database;
+  const storage = new MockDatabase();
 
   return { client, storage, store: new TelegramAuthStore(config, client, storage) };
 }

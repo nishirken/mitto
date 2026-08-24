@@ -2,21 +2,24 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
-import {
-  mockServices,
-  mockSettingsStore,
-  mockDatabase,
-  mockAuthStore,
-} from 'api/__mocks__/telegram-client';
-import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
+import type { Services } from 'api/services-context';
+import { createMockServices } from 'api/__mocks__/services-context';
+import { MockDatabase } from 'services/database/__mocks__/database';
+import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
+import { DEFAULT_SETTINGS, SettingsStore } from 'services/settings/settings-store';
 import { tid } from 'test-utils';
 import './settings-screen';
 import type { SettingsScreen } from './settings-screen';
 import type { MkButton, MkCheckbox } from 'mudita-ui';
 
+let database: MockDatabase;
+let authStore: MockAuthStore;
+let settingsStore: SettingsStore;
+let services: Services;
+
 function withContext() {
   const provider = document.createElement('div');
-  new ContextProvider(provider, { context: servicesContext, initialValue: mockServices });
+  new ContextProvider(provider, { context: servicesContext, initialValue: services });
 
   return provider;
 }
@@ -35,7 +38,11 @@ describe('settings-screen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.location.hash = '#/settings';
-    mockSettingsStore.settings.set(DEFAULT_SETTINGS);
+    database = new MockDatabase();
+    authStore = new MockAuthStore();
+    settingsStore = new SettingsStore(database);
+    services = createMockServices({ database, authStore, settingsStore });
+    settingsStore.settings.set(DEFAULT_SETTINGS);
     window.location.reload = reload;
   });
 
@@ -62,7 +69,7 @@ describe('settings-screen', () => {
   });
 
   it('reflects the stored settings', async () => {
-    mockSettingsStore.settings.set({
+    settingsStore.settings.set({
       conversations: { pagedScroll: true },
       messages: { pagedScroll: false },
     });
@@ -79,11 +86,11 @@ describe('settings-screen', () => {
     checkbox(el, 'settings.conversations.paged-scroll').shadowRoot!.querySelector('input')!.click();
     await el.updateComplete;
 
-    expect(mockSettingsStore.settings.get()).toEqual({
+    expect(settingsStore.settings.get()).toEqual({
       conversations: { pagedScroll: true },
       messages: { pagedScroll: false },
     });
-    expect(mockDatabase.setSettings).toHaveBeenCalledWith({
+    expect(database.setSettings).toHaveBeenCalledWith({
       conversations: { pagedScroll: true },
       messages: { pagedScroll: false },
     });
@@ -97,22 +104,22 @@ describe('settings-screen', () => {
   });
 
   it('signs out, returns to the chat list and reloads', async () => {
-    vi.mocked(mockAuthStore.logout).mockResolvedValue(true);
+    vi.mocked(authStore.logout).mockResolvedValue(true);
     const el = await mount();
 
     signOut(el).click();
     await vi.waitFor(() => expect(reload).toHaveBeenCalled());
 
-    expect(mockAuthStore.logout).toHaveBeenCalledTimes(1);
+    expect(authStore.logout).toHaveBeenCalledTimes(1);
     expect(window.location.hash).toBe('#/chats');
   });
 
   it('stays put when signing out fails', async () => {
-    vi.mocked(mockAuthStore.logout).mockResolvedValue(false);
+    vi.mocked(authStore.logout).mockResolvedValue(false);
     const el = await mount();
 
     signOut(el).click();
-    await vi.waitFor(() => expect(mockAuthStore.logout).toHaveBeenCalled());
+    await vi.waitFor(() => expect(authStore.logout).toHaveBeenCalled());
 
     expect(reload).not.toHaveBeenCalled();
     expect(window.location.hash).toBe('#/settings');
@@ -120,7 +127,7 @@ describe('settings-screen', () => {
 
   it('disables the button while signing out', async () => {
     let finish!: (ok: boolean) => void;
-    vi.mocked(mockAuthStore.logout).mockReturnValue(
+    vi.mocked(authStore.logout).mockReturnValue(
       new Promise<boolean>((resolve) => {
         finish = resolve;
       }),

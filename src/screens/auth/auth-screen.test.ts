@@ -2,22 +2,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
-import { mockServices, mockAuthStore } from 'api/__mocks__/telegram-client';
+import type { Services } from 'api/services-context';
+import { createMockServices } from 'api/__mocks__/services-context';
+import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
 import type { MkInput } from 'mudita-ui';
 import { tid } from 'test-utils';
 
+let authStore: MockAuthStore;
+let services: Services;
+
 function withContext() {
   const provider = document.createElement('div');
-  new ContextProvider(provider, { context: servicesContext, initialValue: mockServices });
+  new ContextProvider(provider, { context: servicesContext, initialValue: services });
 
   return provider;
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockAuthStore.state.set('wait_phone');
+  authStore = new MockAuthStore();
+  services = createMockServices({ authStore });
+  authStore.state.set('wait_phone');
 });
 
 describe('auth-screen', () => {
@@ -34,7 +41,7 @@ describe('auth-screen', () => {
     tid(el, 'submit')!.click();
     await el.updateComplete;
 
-    expect(mockAuthStore.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
+    expect(authStore.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
   });
 
   it('shows code input after auth state changes to wait_code', async () => {
@@ -42,7 +49,7 @@ describe('auth-screen', () => {
       parentNode: withContext(),
     });
 
-    mockAuthStore.state.set({ type: 'wait_code', isSmsAvailable: false });
+    authStore.state.set({ type: 'wait_code', isSmsAvailable: false });
     await el.updateComplete;
 
     expect(el.shadowRoot!.querySelector('.title')!.textContent).toBe('Enter code');
@@ -50,7 +57,7 @@ describe('auth-screen', () => {
   });
 
   it('calls sendAuthCode on code submit', async () => {
-    mockAuthStore.state.set({ type: 'wait_code', isSmsAvailable: false });
+    authStore.state.set({ type: 'wait_code', isSmsAvailable: false });
     const el = await fixture<AuthScreen>(
       html`
       <auth-screen></auth-screen>
@@ -67,6 +74,6 @@ describe('auth-screen', () => {
     form.dispatchEvent(new Event('submit', { cancelable: true }));
     await el.updateComplete;
 
-    expect(mockAuthStore.sendAuthCode).toHaveBeenCalledWith('12345');
+    expect(authStore.sendAuthCode).toHaveBeenCalledWith('12345');
   });
 });

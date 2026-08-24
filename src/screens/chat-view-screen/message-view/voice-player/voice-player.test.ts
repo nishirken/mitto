@@ -3,6 +3,7 @@ import { fixture, html } from '@open-wc/testing';
 import { settled, tid } from '../../../../test-utils';
 import type { MediaId } from '../../../../services/database';
 import type { Services } from '../../../../api/services-context';
+import { MockMediaFileService } from '../../../../services/media/__mocks__/media-file-service';
 import type { MessageMedia } from '../../chat-view-projection';
 import './voice-player';
 import type { VoicePlayer } from './voice-player';
@@ -20,7 +21,8 @@ async function mount(url: string | null = 'blob:voice') {
 
   vi.spyOn(window, 'Audio').mockImplementation(MockAudio as unknown as typeof Audio);
 
-  const mediaFileService = { url: vi.fn(async () => url) };
+  const mediaFileService = new MockMediaFileService();
+  mediaFileService.url.mockResolvedValue(url);
   const el = await fixture<VoicePlayer>(html`<voice-player .media=${voice}></voice-player>`);
   el.services = { mediaFileService } as unknown as Services;
 

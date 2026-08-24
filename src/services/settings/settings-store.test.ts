@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Database, StoredSettings } from 'services/database';
+import type { StoredSettings } from 'services/database';
+import { MockDatabase } from 'services/database/__mocks__/database';
 import { DEFAULT_SETTINGS, SettingsStore } from './settings-store';
 
 function createStore(stored: StoredSettings | null = null) {
-  const db = {
-    getSettings: vi.fn(async () => stored),
-    setSettings: vi.fn(async () => {}),
-  } as unknown as Database;
+  const db = new MockDatabase();
+  db.settings = stored;
 
   return { db, store: new SettingsStore(db) };
 }

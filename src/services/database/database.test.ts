@@ -6,7 +6,7 @@ import {
   mockStoredMedia,
   mockStoredMessage,
   mockStoredUser,
-} from './database-schema.mocks';
+} from './__mocks__/database-schema';
 import type { ChatId, MediaId, MessageId, UserId } from './database-schema';
 import { mergeUser } from '../repositories/user/mappers';
 

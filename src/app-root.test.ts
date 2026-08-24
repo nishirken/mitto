@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import { mockAuthStore, mockDatabase } from 'api/__mocks__/telegram-client';
+import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
+import { MockDatabase } from 'services/database/__mocks__/database';
+
+let authStore: MockAuthStore;
+let database: MockDatabase;
 
 // Partial mock: the sync services and mappers pull real `Api`/`events`/`utils` off the
 // same default export, and app-root needs a working `sessions.StringSession`.
@@ -44,13 +48,13 @@ vi.mock('./services/database', async (importOriginal) => {
 
   return {
     ...actual,
-    Database: { create: vi.fn(async () => mockDatabase) },
+    Database: { create: vi.fn(async () => database) },
   };
 });
 
 vi.mock('./screens/auth/auth-store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./screens/auth/auth-store')>();
-  const { MockAuthStore } = await import('api/__mocks__/telegram-client');
+  const { MockAuthStore } = await import('screens/auth/__mocks__/auth-store');
 
   return {
     ...actual,
@@ -70,12 +74,14 @@ async function flushAsync(el: AppRoot): Promise<void> {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockAuthStore.state.set('loading');
+  database = new MockDatabase();
+  authStore = new MockAuthStore();
+  authStore.state.set('loading');
 });
 
 describe('app-root', () => {
   it('renders chat-list-screen for #/chats', async () => {
-    mockAuthStore.state.set('ready');
+    authStore.state.set('ready');
     window.location.hash = '#/chats';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
@@ -83,7 +89,7 @@ describe('app-root', () => {
   });
 
   it('renders auth-screen for #/auth', async () => {
-    mockAuthStore.state.set('wait_phone');
+    authStore.state.set('wait_phone');
     window.location.hash = '#/auth';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
@@ -91,7 +97,7 @@ describe('app-root', () => {
   });
 
   it('renders chat-view-screen for #/chat/1', async () => {
-    mockAuthStore.state.set('ready');
+    authStore.state.set('ready');
     window.location.hash = '#/chat/1';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);

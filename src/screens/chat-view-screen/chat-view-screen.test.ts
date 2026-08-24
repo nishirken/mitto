@@ -3,10 +3,10 @@ import { fixture, html } from '@open-wc/testing';
 import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import { mockServices, mockSettingsStore } from 'api/__mocks__/telegram-client';
-import { createFakeStorage, type FakeDatabase } from 'services/database/__mocks__/database';
+import { createMockServices } from 'api/__mocks__/services-context';
+import { MockDatabase } from 'services/database/__mocks__/database';
 import { DatabaseHub } from 'services/database/database-hub';
-import { mockStoredMessage } from 'services/database/database-schema.mocks';
+import { mockStoredMessage } from 'services/database/__mocks__/database-schema';
 import type { MessageId, PeerId } from 'services/database';
 import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
 import { InfiniteScrollContainer, PagedScrollContainer } from 'mudita-ui';
@@ -16,7 +16,7 @@ import type { ChatViewScreen } from './chat-view-screen';
 
 const peerId = 'user:1' as PeerId;
 
-let fake: FakeDatabase;
+let database: MockDatabase;
 let hub: DatabaseHub;
 let services: Services;
 let scrollToBottom: ReturnType<typeof vi.spyOn>;
@@ -46,11 +46,10 @@ async function deliverMessages(el: ChatViewScreen) {
 // the outer element happily forwards into nothing while its inner container is unrendered.
 describe('chat-view-screen initial scroll', () => {
   beforeEach(() => {
-    const storage = createFakeStorage();
-    fake = storage.fake;
+    database = new MockDatabase();
     hub = new DatabaseHub();
-    services = { ...mockServices, database: storage.storage, databaseHub: hub };
-    mockSettingsStore.settings.set(DEFAULT_SETTINGS);
+    services = createMockServices({ database, databaseHub: hub });
+    services.settingsStore.settings.set(DEFAULT_SETTINGS);
     scrollToBottom = vi.spyOn(InfiniteScrollContainer.prototype, 'scrollToBottom');
     scrollToElement = vi.spyOn(InfiniteScrollContainer.prototype, 'scrollToElement');
   });
@@ -60,7 +59,7 @@ describe('chat-view-screen initial scroll', () => {
   });
 
   it('scrolls to the bottom once the first messages arrive', async () => {
-    await fake.putMessages([
+    await database.putMessages([
       mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
       mockStoredMessage({ peerId, id: 2 as MessageId, isOutgoing: true }),
     ]);
@@ -74,7 +73,7 @@ describe('chat-view-screen initial scroll', () => {
   });
 
   it('scrolls to the first unread message once the first messages arrive', async () => {
-    await fake.putMessages([
+    await database.putMessages([
       mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
       mockStoredMessage({ peerId, id: 2 as MessageId }),
       mockStoredMessage({ peerId, id: 3 as MessageId }),
@@ -91,9 +90,11 @@ describe('chat-view-screen initial scroll', () => {
   });
 
   it('reaches the paged implementation in paged mode', async () => {
-    mockSettingsStore.settings.set({ ...DEFAULT_SETTINGS, messages: { pagedScroll: true } });
+    services.settingsStore.settings.set({ ...DEFAULT_SETTINGS, messages: { pagedScroll: true } });
     const scrollToLastPage = vi.spyOn(PagedScrollContainer.prototype, 'scrollToLastPage');
-    await fake.putMessages([mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true })]);
+    await database.putMessages([
+      mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
+    ]);
     const el = await mount();
 
     await deliverMessages(el);

@@ -1,8 +1,9 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { settled, tid } from '../../../../test-utils';
 import type { MediaId } from '../../../../services/database';
 import type { Services } from '../../../../api/services-context';
+import { MockMediaFileService } from '../../../../services/media/__mocks__/media-file-service';
 import type { MessageMedia } from '../../chat-view-projection';
 import './media-attachment';
 import type { MediaAttachment, MediaOpenDetail } from './media-attachment';
@@ -18,7 +19,8 @@ const photo = {
 const video = { id: 'video:1' as MediaId, type: 'video', size: 1468006 } satisfies MessageMedia;
 
 async function mount(media: MessageMedia, url: string | null = 'blob:media') {
-  const mediaFileService = { url: vi.fn(async () => url) };
+  const mediaFileService = new MockMediaFileService();
+  mediaFileService.url.mockResolvedValue(url);
   const el = await fixture<MediaAttachment>(
     html`<media-attachment .media=${media}></media-attachment>`,
   );

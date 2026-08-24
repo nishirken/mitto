@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import telegram from 'telegram';
-import { mockStoredMedia } from '../database/database-schema.mocks';
+import { mockStoredMedia } from '../database/__mocks__/database-schema';
 import { toInputLocation, toTelegramBytes } from './input-location';
 
 const { Api } = telegram;

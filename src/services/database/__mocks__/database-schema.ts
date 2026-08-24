@@ -7,7 +7,7 @@ import type {
   StoredMessage,
   StoredUser,
   UserId,
-} from './database-schema';
+} from '../database-schema';
 import type { Timestamp } from 'utils/flavour';
 
 // Test fixtures: build valid instances of the persisted projections. Every field has a

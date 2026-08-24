@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import telegram from 'telegram';
-import { createFakeStorage, type FakeDatabase } from '../../database/__mocks__/database';
+import { MockDatabase } from '../../database/__mocks__/database';
 import { DatabaseHub } from '../../database/database-hub';
-import type { Database, MediaId, MessageId, PeerId } from '../../database';
+import type { MediaId, MessageId, PeerId } from '../../database';
 import { MediaRepository } from '../media/media-repository';
 import { MessageRepository } from './message-repository';
 
@@ -32,23 +32,22 @@ function voiceMessage(id: number) {
 }
 
 describe('MessageRepository', () => {
-  let storage: Database;
-  let fake: FakeDatabase;
+  let database: MockDatabase;
   let hub: DatabaseHub;
   let repo: MessageRepository;
 
   beforeEach(() => {
-    ({ storage, fake } = createFakeStorage());
+    database = new MockDatabase();
     hub = new DatabaseHub();
-    repo = new MessageRepository(storage, hub, new MediaRepository(storage));
+    repo = new MessageRepository(database, hub, new MediaRepository(database));
   });
 
   test('writes the media a live message references', async () => {
     await repo.applyMessage(voiceMessage(5));
 
-    const message = await storage.getMessage('user:1' as PeerId, 5);
+    const message = await database.getMessage('user:1' as PeerId, 5);
     expect(message?.mediaId).toBe('voice:20');
-    expect(await storage.getMedia(message!.mediaId as MediaId)).toMatchObject({
+    expect(await database.getMedia(message!.mediaId as MediaId)).toMatchObject({
       id: 'voice:20',
       type: 'voice',
       duration: 7,
@@ -58,7 +57,7 @@ describe('MessageRepository', () => {
   test('has the media stored by the time newMessage fires', async () => {
     let mediaAtNotify: unknown;
     hub.subscribe('newMessage', () => {
-      mediaAtNotify = fake.media.get('voice:20');
+      mediaAtNotify = database.media.get('voice:20');
     });
 
     await repo.applyMessage(voiceMessage(6));
@@ -82,7 +81,7 @@ describe('MessageRepository', () => {
     await repo.applyMessage(new Api.MessageEmpty({ id: 8 }));
 
     expect(events).toEqual([]);
-    expect(fake.messages.size).toBe(0);
+    expect(database.messages.size).toBe(0);
   });
 
   test('still accepts a synthesized message with no media', async () => {
@@ -97,7 +96,7 @@ describe('MessageRepository', () => {
       isOutgoing: true,
     });
 
-    expect(await storage.getMessage('user:1' as PeerId, 9)).toMatchObject({ text: 'sent' });
+    expect(await database.getMessage('user:1' as PeerId, 9)).toMatchObject({ text: 'sent' });
     expect(events).toHaveLength(1);
   });
 
@@ -109,7 +108,7 @@ describe('MessageRepository', () => {
       new Api.UpdateNewMessage({ message: voiceMessage(10), pts: 1, ptsCount: 1 }),
     );
 
-    expect(fake.media.get('voice:20')).toBeDefined();
+    expect(database.media.get('voice:20')).toBeDefined();
     expect(events).toHaveLength(1);
   });
 });
