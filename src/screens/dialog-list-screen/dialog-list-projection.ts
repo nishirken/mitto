@@ -10,7 +10,7 @@ import { isUser } from 'services/peer-key';
 import { signal } from '@lit-labs/signals';
 import { liveQuery, type Subscription } from 'dexie';
 
-export type ChatListItem = {
+export type DialogListItem = {
   id: PeerId;
   name: string;
   topMessage?: { text: string; isOutgoing: boolean };
@@ -29,11 +29,11 @@ function peerName(peer: StoredPeer): string {
   return 'Unknown';
 }
 
-export function toChatListItem(
+export function toDialogListItem(
   dialog: StoredDialog,
   peer: StoredPeer,
   topMessage?: StoredMessage,
-): ChatListItem {
+): DialogListItem {
   return {
     id: dialog.peerId,
     name: peerName(peer),
@@ -50,7 +50,7 @@ export function toChatListItem(
 }
 
 export class DialogListProjection {
-  readonly chats = signal<ChatListItem[]>([]);
+  readonly dialogs = signal<DialogListItem[]>([]);
   private _sub?: Subscription;
 
   constructor(private readonly _db: Database) {}
@@ -67,12 +67,12 @@ export class DialogListProjection {
         .map((dialog, i) => {
           const user = users[i];
 
-          return user ? toChatListItem(dialog, user, topMessages[i]) : undefined;
+          return user ? toDialogListItem(dialog, user, topMessages[i]) : undefined;
         })
-        .filter((chat) => !!chat)
+        .filter((dialog) => !!dialog)
         .sort((a, b) => b.date - a.date);
     }).subscribe({
-      next: (chats) => this.chats.set(chats),
+      next: (dialogs) => this.dialogs.set(dialogs),
       error: () => {},
     });
   }

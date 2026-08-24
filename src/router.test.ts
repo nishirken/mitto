@@ -10,16 +10,16 @@ describe('parseHash', () => {
     expect(parseHash('#/auth')).toBeNull();
   });
 
-  it('returns chats for #/chats', () => {
-    expect(parseHash('#/chats')).toEqual({ name: 'chats', params: {} });
+  it('returns dialogs for #/dialogs', () => {
+    expect(parseHash('#/dialogs')).toEqual({ name: 'dialogs', params: {} });
   });
 
-  it('returns chat with id for #/chat/1', () => {
-    expect(parseHash('#/chat/1')).toEqual({ name: 'chat', params: { id: '1' } });
+  it('returns dialog with id for #/dialog/1', () => {
+    expect(parseHash('#/dialog/1')).toEqual({ name: 'dialog', params: { id: '1' } });
   });
 
-  it('returns chat with id for #/chat/42', () => {
-    expect(parseHash('#/chat/42')).toEqual({ name: 'chat', params: { id: '42' } });
+  it('returns dialog with id for #/dialog/42', () => {
+    expect(parseHash('#/dialog/42')).toEqual({ name: 'dialog', params: { id: '42' } });
   });
 
   it('returns null for unknown routes', () => {

@@ -7,10 +7,10 @@ export type RouteChangeCallback = (route: Route) => void;
 
 export function parseHash(hash: string): Route | null {
   const path = hash.replace(/^#\/?/, '');
-  if (path === 'chats') return { name: 'chats', params: {} };
+  if (path === 'dialogs') return { name: 'dialogs', params: {} };
   if (path === 'settings') return { name: 'settings', params: {} };
-  const chatMatch = path.match(/^chat\/(.+)$/);
-  if (chatMatch) return { name: 'chat', params: { id: chatMatch[1] } };
+  const dialogMatch = path.match(/^dialog\/(.+)$/);
+  if (dialogMatch) return { name: 'dialog', params: { id: dialogMatch[1] } };
 
   return null;
 }
@@ -30,5 +30,5 @@ export function onRouteChange(callback: RouteChangeCallback): () => void {
 }
 
 export function currentRoute(): Route {
-  return parseHash(window.location.hash) ?? { name: 'chats', params: {} };
+  return parseHash(window.location.hash) ?? { name: 'dialogs', params: {} };
 }

@@ -5,7 +5,7 @@ import 'mudita-ui';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { formatFileSize } from 'utils/format-file-size';
-import type { MessageMedia } from '../../chat-view-projection';
+import type { MessageMedia } from '../../dialog-projection';
 import styles from './media-attachment.css?inline';
 
 export type MediaOpenDetail = { url: string; type: 'photo' | 'video' };

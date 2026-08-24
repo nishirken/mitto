@@ -1,7 +1,7 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import styles from './message-view.css?inline';
-import type { MessageMedia } from '../chat-view-projection';
+import type { MessageMedia } from '../dialog-projection';
 import './media-attachment/media-attachment';
 import './voice-player/voice-player';
 import 'mudita-ui';

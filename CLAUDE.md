@@ -3,10 +3,10 @@
 E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×480, 217 PPI). Lit web components, TypeScript, Vite, pnpm. Capacitor for Android APK bundling. gramjs (vendored bundle in `src/lib/telegram/`) for Telegram API. Vitest + @open-wc/testing + happy-dom for testing. Biome for linting and formatting (TS + CSS). Nix flake + direnv for dev environment.
 
 ## Conventions
-- Files: kebab-case (`chat-item.ts`, `chat-list-screen.ts`)
+- Files: kebab-case (`dialog-item.ts`, `dialog-list-screen.ts`)
 - Colocate test files next to components (`*.test.ts`)
-- Custom elements: kebab-case (`<chat-item>`, `<app-root>`)
-- Classes: PascalCase (`ChatItem`, `AppRoot`)
+- Custom elements: kebab-case (`<dialog-item>`, `<app-root>`)
+- Classes: PascalCase (`DialogItem`, `AppRoot`)
 - `mk-*` prefix for design system components, full names for feature/screen components
 
 ## Coding

@@ -2,10 +2,10 @@ import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import 'mudita-ui';
 import type { MkTextarea } from 'mudita-ui';
-import styles from './chat-view-footer.css?inline';
+import styles from './dialog-footer.css?inline';
 
-@customElement('chat-view-footer')
-export class ChatViewFooter extends LitElement {
+@customElement('dialog-footer')
+export class DialogFooter extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property() value = '';
@@ -26,13 +26,13 @@ export class ChatViewFooter extends LitElement {
   render() {
     return html`
       <form @submit=${this._handleSubmit}>
-        <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="chat-view.message-input"></mk-textarea>
+        <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="dialog.message-input"></mk-textarea>
         <mk-icon-button
           bordered
           icon="arrow-up"
           label="Send"
           type="submit"
-          data-testid="chat-view.send-button"
+          data-testid="dialog.send-button"
         ></mk-icon-button>
       </form>
     `;

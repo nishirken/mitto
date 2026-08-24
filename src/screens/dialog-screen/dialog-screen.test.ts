@@ -11,8 +11,8 @@ import type { MessageId, PeerId } from 'services/database';
 import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
 import { InfiniteScrollContainer, PagedScrollContainer } from 'mudita-ui';
 import { settled } from 'test-utils';
-import './chat-view-screen';
-import type { ChatViewScreen } from './chat-view-screen';
+import './dialog-screen';
+import type { DialogScreen } from './dialog-screen';
 
 const peerId = 'user:1' as PeerId;
 
@@ -29,20 +29,20 @@ function withContext() {
 }
 
 const mount = () =>
-  fixture<ChatViewScreen>(html`<chat-view-screen .chatId=${peerId}></chat-view-screen>`, {
+  fixture<DialogScreen>(html`<dialog-screen .peerId=${peerId}></dialog-screen>`, {
     parentNode: withContext(),
   });
 
 // The screen scrolls only once the first batch of messages has been projected, which takes a
 // liveQuery round-trip through the database on top of the render.
-async function deliverMessages(el: ChatViewScreen) {
+async function deliverMessages(el: DialogScreen) {
   for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
   await settled(el);
 }
 
 // Spying on the implementation rather than on `scroll-container` keeps the assertion honest:
 // the outer element happily forwards into nothing while its inner container is unrendered.
-describe('chat-view-screen initial scroll', () => {
+describe('dialog-screen initial scroll', () => {
   beforeEach(() => {
     database = createTestDatabase();
     services = createMockServices({ database });
@@ -99,7 +99,7 @@ describe('chat-view-screen initial scroll', () => {
     expect(scrollToLastPage).toHaveBeenCalledTimes(1);
   });
 
-  it('waits instead of scrolling an empty chat', async () => {
+  it('waits instead of scrolling an empty dialog', async () => {
     const el = await mount();
 
     await deliverMessages(el);

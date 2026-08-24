@@ -7,8 +7,8 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import styles from './app-root.css?inline';
 import 'screens/auth/auth-screen';
-import 'screens/chat-list-screen/chat-list-screen';
-import 'screens/chat-view-screen/chat-view-screen';
+import 'screens/dialog-list-screen/dialog-list-screen';
+import 'screens/dialog-screen/dialog-screen';
 import 'screens/settings-screen/settings-screen';
 import 'mudita-ui/tokens.css';
 import 'mudita-ui/eink.css';
@@ -85,12 +85,12 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   private _renderRoute() {
     switch (this._route.name) {
-      case 'chats':
-        return html`<chat-list-screen></chat-list-screen>`;
-      case 'chat': {
-        return html`<chat-view-screen
-          .chatId=${this._route.params.id}
-        ></chat-view-screen>`;
+      case 'dialogs':
+        return html`<dialog-list-screen></dialog-list-screen>`;
+      case 'dialog': {
+        return html`<dialog-screen
+          .peerId=${this._route.params.id}
+        ></dialog-screen>`;
       }
       case 'settings':
         return html`<settings-screen></settings-screen>`;

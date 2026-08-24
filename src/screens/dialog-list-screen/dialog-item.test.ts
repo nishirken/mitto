@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
-import './chat-item';
-import type { ChatItem } from './chat-item';
+import './dialog-item';
+import type { DialogItem } from './dialog-item';
 
-describe('chat-item', () => {
+describe('dialog-item', () => {
   it('renders all fields', async () => {
-    const el = await fixture<ChatItem>(html`
-      <chat-item
+    const el = await fixture<DialogItem>(html`
+      <dialog-item
         name="Alice"
         timestamp="14:32"
         preview="Hello there"
         .unreadCount=${3}
-      ></chat-item>
+      ></dialog-item>
     `);
 
     const shadow = el.shadowRoot!;
@@ -22,13 +22,13 @@ describe('chat-item', () => {
   });
 
   it('hides badge when unreadCount is 0', async () => {
-    const el = await fixture<ChatItem>(html`
-      <chat-item
+    const el = await fixture<DialogItem>(html`
+      <dialog-item
         name="Bob"
         timestamp="13:00"
         preview="Hi"
         .unreadCount=${0}
-      ></chat-item>
+      ></dialog-item>
     `);
 
     expect(el.shadowRoot!.querySelector('.badge')).toBeNull();

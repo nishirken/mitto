@@ -67,7 +67,7 @@ export function toMessageListItem(
   };
 }
 
-export class ChatViewProjection {
+export class DialogProjection {
   readonly messages = signal<MessageListItem[]>([]);
   readonly firstUnreadId = computed<number | undefined>(() => {
     let first: number | undefined;

@@ -10,7 +10,7 @@ import type { MediaId, MessageId, PeerId } from '../../services/database/databas
 import { MediaRepository } from '../../services/repositories/media/media-repository';
 import { MessageRepository } from '../../services/repositories/message/message-repository';
 import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
-import { ChatViewProjection, isMessageRead, toMessageListItem } from './chat-view-projection';
+import { DialogProjection, isMessageRead, toMessageListItem } from './dialog-projection';
 
 const peerId = 'user:1' as PeerId;
 // Real IndexedDB writes take several macrotask turns to settle, and the handlers under test
@@ -87,15 +87,15 @@ describe('isMessageRead', () => {
   });
 });
 
-describe('ChatViewProjection', () => {
+describe('DialogProjection', () => {
   let database: Database;
-  let projection: ChatViewProjection;
+  let projection: DialogProjection;
 
   afterEach(() => projection.dispose());
 
   beforeEach(async () => {
     database = createTestDatabase();
-    projection = new ChatViewProjection(database, peerId);
+    projection = new DialogProjection(database, peerId);
     projection.init();
   });
 
@@ -144,9 +144,9 @@ describe('ChatViewProjection', () => {
   });
 });
 
-describe('ChatViewProjection first messages', () => {
+describe('DialogProjection first messages', () => {
   let database: Database;
-  let projection: ChatViewProjection;
+  let projection: DialogProjection;
 
   let resolved: boolean;
 
@@ -154,7 +154,7 @@ describe('ChatViewProjection first messages', () => {
 
   beforeEach(async () => {
     database = createTestDatabase();
-    projection = new ChatViewProjection(database, peerId);
+    projection = new DialogProjection(database, peerId);
     resolved = false;
     void projection.firstMessages.then(() => {
       resolved = true;
@@ -170,7 +170,7 @@ describe('ChatViewProjection first messages', () => {
     expect(resolved).toBe(true);
   });
 
-  test('stays pending while the chat has no messages', async () => {
+  test('stays pending while the dialog has no messages', async () => {
     await database.dialogs.bulkPut([mockStoredDialog({ peerId })]);
 
     await flush();
@@ -179,9 +179,9 @@ describe('ChatViewProjection first messages', () => {
   });
 });
 
-describe('ChatViewProjection read state', () => {
+describe('DialogProjection read state', () => {
   let database: Database;
-  let projection: ChatViewProjection;
+  let projection: DialogProjection;
 
   afterEach(() => projection.dispose());
 
@@ -191,7 +191,7 @@ describe('ChatViewProjection read state', () => {
 
   async function start(dialog: Partial<Parameters<typeof mockStoredDialog>[0]> = {}) {
     await database.dialogs.bulkPut([mockStoredDialog({ peerId, ...dialog })]);
-    projection = new ChatViewProjection(database, peerId);
+    projection = new DialogProjection(database, peerId);
     projection.init();
   }
 
@@ -247,7 +247,7 @@ describe('ChatViewProjection read state', () => {
     expect(projection.messages.get()[0].isRead).toBe(true);
   });
 
-  test('ignores read updates for another chat', async () => {
+  test('ignores read updates for another dialog', async () => {
     await start({ readOutboxMaxId: 0 as MessageId });
     await database.messages.bulkPut([outgoing(1)]);
 
@@ -264,15 +264,15 @@ describe('ChatViewProjection read state', () => {
 
 // Replaces the hub-notification tests the repositories used to carry: the point is that a
 // repository write reaches the read model, which is now liveQuery's job rather than ours.
-describe('ChatViewProjection end to end', () => {
+describe('DialogProjection end to end', () => {
   let database: Database;
-  let projection: ChatViewProjection;
+  let projection: DialogProjection;
 
   afterEach(() => projection.dispose());
 
   beforeEach(() => {
     database = createTestDatabase();
-    projection = new ChatViewProjection(database, peerId);
+    projection = new DialogProjection(database, peerId);
     projection.init();
   });
 

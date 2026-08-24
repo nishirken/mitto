@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { tid } from '../../../test-utils';
 import type { MediaId } from '../../../services/database';
-import type { MessageMedia } from '../chat-view-projection';
+import type { MessageMedia } from '../dialog-projection';
 import './message-view';
 import type { MessageView } from './message-view';
 

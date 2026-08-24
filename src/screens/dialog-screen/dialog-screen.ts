@@ -3,14 +3,14 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
 import { formatTimestamp } from 'utils/format-timestamp';
-import './chat-view-header';
-import './chat-view-footer';
+import './dialog-header';
+import './dialog-footer';
 import './message-view/message-view';
 import './media-viewer/media-viewer';
 import 'mudita-ui';
 import type { ScrollContainer } from 'mudita-ui';
-import styles from './chat-view-screen.css?inline';
-import { ChatViewProjection } from './chat-view-projection';
+import styles from './dialog-screen.css?inline';
+import { DialogProjection } from './dialog-projection';
 import type { Services } from 'api/services-context';
 import { servicesContext } from 'api/services-context';
 import { consume } from '@lit/context';
@@ -18,14 +18,14 @@ import type { PeerId } from 'services/database';
 import { DialogSyncService } from './dialog-sync-service';
 import type { MediaOpenDetail } from './message-view/media-attachment/media-attachment';
 
-@customElement('chat-view-screen')
-export class ChatViewScreen extends SignalWatcher(LitElement) {
+@customElement('dialog-screen')
+export class DialogScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @property({ type: String }) chatId = '';
+  @property({ type: String }) peerId = '' as PeerId;
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
-  private _chatViewProjection!: ChatViewProjection;
+  private _dialogProjection!: DialogProjection;
   private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
   @state() private _viewer?: MediaOpenDetail;
@@ -33,8 +33,8 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   connectedCallback() {
     super.connectedCallback();
 
-    if (!this.chatId) {
-      throw new Error('chatId property is required');
+    if (!this.peerId) {
+      throw new Error('peerId property is required');
     }
 
     this._dialogSyncService = new DialogSyncService(
@@ -42,20 +42,17 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       this.services.messageRepository,
       this.services.dialogRepository,
       this.services.database,
-      this.chatId as PeerId,
+      this.peerId,
     );
-    this._chatViewProjection = new ChatViewProjection(
-      this.services.database,
-      this.chatId as PeerId,
-    );
-    this._chatViewProjection.init();
+    this._dialogProjection = new DialogProjection(this.services.database, this.peerId);
+    this._dialogProjection.init();
     void this._dialogSyncService.loadInitial();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._dialogSyncService?.dispose();
-    this._chatViewProjection?.dispose();
+    this._dialogProjection?.dispose();
   }
 
   protected async getUpdateComplete(): Promise<boolean> {
@@ -66,13 +63,13 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   }
 
   protected async firstUpdated(): Promise<void> {
-    await this._chatViewProjection.firstMessages;
+    await this._dialogProjection.firstMessages;
     await this.updateComplete;
     this._scrollToFirstUnread();
   }
 
   private _scrollToFirstUnread() {
-    const firstUnreadId = this._chatViewProjection.firstUnreadId.get();
+    const firstUnreadId = this._dialogProjection.firstUnreadId.get();
     const target =
       firstUnreadId === undefined
         ? null
@@ -106,7 +103,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   }
 
   private _onBack() {
-    navigate('chats');
+    navigate('dialogs');
   }
 
   private _onMediaOpen = (e: CustomEvent<MediaOpenDetail>): void => {
@@ -130,11 +127,11 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   }
 
   render() {
-    const messages = this._chatViewProjection.messages.get();
-    const contactName = this._chatViewProjection.peerName.get();
+    const messages = this._dialogProjection.messages.get();
+    const contactName = this._dialogProjection.peerName.get();
 
     return html`
-      <chat-view-header .contactName=${contactName} @back=${this._onBack}></chat-view-header>
+      <dialog-header .contactName=${contactName} @back=${this._onBack}></dialog-header>
       <scroll-container
         class="list"
         ?paged=${this.services.settingsStore.pagedScroll('messages')}
@@ -160,7 +157,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
           )}
         </div>
       </scroll-container>
-      <chat-view-footer @send=${this._onSend}></chat-view-footer>
+      <dialog-footer @send=${this._onSend}></dialog-footer>
       ${
         this._viewer
           ? html`<media-viewer

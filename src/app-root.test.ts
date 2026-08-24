@@ -81,12 +81,12 @@ beforeEach(() => {
 });
 
 describe('app-root', () => {
-  it('renders chat-list-screen for #/chats', async () => {
+  it('renders dialog-list-screen for #/dialogs', async () => {
     authStore.state.set('ready');
-    window.location.hash = '#/chats';
+    window.location.hash = '#/dialogs';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
-    expect(el.shadowRoot!.querySelector('chat-list-screen')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('dialog-list-screen')).not.toBeNull();
   });
 
   it('renders auth-screen for #/auth', async () => {
@@ -97,11 +97,11 @@ describe('app-root', () => {
     expect(el.shadowRoot!.querySelector('auth-screen')).not.toBeNull();
   });
 
-  it('renders chat-view-screen for #/chat/user:1', async () => {
+  it('renders dialog-screen for #/dialog/user:1', async () => {
     authStore.state.set('ready');
-    window.location.hash = '#/chat/user:1';
+    window.location.hash = '#/dialog/user:1';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
-    expect(el.shadowRoot!.querySelector('chat-view-screen')).not.toBeNull();
+    expect(el.shadowRoot!.querySelector('dialog-screen')).not.toBeNull();
   });
 });

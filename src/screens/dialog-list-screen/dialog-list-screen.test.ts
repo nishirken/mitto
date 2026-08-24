@@ -16,9 +16,9 @@ import { MediaRepository } from 'services/repositories/media/media-repository';
 import { DialogRepository } from 'services/repositories/dialog/dialog-repository';
 import type { Timestamp } from 'utils/flavour';
 import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
-import './chat-list-screen';
-import type { ChatListScreen } from './chat-list-screen';
-import type { ChatItem } from './chat-item';
+import './dialog-list-screen';
+import type { DialogListScreen } from './dialog-list-screen';
+import type { DialogItem } from './dialog-item';
 
 let database: Database;
 let services: Services;
@@ -31,11 +31,11 @@ function withContext() {
 }
 
 const mount = () =>
-  fixture<ChatListScreen>(html`<chat-list-screen></chat-list-screen>`, {
+  fixture<DialogListScreen>(html`<dialog-list-screen></dialog-list-screen>`, {
     parentNode: withContext(),
   });
 
-type ChatSeed = {
+type DialogSeed = {
   firstName?: string;
   lastName?: string;
   text?: string;
@@ -43,7 +43,7 @@ type ChatSeed = {
   unreadCount?: number;
 };
 
-async function seedChat(n: number, seed: ChatSeed = {}): Promise<UserId> {
+async function seedDialog(n: number, seed: DialogSeed = {}): Promise<UserId> {
   const peerId = `user:${n}` as UserId;
   const topMessageId = n as MessageId;
 
@@ -69,41 +69,41 @@ async function seedChat(n: number, seed: ChatSeed = {}): Promise<UserId> {
   return peerId;
 }
 
-const chatItems = (el: ChatListScreen) => [
-  ...el.shadowRoot!.querySelectorAll<ChatItem>('chat-item'),
+const dialogItems = (el: DialogListScreen) => [
+  ...el.shadowRoot!.querySelectorAll<DialogItem>('dialog-item'),
 ];
 
 beforeEach(() => {
   database = createTestDatabase();
   services = createMockServices({ database });
   services.settingsStore.settings.set(DEFAULT_SETTINGS);
-  window.location.hash = '#/chats';
+  window.location.hash = '#/dialogs';
 });
 
-describe('Chat list screen', () => {
-  it('Render chats', async () => {
-    await seedChat(1, {
+describe('Dialog list screen', () => {
+  it('Render dialogs', async () => {
+    await seedDialog(1, {
       text: 'Hello',
     });
-    await seedChat(2, {
+    await seedDialog(2, {
       text: 'Hi',
     });
     const el = await mount();
 
     await vi.waitFor(async () => {
       await el.updateComplete;
-      expect(chatItems(el)).toHaveLength(2);
+      expect(dialogItems(el)).toHaveLength(2);
     });
   });
 
   // Replaces the hub-notification tests the repositories used to carry: a repository write
   // has to reach the read model, which is liveQuery's job now rather than ours.
   it('picks up a dialog written through the repository', async () => {
-    await seedChat(1);
+    await seedDialog(1);
     const el = await mount();
     await vi.waitFor(async () => {
       await el.updateComplete;
-      expect(chatItems(el)).toHaveLength(1);
+      expect(dialogItems(el)).toHaveLength(1);
     });
 
     const repo = new DialogRepository(database, new MediaRepository(database));
@@ -111,7 +111,7 @@ describe('Chat list screen', () => {
 
     await vi.waitFor(async () => {
       await el.updateComplete;
-      expect(chatItems(el)[0].unreadCount).toBe(7);
+      expect(dialogItems(el)[0].unreadCount).toBe(7);
     });
   });
 });

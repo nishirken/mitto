@@ -105,7 +105,7 @@ describe('settings-screen', () => {
     expect(signOut(el).textContent!.trim()).toBe('Sign out');
   });
 
-  it('signs out, returns to the chat list and reloads', async () => {
+  it('signs out, returns to the dialog list and reloads', async () => {
     vi.mocked(authStore.logout).mockResolvedValue(true);
     const el = await mount();
 
@@ -113,7 +113,7 @@ describe('settings-screen', () => {
     await vi.waitFor(() => expect(reload).toHaveBeenCalled());
 
     expect(authStore.logout).toHaveBeenCalledTimes(1);
-    expect(window.location.hash).toBe('#/chats');
+    expect(window.location.hash).toBe('#/dialogs');
   });
 
   it('stays put when signing out fails', async () => {
@@ -149,11 +149,11 @@ describe('settings-screen', () => {
     });
   });
 
-  it('navigates back to the chat list', async () => {
+  it('navigates back to the dialog list', async () => {
     const el = await mount();
 
     tid(el, 'settings.back')!.click();
 
-    expect(window.location.hash).toBe('#/chats');
+    expect(window.location.hash).toBe('#/dialogs');
   });
 });

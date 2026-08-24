@@ -7,13 +7,14 @@ import type { Services } from 'api/services-context';
 import { navigate } from 'router';
 import { formatTimestamp } from 'utils/format-timestamp';
 import 'mudita-ui';
-import './chat-item';
-import styles from './chat-list-screen.css?inline';
+import './dialog-item';
+import styles from './dialog-list-screen.css?inline';
 import { DialogListProjection } from './dialog-list-projection';
 import { DialogListSyncService } from './dialog-list-sync-service';
+import type { PeerId } from 'services/database';
 
-@customElement('chat-list-screen')
-export class ChatListScreen extends SignalWatcher(LitElement) {
+@customElement('dialog-list-screen')
+export class DialogListScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
   private _dialogListProjection!: DialogListProjection;
   private _dialogListSyncService!: DialogListSyncService;
@@ -43,8 +44,8 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
     void this._dialogListSyncService.loadMore().catch(() => {});
   };
 
-  private _onChatClick = (chatId: string) => {
-    navigate(`chat/${chatId}`);
+  private _onDialogClick = (peerId: PeerId) => {
+    navigate(`dialog/${peerId}`);
   };
 
   private _onSettingsClick = () => {
@@ -52,17 +53,17 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
   };
 
   render() {
-    const chats = this._dialogListProjection.chats.get();
+    const dialogs = this._dialogListProjection.dialogs.get();
 
     return html`
       <mk-header headline="Mitto">
-        <span class="count" slot="end">${chats.length} chats</span>
+        <span class="count" slot="end">${dialogs.length} chats</span>
         <mk-icon-button
           bordered
           slot="end"
           icon="settings"
           label="Settings"
-          data-testid="chat-list.settings-button"
+          data-testid="dialog-list.settings-button"
           @click=${this._onSettingsClick}
         ></mk-icon-button>
       </mk-header>
@@ -71,15 +72,15 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
         ?paged=${this.services.settingsStore.pagedScroll('conversations')}
         .onBottom=${this._onBottom}
       >
-        ${chats.map(
-          (chat) => html`
-            <chat-item
-              .name=${chat.name}
-              .timestamp=${formatTimestamp(chat.date)}
-              .preview=${chat.topMessage?.text}
-              .unreadCount=${chat.unreadCount}
-              @click="${() => this._onChatClick(chat.id)}"
-            ></chat-item>
+        ${dialogs.map(
+          (dialog) => html`
+            <dialog-item
+              .name=${dialog.name}
+              .timestamp=${formatTimestamp(dialog.date)}
+              .preview=${dialog.topMessage?.text}
+              .unreadCount=${dialog.unreadCount}
+              @click="${() => this._onDialogClick(dialog.id)}"
+            ></dialog-item>
           `,
         )}
       </scroll-container>

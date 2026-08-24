@@ -4,7 +4,7 @@ import { settled, tid } from '../../../../test-utils';
 import type { MediaId } from '../../../../services/database';
 import type { Services } from '../../../../api/services-context';
 import { MockMediaFileService } from '../../../../services/media/__mocks__/media-file-service';
-import type { MessageMedia } from '../../chat-view-projection';
+import type { MessageMedia } from '../../dialog-projection';
 import './voice-player';
 import type { VoicePlayer } from './voice-player';
 

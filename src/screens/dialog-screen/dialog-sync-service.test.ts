@@ -89,7 +89,7 @@ describe('DialogSyncService', () => {
     expect(await database.media.get('photo:10')).toMatchObject({ type: 'photo', thumbSize: 'x' });
   });
 
-  test('advances the inbox marker when the chat is read elsewhere', async () => {
+  test('advances the inbox marker when the dialog is read elsewhere', async () => {
     const handler = handlerFor(1) as (update: ApiTypes.TypeUpdate) => void;
 
     handler(

@@ -4,7 +4,7 @@ import { consume } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import 'mudita-ui';
-import type { MessageMedia } from '../../chat-view-projection';
+import type { MessageMedia } from '../../dialog-projection';
 import styles from './voice-player.css?inline';
 
 @customElement('voice-player')

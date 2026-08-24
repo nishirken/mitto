@@ -19,7 +19,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
   @state() private _signingOut = false;
 
   private _onBack = () => {
-    navigate('chats');
+    navigate('dialogs');
   };
 
   private _onConversationsChange = (e: Event) => {
@@ -38,7 +38,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
     this._signingOut = true;
     try {
       if (await this.services.authStore.logout()) {
-        navigate('chats');
+        navigate('dialogs');
         window.location.reload();
       }
     } finally {

@@ -1,10 +1,10 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import 'mudita-ui';
-import styles from './chat-view-header.css?inline';
+import styles from './dialog-header.css?inline';
 
-@customElement('chat-view-header')
-export class ChatViewHeader extends LitElement {
+@customElement('dialog-header')
+export class DialogHeader extends LitElement {
   static styles = unsafeCSS(styles);
 
   @property() contactName = '';
