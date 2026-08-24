@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { StoredSettings } from 'services/database';
-import { MockDatabase } from 'services/database/__mocks__/database';
+import { createTestDatabase } from 'services/database/__mocks__/database';
 import { DEFAULT_SETTINGS, SettingsStore } from './settings-store';
 
-function createStore(stored: StoredSettings | null = null) {
-  const db = new MockDatabase();
-  db.settings = stored;
+async function createStore(stored: StoredSettings | null = null) {
+  const db = createTestDatabase();
+  // Seeded through the table so the `setSettings` spy below only sees the store's own write.
+  if (stored) await db.meta.put({ key: 'settings', value: stored });
+  const setSettings = vi.spyOn(db, 'setSettings');
 
-  return { db, store: new SettingsStore(db) };
+  return { db, setSettings, store: new SettingsStore(db) };
 }
 
 describe('SettingsStore', () => {
@@ -16,7 +18,7 @@ describe('SettingsStore', () => {
   });
 
   it('falls back to defaults when nothing is stored', async () => {
-    const { store } = createStore(null);
+    const { store } = await createStore(null);
 
     await store.init();
 
@@ -26,7 +28,7 @@ describe('SettingsStore', () => {
   });
 
   it('loads stored settings', async () => {
-    const { store } = createStore({
+    const { store } = await createStore({
       conversations: { pagedScroll: true },
       messages: { pagedScroll: true },
     });
@@ -38,7 +40,7 @@ describe('SettingsStore', () => {
   });
 
   it('fills missing sections with defaults', async () => {
-    const { store } = createStore({ messages: { pagedScroll: true } } as StoredSettings);
+    const { store } = await createStore({ messages: { pagedScroll: true } } as StoredSettings);
 
     await store.init();
 
@@ -49,7 +51,7 @@ describe('SettingsStore', () => {
   });
 
   it('writes a section without touching the other', async () => {
-    const { db, store } = createStore(null);
+    const { setSettings, store } = await createStore(null);
     await store.init();
 
     await store.setPagedScroll('messages', true);
@@ -58,14 +60,14 @@ describe('SettingsStore', () => {
       conversations: { pagedScroll: false },
       messages: { pagedScroll: true },
     });
-    expect(db.setSettings).toHaveBeenCalledWith({
+    expect(setSettings).toHaveBeenCalledWith({
       conversations: { pagedScroll: false },
       messages: { pagedScroll: true },
     });
   });
 
   it('does not mutate the defaults', async () => {
-    const { store } = createStore(null);
+    const { store } = await createStore(null);
     await store.init();
 
     await store.setPagedScroll('conversations', true);

@@ -1,10 +1,11 @@
-import { openDB, type IDBPDatabase } from 'idb';
+import { Dexie, type Table } from 'dexie';
 import type {
   StoredPeer,
   MediaId,
+  MessageId,
   MetaKey,
+  MetaRecord,
   MetaValue,
-  MittoDB,
   PeerId,
   StoredSettings,
   StoredDialog,
@@ -18,62 +19,43 @@ import { isUser } from '../peer-key';
 export const DB_NAME = 'mitto';
 export const DB_VERSION = 1;
 
-export interface IDatabase {
-  close(): void;
-  getSession(): Promise<string | null>;
-  setSession(value: string): Promise<void>;
-  clearSession(): Promise<void>;
-  getSettings(): Promise<StoredSettings | null>;
-  setSettings(value: StoredSettings): Promise<void>;
-  putUsers(users: StoredUser[]): Promise<void>;
-  putMessages(msgs: StoredMessage[]): Promise<void>;
-  putMedia(media: StoredMedia[]): Promise<void>;
-  putDialogs(dialogs: StoredDialog[]): Promise<void>;
-  putAll(
-    users: StoredUser[],
-    mergeUser: (x: StoredUser, y: StoredUser) => StoredUser,
-    messages: StoredMessage[],
-    dialogs: StoredDialog[],
-  ): Promise<void>;
-  getUser(id: UserId): Promise<StoredUser | undefined>;
-  getPeer(id: PeerId): Promise<StoredPeer | undefined>;
-  getUsers(ids: UserId[]): Promise<(StoredUser | undefined)[]>;
-  getMedia(id: MediaId): Promise<StoredMedia | undefined>;
-  getMediaItems(ids: MediaId[]): Promise<StoredMedia[]>;
-  getMessage(peerId: PeerId, id: number): Promise<StoredMessage | undefined>;
-  loadDialogs(): Promise<StoredDialog[]>;
-  getDialog(peerId: PeerId): Promise<StoredDialog | undefined>;
-  getDialogs(ids: PeerId[]): Promise<StoredDialog[]>;
-  loadMessages(peerId: PeerId): Promise<StoredMessage[]>;
-  clearCache(): Promise<void>;
-}
+/**
+ * Tables are public: callers read and write them through the Dexie API directly. Only
+ * operations that encode something the table API does not — a key range, a multi-table
+ * transaction, the shape of the `meta` store — get a method here.
+ *
+ * Store declarations mirror what the `idb` upgrade callback created, key paths included and
+ * without secondary indexes, so Dexie adopts an existing v1 database instead of upgrading it.
+ */
+export class Database extends Dexie {
+  meta!: Table<MetaRecord, MetaKey>;
+  users!: Table<StoredUser, UserId>;
+  messages!: Table<StoredMessage, [PeerId, MessageId]>;
+  dialogs!: Table<StoredDialog, PeerId>;
+  media!: Table<StoredMedia, MediaId>;
 
-export class Database implements IDatabase {
-  private constructor(private readonly _db: IDBPDatabase<MittoDB>) {}
-
-  static async create(): Promise<Database> {
-    const db = await openDB<MittoDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        db.createObjectStore('meta', { keyPath: 'key' });
-        db.createObjectStore('users', { keyPath: 'id' });
-        db.createObjectStore('messages', { keyPath: ['peerId', 'id'] });
-        db.createObjectStore('dialogs', { keyPath: 'peerId' });
-        db.createObjectStore('media', { keyPath: 'id' });
-      },
+  constructor(name = DB_NAME) {
+    super(name);
+    this.version(DB_VERSION).stores({
+      meta: 'key',
+      users: 'id',
+      messages: '[peerId+id]',
+      dialogs: 'peerId',
+      media: 'id',
     });
-
-    return new Database(db);
   }
 
-  /** Closes the underlying connection so the database can be deleted or reopened. */
-  close(): void {
-    this._db.close();
+  static async create(name = DB_NAME): Promise<Database> {
+    const db = new Database(name);
+    await db.open();
+
+    return db;
   }
 
   // --- meta ------------------------------------------------------------------
 
   private async _getMeta<K extends MetaKey>(key: K): Promise<MetaValue[K] | undefined> {
-    const rec = await this._db.get('meta', key);
+    const rec = await this.meta.get(key);
 
     return rec?.value as MetaValue[K] | undefined;
   }
@@ -83,11 +65,11 @@ export class Database implements IDatabase {
   }
 
   async setSession(value: string): Promise<void> {
-    await this._db.put('meta', { key: 'session', value });
+    await this.meta.put({ key: 'session', value });
   }
 
   async clearSession(): Promise<void> {
-    await this._db.delete('meta', 'session');
+    await this.meta.delete('session');
   }
 
   async getSettings(): Promise<StoredSettings | null> {
@@ -95,37 +77,13 @@ export class Database implements IDatabase {
   }
 
   async setSettings(value: StoredSettings): Promise<void> {
-    await this._db.put('meta', { key: 'settings', value });
+    await this.meta.put({ key: 'settings', value });
   }
 
-  // --- normalized writes -----------------------------------------------------
+  // --- operations the table API does not cover --------------------------------
 
-  async putUsers(users: StoredUser[]): Promise<void> {
-    if (users.length === 0) return;
-    const tx = this._db.transaction('users', 'readwrite');
-    await Promise.all(users.map((u) => tx.store.put(u)));
-    await tx.done;
-  }
-
-  async putMessages(msgs: StoredMessage[]): Promise<void> {
-    if (msgs.length === 0) return;
-    const tx = this._db.transaction('messages', 'readwrite');
-    await Promise.all(msgs.map((m) => tx.store.put(m)));
-    await tx.done;
-  }
-
-  async putMedia(media: StoredMedia[]): Promise<void> {
-    if (media.length === 0) return;
-    const tx = this._db.transaction('media', 'readwrite');
-    await Promise.all(media.map((m) => tx.store.put(m)));
-    await tx.done;
-  }
-
-  async putDialogs(dialogs: StoredDialog[]): Promise<void> {
-    if (dialogs.length === 0) return;
-    const tx = this._db.transaction('dialogs', 'readwrite');
-    await Promise.all(dialogs.map((d) => tx.store.put(d)));
-    await tx.done;
+  async getPeer(id: PeerId): Promise<StoredPeer | undefined> {
+    if (isUser(id)) return this.users.get(id);
   }
 
   async putAll(
@@ -134,79 +92,36 @@ export class Database implements IDatabase {
     messages: StoredMessage[],
     dialogs: StoredDialog[],
   ): Promise<void> {
-    const tx = this._db.transaction(['users', 'messages', 'dialogs'], 'readwrite');
-    await Promise.all([
-      ...users.map(async (u) => {
-        const existing = await tx.objectStore('users').get(u.id);
+    await this.transaction('rw', this.users, this.messages, this.dialogs, async () => {
+      const existing = await this.users.bulkGet(users.map((u) => u.id));
+      const merged = users.map((u, i) => {
+        const prev = existing[i];
 
-        return tx.objectStore('users').put(existing ? mergeUser(existing, u) : u);
-      }),
-      ...messages.map((m) => tx.objectStore('messages').put(m)),
-      ...dialogs.map((d) => tx.objectStore('dialogs').put(d)),
-    ]);
-    await tx.done;
-  }
-
-  // --- normalized reads ------------------------------------------------------
-
-  async getUser(id: UserId): Promise<StoredUser | undefined> {
-    return this._db.get('users', id);
-  }
-
-  async getPeer(id: PeerId): Promise<StoredPeer | undefined> {
-    if (isUser(id)) return this.getUser(id);
-  }
-
-  async getUsers(ids: UserId[]): Promise<(StoredUser | undefined)[]> {
-    const tx = this._db.transaction('users', 'readonly');
-    const result = await Promise.all(ids.map((id) => tx.store.get(id)));
-    await tx.done;
-
-    return result;
-  }
-
-  async getMedia(id: MediaId): Promise<StoredMedia | undefined> {
-    return this._db.get('media', id);
-  }
-
-  async getMediaItems(ids: MediaId[]): Promise<StoredMedia[]> {
-    if (ids.length === 0) return [];
-    const tx = this._db.transaction('media', 'readonly');
-    const result = await Promise.all(ids.map((id) => tx.store.get(id)));
-    await tx.done;
-
-    return result.filter((m) => !!m) as StoredMedia[];
-  }
-
-  async getMessage(peerId: PeerId, id: number): Promise<StoredMessage | undefined> {
-    return this._db.get('messages', [peerId, id]);
-  }
-
-  async loadDialogs(): Promise<StoredDialog[]> {
-    return this._db.getAll('dialogs');
-  }
-
-  async getDialog(peerId: PeerId): Promise<StoredDialog | undefined> {
-    return this._db.get('dialogs', peerId);
-  }
-
-  async getDialogs(ids: PeerId[]): Promise<StoredDialog[]> {
-    if (ids.length === 0) return [];
-    const tx = this._db.transaction('dialogs', 'readonly');
-    const result = await Promise.all(ids.map((id) => tx.store.get(id)));
-    await tx.done;
-
-    return result.filter((d) => !!d) as StoredDialog[];
+        return prev ? mergeUser(prev, u) : u;
+      });
+      await Promise.all([
+        this.users.bulkPut(merged),
+        this.messages.bulkPut(messages),
+        this.dialogs.bulkPut(dialogs),
+      ]);
+    });
   }
 
   async loadMessages(peerId: PeerId): Promise<StoredMessage[]> {
-    return this._db.getAll('messages', IDBKeyRange.bound([peerId], [peerId, []]));
+    return this.messages
+      .where('[peerId+id]')
+      .between([peerId, Dexie.minKey], [peerId, Dexie.maxKey])
+      .toArray();
   }
 
   async clearCache(): Promise<void> {
-    const stores = ['users', 'messages', 'dialogs', 'media'] as const;
-    const tx = this._db.transaction(stores, 'readwrite');
-    await Promise.all(stores.map((s) => tx.objectStore(s).clear()));
-    await tx.done;
+    await this.transaction('rw', this.users, this.messages, this.dialogs, this.media, async () => {
+      await Promise.all([
+        this.users.clear(),
+        this.messages.clear(),
+        this.dialogs.clear(),
+        this.media.clear(),
+      ]);
+    });
   }
 }

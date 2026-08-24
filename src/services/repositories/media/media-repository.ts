@@ -1,6 +1,6 @@
 import type { Api } from 'telegram';
 import telegram from 'telegram';
-import type { IDatabase, StoredMedia, MediaId } from '../../database';
+import type { Database, StoredMedia, MediaId } from '../../database';
 import { toStoredMedia } from './mappers';
 
 const { Api: A } = telegram;
@@ -12,7 +12,7 @@ export interface IMediaRepository {
 }
 
 export class MediaRepository implements IMediaRepository {
-  constructor(private readonly _storage: IDatabase) {}
+  constructor(private readonly _storage: Database) {}
 
   async applyMessagesMedia(messages: Api.TypeMessage[]): Promise<void> {
     const media = new Map<MediaId, StoredMedia>();
@@ -24,7 +24,7 @@ export class MediaRepository implements IMediaRepository {
       if (stored) media.set(stored.id, stored);
     }
 
-    await this._storage.putMedia([...media.values()]);
+    await this._storage.media.bulkPut([...media.values()]);
   }
 
   async applyMedia(media: Api.TypeMessageMedia): Promise<MediaId | null> {
@@ -32,7 +32,7 @@ export class MediaRepository implements IMediaRepository {
 
     if (!stored) return null;
 
-    await this._storage.putMedia([stored]);
+    await this._storage.media.bulkPut([stored]);
 
     return stored.id;
   }

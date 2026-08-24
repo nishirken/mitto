@@ -4,7 +4,8 @@ import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { createMockServices } from 'api/__mocks__/services-context';
-import { MockDatabase } from 'services/database/__mocks__/database';
+import type { Database } from 'services/database';
+import { createTestDatabase } from 'services/database/__mocks__/database';
 import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
 import { DEFAULT_SETTINGS, SettingsStore } from 'services/settings/settings-store';
 import { tid } from 'test-utils';
@@ -12,7 +13,7 @@ import './settings-screen';
 import type { SettingsScreen } from './settings-screen';
 import type { MkButton, MkCheckbox } from 'mudita-ui';
 
-let database: MockDatabase;
+let database: Database;
 let authStore: MockAuthStore;
 let settingsStore: SettingsStore;
 let services: Services;
@@ -38,7 +39,8 @@ describe('settings-screen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.location.hash = '#/settings';
-    database = new MockDatabase();
+    database = createTestDatabase();
+    vi.spyOn(database, 'setSettings');
     authStore = new MockAuthStore();
     settingsStore = new SettingsStore(database);
     services = createMockServices({ database, authStore, settingsStore });

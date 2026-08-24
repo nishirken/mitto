@@ -4,8 +4,8 @@ import { ContextProvider } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { createMockServices } from 'api/__mocks__/services-context';
-import { MockDatabase } from 'services/database/__mocks__/database';
-import { DatabaseHub } from 'services/database/database-hub';
+import type { Database } from 'services/database';
+import { createTestDatabase } from 'services/database/__mocks__/database';
 import { mockStoredMessage } from 'services/database/__mocks__/database-schema';
 import type { MessageId, PeerId } from 'services/database';
 import { DEFAULT_SETTINGS } from 'services/settings/settings-store';
@@ -16,8 +16,7 @@ import type { ChatViewScreen } from './chat-view-screen';
 
 const peerId = 'user:1' as PeerId;
 
-let database: MockDatabase;
-let hub: DatabaseHub;
+let database: Database;
 let services: Services;
 let scrollToBottom: ReturnType<typeof vi.spyOn>;
 let scrollToElement: ReturnType<typeof vi.spyOn>;
@@ -35,10 +34,9 @@ const mount = () =>
   });
 
 // The screen scrolls only once the first batch of messages has been projected, which takes a
-// hub round-trip through the database on top of the render.
+// liveQuery round-trip through the database on top of the render.
 async function deliverMessages(el: ChatViewScreen) {
-  hub.notify('newMessages', []);
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
   await settled(el);
 }
 
@@ -46,9 +44,8 @@ async function deliverMessages(el: ChatViewScreen) {
 // the outer element happily forwards into nothing while its inner container is unrendered.
 describe('chat-view-screen initial scroll', () => {
   beforeEach(() => {
-    database = new MockDatabase();
-    hub = new DatabaseHub();
-    services = createMockServices({ database, databaseHub: hub });
+    database = createTestDatabase();
+    services = createMockServices({ database });
     services.settingsStore.settings.set(DEFAULT_SETTINGS);
     scrollToBottom = vi.spyOn(InfiniteScrollContainer.prototype, 'scrollToBottom');
     scrollToElement = vi.spyOn(InfiniteScrollContainer.prototype, 'scrollToElement');
@@ -59,7 +56,7 @@ describe('chat-view-screen initial scroll', () => {
   });
 
   it('scrolls to the bottom once the first messages arrive', async () => {
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
       mockStoredMessage({ peerId, id: 2 as MessageId, isOutgoing: true }),
     ]);
@@ -73,7 +70,7 @@ describe('chat-view-screen initial scroll', () => {
   });
 
   it('scrolls to the first unread message once the first messages arrive', async () => {
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
       mockStoredMessage({ peerId, id: 2 as MessageId }),
       mockStoredMessage({ peerId, id: 3 as MessageId }),
@@ -92,7 +89,7 @@ describe('chat-view-screen initial scroll', () => {
   it('reaches the paged implementation in paged mode', async () => {
     services.settingsStore.settings.set({ ...DEFAULT_SETTINGS, messages: { pagedScroll: true } });
     const scrollToLastPage = vi.spyOn(PagedScrollContainer.prototype, 'scrollToLastPage');
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 1 as MessageId, isOutgoing: true }),
     ]);
     const el = await mount();

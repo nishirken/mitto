@@ -2,7 +2,7 @@ import { signal, type Signal } from '@lit-labs/signals';
 import type { Api, TelegramClient, events } from 'telegram';
 import telegram from 'telegram';
 import type { Timestamp } from '../../utils/flavour';
-import type { IDatabase, MessageId, PeerId } from '../../services/database';
+import type { Database, MessageId, PeerId } from '../../services/database';
 import { peerKey, toInputPeer } from '../../services/peer-key';
 import type { IMessageRepository } from '../../services/repositories/message/message-repository';
 import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
@@ -31,7 +31,7 @@ export class DialogSyncService {
     private readonly _client: TelegramClient,
     private readonly _repo: IMessageRepository,
     private readonly _dialogRepo: IDialogRepository,
-    private readonly _db: IDatabase,
+    private readonly _db: Database,
     private readonly _peerId: PeerId,
   ) {}
 

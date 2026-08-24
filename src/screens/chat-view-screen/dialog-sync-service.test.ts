@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import telegram from 'telegram';
 import type { Api as ApiTypes, events, TelegramClient } from 'telegram';
-import { MockDatabase } from '../../services/database/__mocks__/database';
-import { DatabaseHub } from '../../services/database/database-hub';
-import type { PeerId } from '../../services/database';
+import type { Database } from '../../services/database';
+import { createTestDatabase } from '../../services/database/__mocks__/database';
+import type { MessageId, PeerId } from '../../services/database';
 import {
   mockStoredDialog,
   mockStoredUser,
@@ -16,7 +16,11 @@ import { DialogSyncService } from './dialog-sync-service';
 const { Api } = telegram;
 const big = (n: string) => n as unknown as BigInteger;
 const peerId = 'user:1' as PeerId;
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+// Real IndexedDB writes take several macrotask turns to settle, and the handlers under test
+// fire and forget, so one turn is not enough to observe them.
+const flush = async () => {
+  for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+};
 
 function photoMessage() {
   return new Api.Message({
@@ -38,16 +42,16 @@ function photoMessage() {
 }
 
 describe('DialogSyncService', () => {
-  let database: MockDatabase;
+  let database: Database;
   let client: { addEventHandler: ReturnType<typeof vi.fn>; invoke: ReturnType<typeof vi.fn> };
   let service: DialogSyncService;
 
   const handlerFor = (index: number) => client.addEventHandler.mock.calls[index][0];
 
   beforeEach(async () => {
-    database = new MockDatabase();
-    await database.putUsers([mockStoredUser({ id: 'user:1' })]);
-    await database.putDialogs([mockStoredDialog({ peerId, unreadCount: 3 })]);
+    database = createTestDatabase();
+    await database.users.bulkPut([mockStoredUser({ id: 'user:1' })]);
+    await database.dialogs.bulkPut([mockStoredDialog({ peerId, unreadCount: 3 })]);
 
     client = {
       addEventHandler: vi.fn(),
@@ -61,10 +65,9 @@ describe('DialogSyncService', () => {
       ),
     };
 
-    const hub = new DatabaseHub();
     const media = new MediaRepository(database);
-    const repo = new MessageRepository(database, hub, media);
-    const dialogRepo = new DialogRepository(database, hub, media);
+    const repo = new MessageRepository(database, media);
+    const dialogRepo = new DialogRepository(database, media);
     service = new DialogSyncService(
       client as unknown as TelegramClient,
       repo,
@@ -81,9 +84,9 @@ describe('DialogSyncService', () => {
     handler({ message: photoMessage() } as events.NewMessageEvent);
     await flush();
 
-    const message = await database.getMessage(peerId, 5);
+    const message = await database.messages.get([peerId, 5 as MessageId]);
     expect(message?.mediaId).toBe('photo:10');
-    expect(database.media.get('photo:10')).toMatchObject({ type: 'photo', thumbSize: 'x' });
+    expect(await database.media.get('photo:10')).toMatchObject({ type: 'photo', thumbSize: 'x' });
   });
 
   test('advances the inbox marker when the chat is read elsewhere', async () => {
@@ -100,7 +103,10 @@ describe('DialogSyncService', () => {
     );
     await flush();
 
-    expect(database.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });
+    expect(await database.dialogs.get(peerId)).toMatchObject({
+      readInboxMaxId: 42,
+      unreadCount: 0,
+    });
   });
 
   test('advances the outbox marker when the peer reads our messages', async () => {
@@ -116,7 +122,7 @@ describe('DialogSyncService', () => {
     );
     await flush();
 
-    expect(database.dialogs.get(peerId)).toMatchObject({ readOutboxMaxId: 7 });
+    expect(await database.dialogs.get(peerId)).toMatchObject({ readOutboxMaxId: 7 });
   });
 
   test('ignores a read update that moves the marker backwards', async () => {
@@ -132,7 +138,10 @@ describe('DialogSyncService', () => {
     );
     await flush();
 
-    expect(database.dialogs.get(peerId)).toMatchObject({ readInboxMaxId: 42, unreadCount: 0 });
+    expect(await database.dialogs.get(peerId)).toMatchObject({
+      readInboxMaxId: 42,
+      unreadCount: 0,
+    });
   });
 
   test('never marks the history read on the server', async () => {

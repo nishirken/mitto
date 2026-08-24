@@ -1,4 +1,3 @@
-import type { DBSchema } from 'idb';
 import type { Flavour, Timestamp } from 'utils/flavour';
 
 // Canonical keys — string flavours so Map lookups and IDB keys use value equality.
@@ -84,26 +83,3 @@ export type StoredDialog = {
   readInboxMaxId: MessageId;
   readOutboxMaxId: MessageId;
 };
-
-export interface MittoDB extends DBSchema {
-  meta: {
-    key: MetaKey;
-    value: MetaRecord;
-  };
-  users: {
-    key: UserId;
-    value: StoredUser;
-  };
-  messages: {
-    key: [PeerId, MessageId];
-    value: StoredMessage;
-  };
-  dialogs: {
-    key: PeerId;
-    value: StoredDialog;
-  };
-  media: {
-    key: MediaId;
-    value: StoredMedia;
-  };
-}

@@ -17,7 +17,6 @@ import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
 import { Database } from './services/database';
 import { MessageRepository } from './services/repositories/message/message-repository';
-import { DatabaseHub } from './services/database/database-hub';
 import { DialogRepository } from './services/repositories/dialog/dialog-repository';
 import { MediaRepository } from './services/repositories/media/media-repository';
 import { MediaFileService } from './services/media/media-file-service';
@@ -50,7 +49,6 @@ export class AppRoot extends SignalWatcher(LitElement) {
     });
 
     const storage = await Database.create();
-    const hub = new DatabaseHub();
 
     const sessionString = (await storage.getSession()) ?? '';
     this._hasSession = sessionString !== '';
@@ -69,10 +67,9 @@ export class AppRoot extends SignalWatcher(LitElement) {
     this._services = {
       client,
       database: storage,
-      databaseHub: hub,
       authStore: new TelegramAuthStore(config, client, storage),
-      dialogRepository: new DialogRepository(storage, hub, mediaRepository),
-      messageRepository: new MessageRepository(storage, hub, mediaRepository),
+      dialogRepository: new DialogRepository(storage, mediaRepository),
+      messageRepository: new MessageRepository(storage, mediaRepository),
       mediaRepository,
       mediaFileService: new MediaFileService(client, storage),
       settingsStore,

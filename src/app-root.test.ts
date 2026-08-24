@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fixture, html } from '@open-wc/testing';
 import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
-import { MockDatabase } from 'services/database/__mocks__/database';
+import type { Database } from 'services/database';
+import { createTestDatabase } from 'services/database/__mocks__/database';
 
 let authStore: MockAuthStore;
-let database: MockDatabase;
+let database: Database;
 
 // Partial mock: the sync services and mappers pull real `Api`/`events`/`utils` off the
 // same default export, and app-root needs a working `sessions.StringSession`.
@@ -67,14 +68,14 @@ import type { AppRoot } from 'app-root';
 
 async function flushAsync(el: AppRoot): Promise<void> {
   for (let i = 0; i < 5; i++) {
-    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     await el.updateComplete;
   }
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  database = new MockDatabase();
+  database = createTestDatabase();
   authStore = new MockAuthStore();
   authStore.state.set('loading');
 });
@@ -96,9 +97,9 @@ describe('app-root', () => {
     expect(el.shadowRoot!.querySelector('auth-screen')).not.toBeNull();
   });
 
-  it('renders chat-view-screen for #/chat/1', async () => {
+  it('renders chat-view-screen for #/chat/user:1', async () => {
     authStore.state.set('ready');
-    window.location.hash = '#/chat/1';
+    window.location.hash = '#/chat/user:1';
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
     expect(el.shadowRoot!.querySelector('chat-view-screen')).not.toBeNull();

@@ -28,12 +28,9 @@ export class ChatListScreen extends SignalWatcher(LitElement) {
       this.services.dialogRepository,
       this.services.messageRepository,
     );
-    this._dialogListProjection = new DialogListProjection(
-      this.services.database,
-      this.services.databaseHub,
-    );
+    this._dialogListProjection = new DialogListProjection(this.services.database);
     void this._dialogListSyncService.loadInitial().catch(() => {});
-    this._dialogListProjection.init().catch(() => {});
+    this._dialogListProjection.init();
   }
 
   disconnectedCallback(): void {

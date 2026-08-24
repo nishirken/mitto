@@ -2,7 +2,7 @@ import { signal, type Signal } from '@lit-labs/signals';
 import type { TelegramClient } from 'telegram';
 import telegram from 'telegram';
 import type { TelegramConfig } from 'types/telegram';
-import type { IDatabase } from 'services/database';
+import type { Database } from 'services/database';
 
 export type AuthState =
   | 'loading'
@@ -31,7 +31,7 @@ export class TelegramAuthStore implements IAuthStore {
   constructor(
     private readonly _config: TelegramConfig,
     private readonly _client: TelegramClient,
-    private readonly _storage: IDatabase,
+    private readonly _storage: Database,
   ) {}
 
   /**

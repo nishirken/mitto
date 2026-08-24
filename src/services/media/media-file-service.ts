@@ -1,5 +1,5 @@
 import type { TelegramClient } from 'telegram';
-import type { IDatabase, MediaId, StoredMedia } from '../database';
+import type { Database, MediaId, StoredMedia } from '../database';
 import { toInputLocation } from './input-location';
 
 const PHOTO_MIME = 'image/jpeg';
@@ -16,7 +16,7 @@ export class MediaFileService implements IMediaFileService {
 
   constructor(
     private readonly _client: TelegramClient,
-    private readonly _storage: IDatabase,
+    private readonly _storage: Database,
   ) {}
 
   async url(id: MediaId): Promise<string | null> {
@@ -39,7 +39,7 @@ export class MediaFileService implements IMediaFileService {
   }
 
   private async _download(id: MediaId): Promise<string | null> {
-    const media = await this._storage.getMedia(id);
+    const media = await this._storage.media.get(id);
     if (!media) return null;
 
     const location = toInputLocation(media);

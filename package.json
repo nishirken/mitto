@@ -26,7 +26,7 @@
     "@capacitor/core": "^8.5.0",
     "@lit-labs/signals": "^0.2.0",
     "@lit/context": "^1.1.6",
-    "idb": "^8.0.3",
+    "dexie": "^4.4.5",
     "lit": "^3.3.2",
     "mudita-ui": "github:nishirken/mudita-ui#1e675cf06a840bf724eb61effd498587f2bd5c2c",
     "signal-polyfill": "^0.2.2"

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import telegram from 'telegram';
-import { MockDatabase } from '../../database/__mocks__/database';
-import { DatabaseHub } from '../../database/database-hub';
+import type { Database } from '../../database';
+import { createTestDatabase } from '../../database/__mocks__/database';
 import type { MediaId, MessageId, PeerId } from '../../database';
 import { MediaRepository } from '../media/media-repository';
 import { MessageRepository } from './message-repository';
@@ -32,62 +32,42 @@ function voiceMessage(id: number) {
 }
 
 describe('MessageRepository', () => {
-  let database: MockDatabase;
-  let hub: DatabaseHub;
+  let database: Database;
   let repo: MessageRepository;
 
   beforeEach(() => {
-    database = new MockDatabase();
-    hub = new DatabaseHub();
-    repo = new MessageRepository(database, hub, new MediaRepository(database));
+    database = createTestDatabase();
+    repo = new MessageRepository(database, new MediaRepository(database));
   });
 
   test('writes the media a live message references', async () => {
     await repo.applyMessage(voiceMessage(5));
 
-    const message = await database.getMessage('user:1' as PeerId, 5);
+    const message = await database.messages.get(['user:1' as PeerId, 5 as MessageId]);
     expect(message?.mediaId).toBe('voice:20');
-    expect(await database.getMedia(message!.mediaId as MediaId)).toMatchObject({
+    expect(await database.media.get(message!.mediaId as MediaId)).toMatchObject({
       id: 'voice:20',
       type: 'voice',
       duration: 7,
     });
   });
 
-  test('has the media stored by the time newMessage fires', async () => {
-    let mediaAtNotify: unknown;
-    hub.subscribe('newMessage', () => {
-      mediaAtNotify = database.media.get('voice:20');
-    });
-
-    await repo.applyMessage(voiceMessage(6));
-
-    expect(mediaAtNotify).toBeDefined();
-  });
-
-  test('notifies with the stored peer and id', async () => {
-    const events: { peerId: PeerId; id: MessageId }[] = [];
-    hub.subscribe('newMessage', (e) => events.push(e));
-
+  test('stores the message under its peer and id', async () => {
     await repo.applyMessage(voiceMessage(7));
 
-    expect(events).toEqual([{ peerId: 'user:1', id: 7 }]);
+    expect(await database.messages.get(['user:1' as PeerId, 7 as MessageId])).toMatchObject({
+      peerId: 'user:1',
+      id: 7,
+    });
   });
 
   test('ignores messages that do not project', async () => {
-    const events: unknown[] = [];
-    hub.subscribe('newMessage', (e) => events.push(e));
-
     await repo.applyMessage(new Api.MessageEmpty({ id: 8 }));
 
-    expect(events).toEqual([]);
-    expect(database.messages.size).toBe(0);
+    expect(await database.messages.count()).toBe(0);
   });
 
   test('still accepts a synthesized message with no media', async () => {
-    const events: unknown[] = [];
-    hub.subscribe('newMessage', (e) => events.push(e));
-
     await repo.applyNewMessage({
       peerId: 'user:1' as PeerId,
       id: 9 as MessageId,
@@ -96,19 +76,16 @@ describe('MessageRepository', () => {
       isOutgoing: true,
     });
 
-    expect(await database.getMessage('user:1' as PeerId, 9)).toMatchObject({ text: 'sent' });
-    expect(events).toHaveLength(1);
+    expect(await database.messages.get(['user:1' as PeerId, 9 as MessageId])).toMatchObject({
+      text: 'sent',
+    });
   });
 
-  test('writes media and notifies for an update', async () => {
-    const events: unknown[] = [];
-    hub.subscribe('newMessage', (e) => events.push(e));
-
+  test('writes media for an update', async () => {
     await repo.updateNewMessage(
       new Api.UpdateNewMessage({ message: voiceMessage(10), pts: 1, ptsCount: 1 }),
     );
 
-    expect(database.media.get('voice:20')).toBeDefined();
-    expect(events).toHaveLength(1);
+    expect(await database.media.get('voice:20')).toBeDefined();
   });
 });

@@ -1,7 +1,6 @@
 import type { Services } from '../services-context';
-import { DatabaseHub } from '../../services/database/database-hub';
 import { SettingsStore } from '../../services/settings/settings-store';
-import { MockDatabase } from '../../services/database/__mocks__/database';
+import { createTestDatabase } from '../../services/database/__mocks__/database';
 import { MockAuthStore } from '../../screens/auth/__mocks__/auth-store';
 import { MockDialogRepository } from '../../services/repositories/dialog/__mocks__/dialog-repository';
 import { MockMessageRepository } from '../../services/repositories/message/__mocks__/message-repository';
@@ -10,12 +9,11 @@ import { MockMediaFileService } from '../../services/media/__mocks__/media-file-
 import { MockClient } from './telegram-client';
 
 export function createMockServices(overrides: Partial<Services> = {}): Services {
-  const database = overrides.database ?? new MockDatabase();
+  const database = overrides.database ?? createTestDatabase();
 
   return {
     client: new MockClient() as unknown as Services['client'],
     database,
-    databaseHub: new DatabaseHub(),
     authStore: new MockAuthStore(),
     dialogRepository: new MockDialogRepository(),
     messageRepository: new MockMessageRepository(),

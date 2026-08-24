@@ -1,7 +1,7 @@
 import { computed, signal } from '@lit-labs/signals';
 import type { Timestamp } from 'utils/flavour';
-import type { IDatabase, MessageId, PeerId } from '../../services/database';
-import type { DatabaseHub } from '../../services/database/database-hub';
+import type { Database, MessageId, PeerId } from '../../services/database';
+import { liveQuery, type Subscription } from 'dexie';
 import type {
   MediaId,
   StoredMedia,
@@ -83,10 +83,7 @@ export class ChatViewProjection {
   readonly firstMessages = new Promise<void>((resolve) => {
     this._resolveFirstMessages = resolve;
   });
-  private readonly _messages = new Map<MessageId, StoredMessage>();
   private readonly _media = new Map<MediaId, StoredMedia>();
-  private readonly _readInboxMaxId = signal(0 as MessageId);
-  private readonly _readOutboxMaxId = signal(0 as MessageId);
   readonly peer = signal<StoredPeer | null>(null);
   readonly peerName = computed(() => {
     const p = this.peer.get();
@@ -95,102 +92,66 @@ export class ChatViewProjection {
 
     return '';
   });
-  private _newMessageUnsub?: VoidFunction;
-  private _newMessagesUnsub?: VoidFunction;
-  private _dialogReadUnsub?: VoidFunction;
-  private _readMarkersLoaded?: Promise<void>;
+  private readonly _subs: Subscription[] = [];
 
   constructor(
-    private readonly _db: IDatabase,
-    private readonly _hub: DatabaseHub,
+    private readonly _db: Database,
     private readonly _peerId: PeerId,
   ) {}
 
-  async init(): Promise<void> {
-    this._readMarkersLoaded = this._loadReadMarkers();
-    this._newMessageUnsub = this._hub.subscribe('newMessage', ({ id, peerId }) => {
-      if (this._peerId !== peerId) {
-        return;
-      }
-      void this._handleNewMessage(id, peerId);
-    });
-    this._newMessagesUnsub = this._hub.subscribe('newMessages', () => {
-      void this._db.loadMessages(this._peerId).then((msgs) => this._applyMessages(msgs));
-    });
-    this._dialogReadUnsub = this._hub.subscribe('dialogRead', (peerId) => {
-      if (this._peerId !== peerId) {
-        return;
-      }
-      void this._loadReadMarkers().then(() => this._notify());
-    });
-    const peer = await this._db.getPeer(this._peerId);
-    if (peer) {
-      this.peer.set(peer);
-    }
-    await this._readMarkersLoaded;
+  init(): void {
+    this._subs.push(
+      liveQuery(async () => {
+        const [messages, dialog] = await Promise.all([
+          this._db.loadMessages(this._peerId),
+          this._db.dialogs.get(this._peerId),
+        ]);
+        const markers: ReadMarkers = dialog
+          ? { inbox: dialog.readInboxMaxId, outbox: dialog.readOutboxMaxId }
+          : NO_READ_MARKERS;
+        const media = await this._resolveMedia(messages);
+
+        return messages.map((message) =>
+          toMessageListItem(
+            message,
+            message.mediaId ? media.get(message.mediaId) : undefined,
+            markers,
+          ),
+        );
+      }).subscribe({
+        next: (items) => {
+          this.messages.set(items);
+          if (items.length > 0) this._resolveFirstMessages();
+        },
+        error: () => {},
+      }),
+      liveQuery(() => this._db.getPeer(this._peerId)).subscribe({
+        next: (peer) => this.peer.set(peer ?? null),
+        error: () => {},
+      }),
+    );
   }
 
-  private async _loadReadMarkers(): Promise<void> {
-    const dialog = await this._db.getDialog(this._peerId);
-
-    if (!dialog) return;
-
-    this._readInboxMaxId.set(dialog.readInboxMaxId);
-    this._readOutboxMaxId.set(dialog.readOutboxMaxId);
-  }
-
-  private async _handleNewMessage(id: MessageId, peerId: PeerId): Promise<void> {
-    const message = await this._db.getMessage(peerId, id);
-    if (message) {
-      await this._applyMessages([message]);
-    }
-  }
-
-  private async _applyMessages(messages: StoredMessage[]): Promise<void> {
-    await this._readMarkersLoaded;
-    await this._loadMedia(messages);
-    for (const message of messages) {
-      this._messages.set(message.id, message);
-    }
-    this._notify();
-  }
-
-  private async _loadMedia(messages: StoredMessage[]): Promise<void> {
+  // Media rows are written once and never updated, so anything already seen can be served
+  // from the cache instead of re-read on every emission.
+  private async _resolveMedia(messages: StoredMessage[]): Promise<Map<MediaId, StoredMedia>> {
     const missing = new Set<MediaId>();
 
     for (const { mediaId } of messages) {
       if (mediaId && !this._media.has(mediaId)) missing.add(mediaId);
     }
 
-    if (missing.size === 0) return;
-
-    for (const media of await this._db.getMediaItems([...missing])) {
-      this._media.set(media.id, media);
+    if (missing.size > 0) {
+      for (const media of await this._db.media.bulkGet([...missing])) {
+        if (media) this._media.set(media.id, media);
+      }
     }
-  }
 
-  private _notify(): void {
-    const markers: ReadMarkers = {
-      inbox: this._readInboxMaxId.get(),
-      outbox: this._readOutboxMaxId.get(),
-    };
-
-    this.messages.set(
-      [...this._messages.values()].map((message) =>
-        toMessageListItem(
-          message,
-          message.mediaId ? this._media.get(message.mediaId) : undefined,
-          markers,
-        ),
-      ),
-    );
-
-    if (this._messages.size > 0) this._resolveFirstMessages();
+    return this._media;
   }
 
   dispose(): void {
-    this._newMessageUnsub?.();
-    this._newMessagesUnsub?.();
-    this._dialogReadUnsub?.();
+    for (const sub of this._subs) sub.unsubscribe();
+    this._subs.length = 0;
   }
 }

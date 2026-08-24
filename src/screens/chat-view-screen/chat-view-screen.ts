@@ -46,10 +46,10 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     );
     this._chatViewProjection = new ChatViewProjection(
       this.services.database,
-      this.services.databaseHub,
       this.chatId as PeerId,
     );
-    Promise.all([this._chatViewProjection.init(), this._dialogSyncService.loadInitial()]);
+    this._chatViewProjection.init();
+    void this._dialogSyncService.loadInitial();
   }
 
   disconnectedCallback() {

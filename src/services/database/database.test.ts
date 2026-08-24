@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { DB_NAME, Database } from './database';
-import { deleteDB } from 'idb';
+import { Dexie } from 'dexie';
 import {
   mockStoredDialog,
   mockStoredMedia,
@@ -19,7 +19,7 @@ describe('Database', () => {
 
   afterEach(async () => {
     storage.close();
-    await deleteDB(DB_NAME);
+    await Dexie.delete(DB_NAME);
   });
 
   describe('Meta', () => {
@@ -67,16 +67,16 @@ describe('Database', () => {
     const users = [mockStoredUser({ id: '1' as UserId }), mockStoredUser({ id: '2' as UserId })];
 
     beforeEach(async () => {
-      await storage.putUsers(users);
+      await storage.users.bulkPut(users);
     });
 
     test('Get users', async () => {
-      const _users = await storage.getUsers(['1', '2']);
+      const _users = await storage.users.bulkGet(['1', '2']);
       expect(_users).toEqual(users);
     });
 
     test('Get user', async () => {
-      const user = await storage.getUser('1');
+      const user = await storage.users.get('1');
       expect(user).toEqual(users[0]);
     });
   });
@@ -88,11 +88,11 @@ describe('Database', () => {
     ];
 
     beforeEach(async () => {
-      await storage.putMessages(messages);
+      await storage.messages.bulkPut(messages);
     });
 
     test('Get message', async () => {
-      const message = await storage.getMessage('1' as ChatId, 1);
+      const message = await storage.messages.get(['1' as ChatId, 1 as MessageId]);
       expect(message).toEqual(messages[0]);
     });
   });
@@ -111,19 +111,19 @@ describe('Database', () => {
     ];
 
     beforeEach(async () => {
-      await storage.putMedia(media);
+      await storage.media.bulkPut(media);
     });
 
     test('Get media', async () => {
-      const photo = await storage.getMedia('photo:1' as MediaId);
-      const voice = await storage.getMedia('voice:2' as MediaId);
+      const photo = await storage.media.get('photo:1' as MediaId);
+      const voice = await storage.media.get('voice:2' as MediaId);
       expect(photo).toEqual(media[0]);
       expect(voice).toEqual(media[1]);
     });
 
     test('Put media is a no-op when empty', async () => {
-      await storage.putMedia([]);
-      expect(await storage.getMedia('photo:1' as MediaId)).toEqual(media[0]);
+      await storage.media.bulkPut([]);
+      expect(await storage.media.get('photo:1' as MediaId)).toEqual(media[0]);
     });
   });
 
@@ -134,11 +134,11 @@ describe('Database', () => {
     ];
 
     beforeEach(async () => {
-      await storage.putDialogs(dialogs);
+      await storage.dialogs.bulkPut(dialogs);
     });
 
     test('Get dialog', async () => {
-      const dialog = await storage.getDialog('2' as ChatId);
+      const dialog = await storage.dialogs.get('2' as ChatId);
       expect(dialog).toEqual(dialogs[1]);
     });
   });
@@ -148,9 +148,9 @@ describe('Database', () => {
     const messages = [mockStoredMessage({ id: 1 as MessageId, peerId: '1' as ChatId })];
     const dialogs = [mockStoredDialog({ peerId: '1' as ChatId })];
     await storage.putAll(users, mergeUser, messages, dialogs);
-    const _users = await storage.getUsers(['1']);
-    const _message = await storage.getMessage('1', 1);
-    const _dialog = await storage.getDialog('1');
+    const _users = await storage.users.bulkGet(['1']);
+    const _message = await storage.messages.get(['1' as ChatId, 1 as MessageId]);
+    const _dialog = await storage.dialogs.get('1');
     expect(_users).toEqual(users);
     expect(_message).toEqual(messages[0]);
     expect(_dialog).toEqual(dialogs[0]);

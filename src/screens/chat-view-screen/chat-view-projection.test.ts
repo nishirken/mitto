@@ -1,16 +1,23 @@
-import { beforeEach, describe, expect, test } from 'vitest';
-import { MockDatabase } from '../../services/database/__mocks__/database';
-import { DatabaseHub } from '../../services/database/database-hub';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { Database } from '../../services/database';
+import { createTestDatabase } from '../../services/database/__mocks__/database';
 import {
   mockStoredDialog,
   mockStoredMedia,
   mockStoredMessage,
 } from '../../services/database/__mocks__/database-schema';
 import type { MediaId, MessageId, PeerId } from '../../services/database/database-schema';
+import { MediaRepository } from '../../services/repositories/media/media-repository';
+import { MessageRepository } from '../../services/repositories/message/message-repository';
+import { DialogRepository } from '../../services/repositories/dialog/dialog-repository';
 import { ChatViewProjection, isMessageRead, toMessageListItem } from './chat-view-projection';
 
 const peerId = 'user:1' as PeerId;
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+// Real IndexedDB writes take several macrotask turns to settle, and the handlers under test
+// fire and forget, so one turn is not enough to observe them.
+const flush = async () => {
+  for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+};
 
 describe('Message media', () => {
   test('projects a photo with its dimensions', () => {
@@ -81,27 +88,26 @@ describe('isMessageRead', () => {
 });
 
 describe('ChatViewProjection', () => {
-  let database: MockDatabase;
-  let hub: DatabaseHub;
+  let database: Database;
   let projection: ChatViewProjection;
 
+  afterEach(() => projection.dispose());
+
   beforeEach(async () => {
-    database = new MockDatabase();
-    hub = new DatabaseHub();
-    projection = new ChatViewProjection(database, hub, peerId);
-    await projection.init();
+    database = createTestDatabase();
+    projection = new ChatViewProjection(database, peerId);
+    projection.init();
   });
 
   test('fulfills media for a batch of messages', async () => {
-    await database.putMedia([
+    await database.media.bulkPut([
       mockStoredMedia({ id: 'photo:9' as MediaId, width: 800, height: 480 }),
     ]);
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 1 as MessageId }),
       mockStoredMessage({ peerId, id: 2 as MessageId, mediaId: 'photo:9' as MediaId }),
     ]);
 
-    hub.notify('newMessages', []);
     await flush();
 
     const messages = projection.messages.get();
@@ -111,14 +117,13 @@ describe('ChatViewProjection', () => {
   });
 
   test('fulfills media for a single new message', async () => {
-    await database.putMedia([
+    await database.media.bulkPut([
       mockStoredMedia({ id: 'voice:9' as MediaId, type: 'voice', duration: 3 }),
     ]);
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 5 as MessageId, mediaId: 'voice:9' as MediaId }),
     ]);
 
-    hub.notify('newMessage', { peerId, id: 5 as MessageId });
     await flush();
 
     expect(projection.messages.get()[0].media).toEqual({
@@ -129,11 +134,10 @@ describe('ChatViewProjection', () => {
   });
 
   test('leaves media unset when the row is missing', async () => {
-    await database.putMessages([
+    await database.messages.bulkPut([
       mockStoredMessage({ peerId, id: 6 as MessageId, mediaId: 'photo:404' as MediaId }),
     ]);
 
-    hub.notify('newMessage', { peerId, id: 6 as MessageId });
     await flush();
 
     expect(projection.messages.get()[0].media).toBeUndefined();
@@ -141,36 +145,34 @@ describe('ChatViewProjection', () => {
 });
 
 describe('ChatViewProjection first messages', () => {
-  let database: MockDatabase;
-  let hub: DatabaseHub;
+  let database: Database;
   let projection: ChatViewProjection;
+
   let resolved: boolean;
 
+  afterEach(() => projection.dispose());
+
   beforeEach(async () => {
-    database = new MockDatabase();
-    hub = new DatabaseHub();
-    projection = new ChatViewProjection(database, hub, peerId);
+    database = createTestDatabase();
+    projection = new ChatViewProjection(database, peerId);
     resolved = false;
     void projection.firstMessages.then(() => {
       resolved = true;
     });
-    await projection.init();
+    projection.init();
   });
 
   test('resolves once the first batch of messages arrives', async () => {
-    await database.putMessages([mockStoredMessage({ peerId, id: 1 as MessageId })]);
+    await database.messages.bulkPut([mockStoredMessage({ peerId, id: 1 as MessageId })]);
 
-    hub.notify('newMessages', []);
     await flush();
 
     expect(resolved).toBe(true);
   });
 
   test('stays pending while the chat has no messages', async () => {
-    await database.putDialogs([mockStoredDialog({ peerId })]);
+    await database.dialogs.bulkPut([mockStoredDialog({ peerId })]);
 
-    hub.notify('newMessages', []);
-    hub.notify('dialogRead', peerId);
     await flush();
 
     expect(resolved).toBe(false);
@@ -178,30 +180,29 @@ describe('ChatViewProjection first messages', () => {
 });
 
 describe('ChatViewProjection read state', () => {
-  let database: MockDatabase;
-  let hub: DatabaseHub;
+  let database: Database;
   let projection: ChatViewProjection;
+
+  afterEach(() => projection.dispose());
 
   const incoming = (id: number) => mockStoredMessage({ peerId, id: id as MessageId });
   const outgoing = (id: number) =>
     mockStoredMessage({ peerId, id: id as MessageId, isOutgoing: true });
 
   async function start(dialog: Partial<Parameters<typeof mockStoredDialog>[0]> = {}) {
-    await database.putDialogs([mockStoredDialog({ peerId, ...dialog })]);
-    projection = new ChatViewProjection(database, hub, peerId);
-    await projection.init();
+    await database.dialogs.bulkPut([mockStoredDialog({ peerId, ...dialog })]);
+    projection = new ChatViewProjection(database, peerId);
+    projection.init();
   }
 
   beforeEach(() => {
-    database = new MockDatabase();
-    hub = new DatabaseHub();
+    database = createTestDatabase();
   });
 
   test('flags messages up to the dialog markers as read', async () => {
     await start({ readInboxMaxId: 2 as MessageId, readOutboxMaxId: 3 as MessageId });
-    await database.putMessages([incoming(1), incoming(3), outgoing(2), outgoing(4)]);
+    await database.messages.bulkPut([incoming(1), incoming(3), outgoing(2), outgoing(4)]);
 
-    hub.notify('newMessages', []);
     await flush();
 
     const readById = new Map(projection.messages.get().map((m) => [m.id, m.isRead]));
@@ -217,9 +218,8 @@ describe('ChatViewProjection read state', () => {
 
   test('points at the oldest unread incoming message', async () => {
     await start({ readInboxMaxId: 2 as MessageId });
-    await database.putMessages([incoming(1), incoming(3), incoming(4), outgoing(2)]);
+    await database.messages.bulkPut([incoming(1), incoming(3), incoming(4), outgoing(2)]);
 
-    hub.notify('newMessages', []);
     await flush();
 
     expect(projection.firstUnreadId.get()).toBe(3);
@@ -227,9 +227,8 @@ describe('ChatViewProjection read state', () => {
 
   test('reports no unread message once everything is read', async () => {
     await start({ readInboxMaxId: 9 as MessageId });
-    await database.putMessages([incoming(1), incoming(2), outgoing(3)]);
+    await database.messages.bulkPut([incoming(1), incoming(2), outgoing(3)]);
 
-    hub.notify('newMessages', []);
     await flush();
 
     expect(projection.firstUnreadId.get()).toBeUndefined();
@@ -237,14 +236,12 @@ describe('ChatViewProjection read state', () => {
 
   test('re-derives read state when the markers advance', async () => {
     await start({ readOutboxMaxId: 0 as MessageId });
-    await database.putMessages([outgoing(1)]);
+    await database.messages.bulkPut([outgoing(1)]);
 
-    hub.notify('newMessages', []);
     await flush();
     expect(projection.messages.get()[0].isRead).toBe(false);
 
-    await database.putDialogs([mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId })]);
-    hub.notify('dialogRead', peerId);
+    await database.dialogs.bulkPut([mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId })]);
     await flush();
 
     expect(projection.messages.get()[0].isRead).toBe(true);
@@ -252,15 +249,54 @@ describe('ChatViewProjection read state', () => {
 
   test('ignores read updates for another chat', async () => {
     await start({ readOutboxMaxId: 0 as MessageId });
-    await database.putMessages([outgoing(1)]);
+    await database.messages.bulkPut([outgoing(1)]);
 
-    hub.notify('newMessages', []);
     await flush();
 
-    await database.putDialogs([mockStoredDialog({ peerId, readOutboxMaxId: 1 as MessageId })]);
-    hub.notify('dialogRead', 'user:2' as PeerId);
+    await database.dialogs.bulkPut([
+      mockStoredDialog({ peerId: 'user:2' as PeerId, readOutboxMaxId: 1 as MessageId }),
+    ]);
     await flush();
 
     expect(projection.messages.get()[0].isRead).toBe(false);
+  });
+});
+
+// Replaces the hub-notification tests the repositories used to carry: the point is that a
+// repository write reaches the read model, which is now liveQuery's job rather than ours.
+describe('ChatViewProjection end to end', () => {
+  let database: Database;
+  let projection: ChatViewProjection;
+
+  afterEach(() => projection.dispose());
+
+  beforeEach(() => {
+    database = createTestDatabase();
+    projection = new ChatViewProjection(database, peerId);
+    projection.init();
+  });
+
+  test('picks up a message written through the repository', async () => {
+    const repo = new MessageRepository(database, new MediaRepository(database));
+
+    await repo.applyNewMessage(mockStoredMessage({ peerId, id: 5 as MessageId, text: 'sent' }));
+
+    await vi.waitFor(() => {
+      const messages = projection.messages.get();
+      expect(messages).toHaveLength(1);
+      expect(messages[0].text).toBe('sent');
+    });
+  });
+
+  test('picks up read markers written through the repository', async () => {
+    const repo = new DialogRepository(database, new MediaRepository(database));
+    await database.dialogs.bulkPut([mockStoredDialog({ peerId, readInboxMaxId: 0 as MessageId })]);
+    await database.messages.bulkPut([mockStoredMessage({ peerId, id: 1 as MessageId })]);
+    await vi.waitFor(() => expect(projection.messages.get()).toHaveLength(1));
+    expect(projection.messages.get()[0].isRead).toBe(false);
+
+    await repo.applyReadInbox(peerId, 1 as MessageId, 0);
+
+    await vi.waitFor(() => expect(projection.messages.get()[0].isRead).toBe(true));
   });
 });
