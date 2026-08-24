@@ -7,8 +7,8 @@ import './chat-view-header';
 import './chat-view-footer';
 import './message-view/message-view';
 import './media-viewer/media-viewer';
-import 'components/scroll-container/scroll-container';
-import type { ScrollContainer } from 'components/scroll-container/scroll-container';
+import 'mudita-ui';
+import type { ScrollContainer } from 'mudita-ui';
 import styles from './chat-view-screen.css?inline';
 import { ChatViewProjection } from './chat-view-projection';
 import type { Services } from 'api/services-context';
@@ -29,7 +29,6 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
   private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
   @state() private _viewer?: MediaOpenDetail;
-  private _initialScrollDone = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -50,8 +49,7 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
       this.services.databaseHub,
       this.chatId as PeerId,
     );
-    this._chatViewProjection.init();
-    this._dialogSyncService.loadInitial();
+    Promise.all([this._chatViewProjection.init(), this._dialogSyncService.loadInitial()]);
   }
 
   disconnectedCallback() {
@@ -60,16 +58,20 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     this._chatViewProjection?.dispose();
   }
 
-  protected updated() {
-    if (this._initialScrollDone || this._chatViewProjection.messages.get().length === 0) return;
+  protected async getUpdateComplete(): Promise<boolean> {
+    const result = await super.getUpdateComplete();
+    await this._scrollContainer?.updateComplete;
 
-    this._initialScrollDone = true;
-    void this._scrollToFirstUnread();
+    return result;
   }
 
-  private async _scrollToFirstUnread() {
+  protected async firstUpdated(): Promise<void> {
+    await this._chatViewProjection.firstMessages;
     await this.updateComplete;
+    this._scrollToFirstUnread();
+  }
 
+  private _scrollToFirstUnread() {
     const firstUnreadId = this._chatViewProjection.firstUnreadId.get();
     const target =
       firstUnreadId === undefined
@@ -77,12 +79,10 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
         : this.renderRoot.querySelector(`[data-message-id="${firstUnreadId}"]`);
 
     if (target) {
-      this._scrollContainer?.scrollToElement(target);
-
-      return;
+      this._scrollContainer?.scrollToElement(target, { position: 'start' });
+    } else {
+      this._scrollContainer?.scrollToBottom();
     }
-
-    this._scrollContainer?.scrollToBottom();
   }
 
   private async _scrollToBottom() {
@@ -98,11 +98,11 @@ export class ChatViewScreen extends SignalWatcher(LitElement) {
     const container = this._scrollContainer;
     if (!this._dialogSyncService || !container) return;
 
-    const prevCount = container.pageCount;
+    const prevHeight = container.contentHeight;
     await this._dialogSyncService.loadMore();
     await this.updateComplete;
-    const added = container.pageCount - prevCount;
-    if (added > 0) container.scrollToPage(added);
+    const added = container.contentHeight - prevHeight;
+    if (added > 0) container.scrollToOffset(container.currentTop + added);
   }
 
   private _onBack() {

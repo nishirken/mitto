@@ -14,11 +14,11 @@ importers:
   .:
     dependencies:
       '@capacitor/android':
-        specifier: ^8.2.0
-        version: 8.2.0(@capacitor/core@8.2.0)
+        specifier: ^8.5.0
+        version: 8.5.0(@capacitor/core@8.5.0)
       '@capacitor/core':
-        specifier: ^8.2.0
-        version: 8.2.0
+        specifier: ^8.5.0
+        version: 8.5.0
       '@lit-labs/signals':
         specifier: ^0.2.0
         version: 0.2.0(patch_hash=dc9d3af4df3f0d6b017e2b03048def2f8132b52b4a59cf944962b4ccba46951f)
@@ -31,13 +31,16 @@ importers:
       lit:
         specifier: ^3.3.2
         version: 3.3.2
+      mudita-ui:
+        specifier: github:nishirken/mudita-ui#1e675cf06a840bf724eb61effd498587f2bd5c2c
+        version: https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c(lit@3.3.2)
       signal-polyfill:
         specifier: ^0.2.2
         version: 0.2.2
     devDependencies:
       '@capacitor/cli':
-        specifier: ^8.2.0
-        version: 8.2.0
+        specifier: ^8.5.0
+        version: 8.5.0
       '@open-wc/testing':
         specifier: ^4.0.0
         version: 4.0.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
@@ -82,18 +85,18 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@capacitor/android@8.2.0':
-    resolution: {integrity: sha512-XLm5OsWLPfXQxDxzFS7SOdMEgGvW+2c7TGLXkTR2cSKdkWK5Abns4imlT5qghKYhjM9r74IrDkBWg/9ALUGNKQ==}
+  '@capacitor/android@8.5.0':
+    resolution: {integrity: sha512-Rb3prJeQiTp0pQhSSOReJuG9VgibOGMG4ECs+UhMwr6TCCHZ3NCZO811bDA0HxD0xrT/gCrJAsY5yfEATu84JQ==}
     peerDependencies:
-      '@capacitor/core': ^8.2.0
+      '@capacitor/core': ^8.5.0
 
-  '@capacitor/cli@8.2.0':
-    resolution: {integrity: sha512-1cMEk0d/I6tl1U+v/lnJR5Oylpx8ZBIHrvQxD5zK0MkjYOUyQAAGJgh97rkhGJqjAUvrGpa8H4BmyhNQN9a17A==}
+  '@capacitor/cli@8.5.0':
+    resolution: {integrity: sha512-rLdzMUM5QV4WITcqoWv04p32i14BXgUH2diqEH6MWQlWaJfiyNrvOyt/+d5vHAfOxOm1klBu637VDEobctlwBA==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@capacitor/core@8.2.0':
-    resolution: {integrity: sha512-oKaoNeNtH2iIZMDFVrb1atoyRECDGHcfLMunJ5KWN8DtvpVBeeA4c41e20NTuhMxw1cSYbpq2PV2hb+/9CJxlQ==}
+  '@capacitor/core@8.5.0':
+    resolution: {integrity: sha512-Ca4krtqH1hothjtBIwf2J2TW7IhYq1ujp8QeItTiJohNsqij8ja2DYYH3DU0l8RmxCWaBAFTGA2TgOgOMCSNsQ==}
 
   '@emnapi/core@1.9.1':
     resolution: {integrity: sha512-mukuNALVsoix/w1BJwFzwXBN/dHeejQtuVzcDsfOEsdpCumXb/E9j8w11h5S54tT1xhifGfbbSm/ICrObRb3KA==}
@@ -610,6 +613,7 @@ packages:
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   accepts@1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -673,6 +677,13 @@ packages:
   big-integer@1.6.52:
     resolution: {integrity: sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==}
     engines: {node: '>=0.6'}
+
+  bplist-creator@0.1.0:
+    resolution: {integrity: sha512-sXaHZicyEEmY86WyueLTQesbeoH/mquvarJaQNbjuOQO+7gbFcDEWqKmcWA4cOTLzFlfgvkiVxolk1k5bBIpmg==}
+
+  bplist-parser@0.3.1:
+    resolution: {integrity: sha512-PyJxiNtA5T2PlLIeBot4lbp7rj4OadzjnMZD/G5zuBNt8ei/yCU7+wW0h2bag9vr8c+/WuRWmSxbqAl9hL1rBA==}
+    engines: {node: '>= 5.10.0'}
 
   bplist-parser@0.3.2:
     resolution: {integrity: sha512-apC2+fspHGI3mMKj+dGevkGo/tCqVB8jMb6i+OX+E29p0Iposz07fABkRIfVUPNd5A5VbuOz1bZbnmkKLYF+wQ==}
@@ -1514,6 +1525,12 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c:
+    resolution: {tarball: https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c}
+    version: 0.1.0
+    peerDependencies:
+      lit: ^3.0.0
+
   nanocolors@0.2.13:
     resolution: {integrity: sha512-0n3mSAQLPpGLV9ORXT5+C/D4mwew7Ebws69Hx4E2sgz2ZA5+32Q80B9tL8PbL7XHnRDiAxH/pnrUJ9a4fkTNTA==}
 
@@ -1786,6 +1803,9 @@ packages:
     resolution: {integrity: sha512-WszCLXwT4h2k1ufIXAgsbiTOazqqevFCIncOuUBZJ91DdvWcC5+OFkluWRQPrcuSYd8fjq+o2y1QfWqYMoAToQ==}
     hasBin: true
 
+  simple-plist@1.3.1:
+    resolution: {integrity: sha512-iMSw5i0XseMnrhtIzRb7XpQEXepa9xhWxGUojHBL43SIpQuDQkh3Wpy67ZbDzZVr6EKxvwVChnVpdl8hEVLDiw==}
+
   sirv@3.0.2:
     resolution: {integrity: sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g==}
     engines: {node: '>=18'}
@@ -1837,6 +1857,10 @@ packages:
 
   std-env@4.0.0:
     resolution: {integrity: sha512-zUMPtQ/HBY3/50VbpkupYHbRroTRZJPRLvreamgErJVys0ceuzMkD44J/QjqhHjOzK42GQ3QZIeFG1OYfOtKqQ==}
+
+  stream-buffers@2.2.0:
+    resolution: {integrity: sha512-uyQK/mx5QjHun80FLJTfaWE7JtwfRMKBLkMne6udYOmvH0CawotVa7TfgYHzAnpphn4+TweIx1QKMnRIbipmUg==}
+    engines: {node: '>= 0.10.0'}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -1956,6 +1980,11 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  uuid@7.0.3:
+    resolution: {integrity: sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+    hasBin: true
 
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
@@ -2092,6 +2121,10 @@ packages:
       utf-8-validate:
         optional: true
 
+  xcode@3.0.1:
+    resolution: {integrity: sha512-kCz5k7J7XbJtjABOvkc5lJmkiDh8VhjVCGNiqdKCscmVpdVUpEAyXv1xmCLkQJ5dsHqx3IPO4XW+NTDhU/fatA==}
+    engines: {node: '>=10.0.0'}
+
   xml2js@0.6.2:
     resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
     engines: {node: '>=4.0.0'}
@@ -2133,11 +2166,11 @@ snapshots:
   '@blazediff/core@1.9.1':
     optional: true
 
-  '@capacitor/android@8.2.0(@capacitor/core@8.2.0)':
+  '@capacitor/android@8.5.0(@capacitor/core@8.5.0)':
     dependencies:
-      '@capacitor/core': 8.2.0
+      '@capacitor/core': 8.5.0
 
-  '@capacitor/cli@8.2.0':
+  '@capacitor/cli@8.5.0':
     dependencies:
       '@ionic/cli-framework-output': 2.2.8
       '@ionic/utils-subprocess': 3.0.1
@@ -2155,11 +2188,12 @@ snapshots:
       semver: 7.7.4
       tar: 7.5.12
       tslib: 2.8.1
+      xcode: 3.0.1
       xml2js: 0.6.2
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@8.2.0':
+  '@capacitor/core@8.5.0':
     dependencies:
       tslib: 2.8.1
 
@@ -2795,6 +2829,14 @@ snapshots:
   base64-js@1.5.1: {}
 
   big-integer@1.6.52: {}
+
+  bplist-creator@0.1.0:
+    dependencies:
+      stream-buffers: 2.2.0
+
+  bplist-parser@0.3.1:
+    dependencies:
+      big-integer: 1.6.52
 
   bplist-parser@0.3.2:
     dependencies:
@@ -3553,6 +3595,10 @@ snapshots:
 
   ms@2.1.3: {}
 
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/1e675cf06a840bf724eb61effd498587f2bd5c2c(lit@3.3.2):
+    dependencies:
+      lit: 3.3.2
+
   nanocolors@0.2.13: {}
 
   nanoid@3.3.11: {}
@@ -3840,6 +3886,12 @@ snapshots:
 
   simple-git-hooks@2.13.1: {}
 
+  simple-plist@1.3.1:
+    dependencies:
+      bplist-creator: 0.1.0
+      bplist-parser: 0.3.1
+      plist: 3.1.0
+
   sirv@3.0.2:
     dependencies:
       '@polka/url': 1.0.0-next.29
@@ -3884,6 +3936,8 @@ snapshots:
   statuses@2.0.2: {}
 
   std-env@4.0.0: {}
+
+  stream-buffers@2.2.0: {}
 
   string-argv@0.3.2: {}
 
@@ -4007,6 +4061,8 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  uuid@7.0.3: {}
+
   vary@1.1.2: {}
 
   vite@8.0.1(@types/node@25.5.0)(yaml@2.8.2):
@@ -4090,6 +4146,11 @@ snapshots:
     optionalDependencies:
       bufferutil: 4.1.0
       utf-8-validate: 5.0.10
+
+  xcode@3.0.1:
+    dependencies:
+      simple-plist: 1.3.1
+      uuid: 7.0.3
 
   xml2js@0.6.2:
     dependencies:

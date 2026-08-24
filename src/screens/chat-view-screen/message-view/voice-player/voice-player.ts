@@ -3,7 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import 'components/mk-icon-button/mk-icon-button';
+import 'mudita-ui';
 import type { MessageMedia } from '../../chat-view-projection';
 import styles from './voice-player.css?inline';
 

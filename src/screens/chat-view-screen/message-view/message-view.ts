@@ -4,7 +4,7 @@ import styles from './message-view.css?inline';
 import type { MessageMedia } from '../chat-view-projection';
 import './media-attachment/media-attachment';
 import './voice-player/voice-player';
-import 'components/mk-icon/mk-icon';
+import 'mudita-ui';
 
 @customElement('message-view')
 export class MessageView extends LitElement {

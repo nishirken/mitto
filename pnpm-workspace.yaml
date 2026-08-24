@@ -1,4 +1,7 @@
-onlyBuiltDependencies:
-  - simple-git-hooks
+allowBuilds:
+  bufferutil: true 
+  esbuild: true
+  simple-git-hooks: false
+  utf-8-validate: false 
 patchedDependencies:
   '@lit-labs/signals@0.2.0': patches/@lit-labs__signals@0.2.0.patch

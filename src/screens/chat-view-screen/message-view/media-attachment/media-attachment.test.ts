@@ -37,7 +37,7 @@ describe('media-attachment', () => {
   test('renders the photo inline once downloaded', async () => {
     const { el, mediaFileService } = await mount(photo);
 
-    (tid(el, 'media.download') as HTMLButtonElement).click();
+    tid(el, 'media.download')!.click();
     await settled(el);
 
     expect(mediaFileService.url).toHaveBeenCalledWith('photo:1');
@@ -50,9 +50,9 @@ describe('media-attachment', () => {
     const opened: MediaOpenDetail[] = [];
     el.addEventListener('mediaopen', (e) => opened.push(e.detail));
 
-    (tid(el, 'media.download') as HTMLButtonElement).click();
+    tid(el, 'media.download')!.click();
     await settled(el);
-    (tid(el, 'media.photo') as HTMLButtonElement).click();
+    tid(el, 'media.photo')!.click();
 
     expect(opened).toEqual([{ url: 'blob:media', type: 'photo' }]);
   });
@@ -62,7 +62,7 @@ describe('media-attachment', () => {
     const opened: MediaOpenDetail[] = [];
     el.addEventListener('mediaopen', (e) => opened.push(e.detail));
 
-    (tid(el, 'media.download') as HTMLButtonElement).click();
+    tid(el, 'media.download')!.click();
     await settled(el);
 
     expect(opened).toEqual([{ url: 'blob:media', type: 'video' }]);
@@ -72,10 +72,10 @@ describe('media-attachment', () => {
   test('disables the chip when the file cannot be downloaded', async () => {
     const { el } = await mount(photo, null);
 
-    (tid(el, 'media.download') as HTMLButtonElement).click();
+    tid(el, 'media.download')!.click();
     await settled(el);
 
-    const chip = tid(el, 'media.download') as HTMLButtonElement;
+    const chip = tid<HTMLButtonElement>(el, 'media.download')!;
     expect(chip.disabled).toBe(true);
     expect(chip.textContent).toContain('Unavailable');
   });

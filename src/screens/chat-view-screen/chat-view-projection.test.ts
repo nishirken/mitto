@@ -140,6 +140,44 @@ describe('ChatViewProjection', () => {
   });
 });
 
+describe('ChatViewProjection first messages', () => {
+  let storage: Database;
+  let fake: FakeDatabase;
+  let hub: DatabaseHub;
+  let projection: ChatViewProjection;
+  let resolved: boolean;
+
+  beforeEach(async () => {
+    ({ storage, fake } = createFakeStorage());
+    hub = new DatabaseHub();
+    projection = new ChatViewProjection(storage, hub, peerId);
+    resolved = false;
+    void projection.firstMessages.then(() => {
+      resolved = true;
+    });
+    await projection.init();
+  });
+
+  test('resolves once the first batch of messages arrives', async () => {
+    await fake.putMessages([mockStoredMessage({ peerId, id: 1 as MessageId })]);
+
+    hub.notify('newMessages', []);
+    await flush();
+
+    expect(resolved).toBe(true);
+  });
+
+  test('stays pending while the chat has no messages', async () => {
+    await fake.putDialogs([mockStoredDialog({ peerId })]);
+
+    hub.notify('newMessages', []);
+    hub.notify('dialogRead', peerId);
+    await flush();
+
+    expect(resolved).toBe(false);
+  });
+});
+
 describe('ChatViewProjection read state', () => {
   let storage: Database;
   let fake: FakeDatabase;

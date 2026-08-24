@@ -4,10 +4,8 @@ import { consume } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
-import 'components/mk-header/mk-header';
-import 'components/mk-input/mk-input';
-import 'components/mk-button/mk-button';
-import type { MkInput } from 'components/mk-input/mk-input';
+import 'mudita-ui';
+import type { MkInput } from 'mudita-ui';
 import styles from './auth-screen.css?inline';
 
 @customElement('auth-screen')

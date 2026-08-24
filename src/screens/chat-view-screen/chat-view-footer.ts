@@ -1,8 +1,7 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import 'components/mk-icon-button/mk-icon-button';
-import 'components/mk-textarea/mk-textarea';
-import type { MkTextarea } from 'components/mk-textarea/mk-textarea';
+import 'mudita-ui';
+import type { MkTextarea } from 'mudita-ui';
 import styles from './chat-view-footer.css?inline';
 
 @customElement('chat-view-footer')

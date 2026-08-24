@@ -1,7 +1,6 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import 'components/mk-header/mk-header';
-import 'components/mk-icon-button/mk-icon-button';
+import 'mudita-ui';
 import styles from './chat-view-header.css?inline';
 
 @customElement('chat-view-header')
