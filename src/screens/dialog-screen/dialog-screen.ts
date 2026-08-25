@@ -8,7 +8,7 @@ import './dialog-footer';
 import './message-view/message-view';
 import './media-viewer/media-viewer';
 import 'mudita-ui';
-import type { ScrollContainer } from 'mudita-ui';
+import type { ScrollContainer, ScrollDetail } from 'mudita-ui';
 import styles from './dialog-screen.css?inline';
 import { DialogProjection } from './dialog-projection';
 import type { Services } from 'api/services-context';
@@ -29,6 +29,7 @@ export class DialogScreen extends SignalWatcher(LitElement) {
   private _dialogSyncService!: DialogSyncService;
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
   @state() private _viewer?: MediaOpenDetail;
+  @state() private _showScrollDown = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -67,6 +68,10 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     await this.updateComplete;
     this._scrollToFirstUnread();
   }
+
+  private _onScroll = ({ top, contentHeight, clientHeight }: ScrollDetail): void => {
+    this._showScrollDown = contentHeight - top - clientHeight > clientHeight / 2;
+  };
 
   private _scrollToFirstUnread() {
     const firstUnreadId = this._dialogProjection.firstUnreadId.get();
@@ -118,6 +123,10 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     this._viewer = undefined;
   };
 
+  private _onScrollDown = (): void => {
+    this._scrollContainer?.scrollToBottom();
+  };
+
   private _onSend(e: CustomEvent<string>) {
     const message = e.detail.trim();
     if (message) {
@@ -132,31 +141,46 @@ export class DialogScreen extends SignalWatcher(LitElement) {
 
     return html`
       <dialog-header .contactName=${contactName} @back=${this._onBack}></dialog-header>
-      <scroll-container
-        class="list"
-        ?paged=${this.services.settingsStore.pagedScroll('messages')}
-        .onTop=${this._onTop}
-      >
-        <div
-          class="messages"
-          id="messages"
-          @mediaopen=${this._onMediaOpen}
-          @mediaload=${this._onMediaLoad}
+      <div class="list-area">
+        <scroll-container
+          class="list"
+          ?paged=${this.services.settingsStore.pagedScroll('messages')}
+          .onTop=${this._onTop}
+          .onScroll=${this._onScroll}
         >
-          ${messages.map(
-            (msg) => html`
-              <message-view
-                data-message-id=${msg.id}
-                ?outgoing=${msg.isOutgoing}
-                ?read=${msg.isRead}
-                .text=${msg.text}
-                .media=${msg.media}
-                .timestamp=${formatTimestamp(msg.date)}
-              ></message-view>
-            `,
-          )}
-        </div>
-      </scroll-container>
+          <div
+            class="messages"
+            id="messages"
+            @mediaopen=${this._onMediaOpen}
+            @mediaload=${this._onMediaLoad}
+          >
+            ${messages.map(
+              (msg) => html`
+                <message-view
+                  data-message-id=${msg.id}
+                  ?outgoing=${msg.isOutgoing}
+                  ?read=${msg.isRead}
+                  .text=${msg.text}
+                  .media=${msg.media}
+                  .timestamp=${formatTimestamp(msg.date)}
+                ></message-view>
+              `,
+            )}
+          </div>
+        </scroll-container>
+        ${
+          this._showScrollDown
+            ? html`<mk-icon-button
+              bordered
+              class="scroll-down"
+              icon="arrow-up"
+              label="Scroll to the latest message"
+              data-testid="dialog.scroll-down"
+              @click=${this._onScrollDown}
+            ></mk-icon-button>`
+            : nothing
+        }
+      </div>
       <dialog-footer @send=${this._onSend}></dialog-footer>
       ${
         this._viewer

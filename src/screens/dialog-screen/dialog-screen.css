@@ -4,9 +4,14 @@
   height: 100%;
 }
 
-.list {
+.list-area {
+  position: relative;
   flex: 1;
   min-height: 0;
+}
+
+.list {
+  height: 100%;
 }
 
 .messages {
@@ -14,6 +19,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+.scroll-down {
+  position: absolute;
+  right: var(--sp-16);
+  bottom: var(--sp-16);
+  background: var(--c-bg);
+  border-radius: var(--radius-bubble);
+  transform: rotate(180deg);
 }
 
 .empty {

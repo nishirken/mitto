@@ -28,7 +28,7 @@
     "@lit/context": "^1.1.6",
     "dexie": "^4.4.5",
     "lit": "^3.3.2",
-    "mudita-ui": "github:nishirken/mudita-ui#1e675cf06a840bf724eb61effd498587f2bd5c2c",
+    "mudita-ui": "github:nishirken/mudita-ui#0a7ae82b9e73bd4d691112907efebff48c0ac6e2",
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
