@@ -21,6 +21,8 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 ## State & Routing
 - `@lit-labs/signals` for reactive state, `@lit/context` for DI (services provided at `app-root`)
 - Hash-based routing via `src/router.ts`
+- Layers: `*Store` app-scoped singleton, state + commands · `*Projection` screen-scoped, derived read signals only, `init()`/`dispose()` per `connectedCallback` · `*SyncService` screen-scoped, paired 1:1 with a projection, network → repository writes, owns `loading`/`hasMore` · `*Repository` app-scoped singleton, transactional DB writes
+- "Projection" names the read-model classes only — persisted rows are `Stored*` records
 
 ## Styles
 - Colocated CSS files, imported with `?inline`, scoped via `static styles = unsafeCSS(...)`

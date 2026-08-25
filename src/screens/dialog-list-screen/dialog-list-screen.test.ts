@@ -96,8 +96,7 @@ describe('Dialog list screen', () => {
     });
   });
 
-  // Replaces the hub-notification tests the repositories used to carry: a repository write
-  // has to reach the read model, which is liveQuery's job now rather than ours.
+  // A repository write has to reach the read model — liveQuery's job rather than ours.
   it('picks up a dialog written through the repository', async () => {
     await seedDialog(1);
     const el = await mount();

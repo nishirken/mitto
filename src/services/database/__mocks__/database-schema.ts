@@ -10,7 +10,7 @@ import type {
 } from '../database-schema';
 import type { Timestamp } from 'utils/flavour';
 
-// Test fixtures: build valid instances of the persisted projections. Every field has a
+// Test fixtures: build valid instances of the persisted records. Every field has a
 // sane default so callers only override what the test cares about.
 
 export function mockStoredUser(over: Partial<StoredUser> = {}): StoredUser {

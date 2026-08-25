@@ -262,8 +262,7 @@ describe('DialogProjection read state', () => {
   });
 });
 
-// Replaces the hub-notification tests the repositories used to carry: the point is that a
-// repository write reaches the read model, which is now liveQuery's job rather than ours.
+// A repository write has to reach the read model — liveQuery's job rather than ours.
 describe('DialogProjection end to end', () => {
   let database: Database;
   let projection: DialogProjection;

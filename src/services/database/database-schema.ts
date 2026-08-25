@@ -28,7 +28,7 @@ export type MetaValue = {
 
 export type MetaRecord = { [K in MetaKey]: { key: K; value: MetaValue[K] } }[MetaKey];
 
-// --- Normalized projections (persisted; never store raw Api.* objects) -------
+// --- Normalized records (persisted; never store raw Api.* objects) -------
 
 export type StoredUser = {
   id: UserId;
