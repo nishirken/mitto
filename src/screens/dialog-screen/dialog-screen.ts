@@ -111,6 +111,10 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     navigate('dialogs');
   }
 
+  private _onSettings() {
+    navigate('settings');
+  }
+
   private _onMediaOpen = (e: CustomEvent<MediaOpenDetail>): void => {
     this._viewer = e.detail;
   };
@@ -140,7 +144,11 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     const contactName = this._dialogProjection.peerName.get();
 
     return html`
-      <dialog-header .contactName=${contactName} @back=${this._onBack}></dialog-header>
+      <dialog-header
+        .contactName=${contactName}
+        @back=${this._onBack}
+        @settings=${this._onSettings}
+      ></dialog-header>
       <div class="list-area">
         <scroll-container
           class="list"
