@@ -39,7 +39,6 @@ export class AppRoot extends SignalWatcher(LitElement) {
   @state()
   private _services?: Services;
   private _unsubRoute?: () => void;
-  private _hasSession = false;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -48,10 +47,9 @@ export class AppRoot extends SignalWatcher(LitElement) {
       this._route = route;
     });
 
-    const storage = await Database.create();
+    const database = await Database.create();
 
-    const sessionString = (await storage.getSession()) ?? '';
-    this._hasSession = sessionString !== '';
+    const sessionString = (await database.getSession()) ?? '';
     const session = new StringSession(sessionString);
     const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
     const client = new TelegramClient(session, API_ID, API_HASH, {
@@ -60,22 +58,22 @@ export class AppRoot extends SignalWatcher(LitElement) {
     await client.connect();
     const config = { apiId: API_ID, apiHash: API_HASH };
 
-    const mediaRepository = new MediaRepository(storage);
-    const settingsStore = new SettingsStore(storage);
-    await settingsStore.init();
+    const mediaRepository = new MediaRepository(database);
+    const settingsStore = new SettingsStore(database);
+    const authStore = new TelegramAuthStore(config, client, database);
 
     this._services = {
       client,
-      database: storage,
-      authStore: new TelegramAuthStore(config, client, storage),
-      dialogRepository: new DialogRepository(storage, mediaRepository),
-      messageRepository: new MessageRepository(storage, mediaRepository),
+      database,
+      authStore,
+      dialogRepository: new DialogRepository(database, mediaRepository),
+      messageRepository: new MessageRepository(database, mediaRepository),
       mediaRepository,
-      mediaFileService: new MediaFileService(client, storage),
+      mediaFileService: new MediaFileService(client, database),
       settingsStore,
     };
 
-    this._services.authStore.init();
+    await Promise.all([settingsStore.init(), authStore.init()]);
   }
 
   disconnectedCallback() {
@@ -101,10 +99,14 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
   render() {
     if (!this._services) {
-      return html``;
+      return html`<mk-loading></mk-loading>`;
     }
 
     const authState = this._services.authStore.state.get();
+
+    if (authState === 'loading') {
+      return html`<mk-loading></mk-loading>`;
+    }
 
     if (authState === 'error') {
       return 'Something went wrong';
@@ -112,10 +114,6 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
     if (authState === 'ready') {
       return this._renderRoute();
-    }
-
-    if (authState === 'loading') {
-      return this._hasSession ? html`` : html`<mk-loading></mk-loading>`;
     }
 
     return html`<auth-screen></auth-screen>`;

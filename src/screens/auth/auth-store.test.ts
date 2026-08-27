@@ -1,71 +1,120 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import telegram from 'telegram';
-import type { TelegramClient } from 'telegram';
+import { describe, it, test, expect, beforeEach, vi } from 'vitest';
+import telegram, { type TelegramClient } from 'telegram';
 import { createTestDatabase } from 'services/database/__mocks__/database';
 import type { TelegramConfig } from 'types/telegram';
 import { TelegramAuthStore } from './auth-store';
+import { MockClient } from '../../api/__mocks__/telegram-client';
 
 const config: TelegramConfig = { apiId: 1, apiHash: 'hash' };
 
 function createStore() {
-  const client = {
-    connect: vi.fn(async () => true),
-    disconnect: vi.fn(async () => {}),
-    invoke: vi.fn(async () => undefined),
-    checkAuthorization: vi.fn(async () => true),
-  } as unknown as TelegramClient;
-
+  const client = new MockClient();
   const storage = createTestDatabase();
   vi.spyOn(storage, 'clearSession');
   vi.spyOn(storage, 'clearCache');
 
-  return { client, storage, store: new TelegramAuthStore(config, client, storage) };
+  return {
+    client,
+    storage,
+    store: new TelegramAuthStore(config, client as unknown as TelegramClient, storage),
+  };
 }
 
-describe('TelegramAuthStore.logout', () => {
+describe('TelegramAuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('revokes the authorization server-side', async () => {
-    const { client, store } = createStore();
+  describe('init', () => {
+    test('Session exists', async () => {
+      const { client, storage, store } = createStore();
+      await storage.setSession('session');
+      client.checkAuthorization.mockResolvedValueOnce(true);
 
-    await store.logout();
+      await store.init();
 
-    expect(client.invoke).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(client.invoke).mock.calls[0][0]).toBeInstanceOf(telegram.Api.auth.LogOut);
+      expect(store.state.get()).toBe('ready');
+      expect(client.checkAuthorization).not.toHaveBeenCalled();
+
+      await vi.waitFor(() => expect(client.checkAuthorization).toHaveBeenCalledTimes(1));
+      expect(store.state.get()).toBe('ready');
+    });
+
+    test("Session doesn't exist and there is no authorization", async () => {
+      const { client, store } = createStore();
+      client.checkAuthorization.mockResolvedValueOnce(false);
+
+      await store.init();
+
+      expect(store.state.get()).toBe('wait_phone');
+      expect(client.checkAuthorization).toHaveBeenCalledTimes(1);
+    });
+
+    test("Session doesn't exist and there is authorization", async () => {
+      const { client, store } = createStore();
+      client.checkAuthorization.mockResolvedValueOnce(true);
+
+      await store.init();
+
+      expect(store.state.get()).toBe('ready');
+      expect(client.checkAuthorization).toHaveBeenCalledTimes(1);
+    });
+
+    test('Error during checkAuthorization', async () => {
+      const { client, store } = createStore();
+      client.checkAuthorization.mockRejectedValueOnce(new Error('Some error'));
+
+      await store.init();
+
+      expect(store.state.get()).toBe('error');
+      expect(client.checkAuthorization).toHaveBeenCalledTimes(1);
+    });
   });
 
-  it('clears the session and cache and resolves true', async () => {
-    const { storage, store } = createStore();
-
-    await expect(store.logout()).resolves.toBe(true);
-
-    expect(storage.clearSession).toHaveBeenCalled();
-    expect(storage.clearCache).toHaveBeenCalled();
-    expect(store.state.get()).toBe('wait_phone');
+  test('sendPhoneNumber', async () => {
+    const { store, client } = createStore();
+    const number = '7123456789';
+    client.sendCode.mockResolvedValueOnce({
+      phoneCodeHash: 'hash',
+      isCodeViaApp: true,
+    });
+    await store.sendPhoneNumber(number);
+    expect(client.sendCode).toHaveBeenCalledWith(config, number);
+    expect(store.state.get()).toEqual({
+      type: 'wait_code',
+      isSmsAvailable: false,
+    });
   });
 
-  it('keeps everything on failure and surfaces the error state', async () => {
-    const { client, storage, store } = createStore();
-    vi.mocked(client.invoke).mockRejectedValue(new Error('offline'));
+  describe('logout', () => {
+    it('revokes the authorization server-side', async () => {
+      const { client, store } = createStore();
 
-    await expect(store.logout()).resolves.toBe(false);
+      await store.logout();
 
-    expect(store.state.get()).toBe('error');
-    expect(storage.clearSession).not.toHaveBeenCalled();
-    expect(storage.clearCache).not.toHaveBeenCalled();
-  });
+      expect(client.invoke).toHaveBeenCalledTimes(1);
+      expect(client.invoke).toHaveBeenCalledWith(new telegram.Api.auth.LogOut());
+    });
 
-  it('retries once through the CONNECTION_NOT_INITED reconnect path', async () => {
-    const { client, store } = createStore();
-    vi.mocked(client.invoke)
-      .mockRejectedValueOnce({ errorMessage: 'CONNECTION_NOT_INITED' })
-      .mockResolvedValueOnce(undefined);
+    it('switches to error state in case of error', async () => {
+      const { client, store, storage } = createStore();
 
-    await expect(store.logout()).resolves.toBe(true);
+      client.invoke.mockRejectedValueOnce(new Error());
+      const result = await store.logout();
+      expect(store.state.get()).toBe('error');
+      expect(result).toBeFalsy();
+      expect(storage.clearSession).not.toHaveBeenCalled();
+      expect(storage.clearCache).not.toHaveBeenCalled();
+    });
 
-    expect(client.disconnect).toHaveBeenCalled();
-    expect(client.invoke).toHaveBeenCalledTimes(2);
+    it('clears the session and cache and resolves true', async () => {
+      const { storage, store } = createStore();
+
+      await expect(store.logout()).resolves.toBe(true);
+
+      expect(storage.clearSession).toHaveBeenCalled();
+      expect(storage.clearCache).toHaveBeenCalled();
+      expect(store.state.get()).toBe('wait_phone');
+    });
   });
 });

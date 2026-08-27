@@ -16,7 +16,10 @@ export class MockClient {
   invoke = vi.fn(async () => emptyDialogs);
   addEventHandler = vi.fn(() => {});
   removeEventHandler = vi.fn(() => {});
-  checkAuthorization = vi.fn(() => {});
-  sendCode = vi.fn(() => {});
+  checkAuthorization = vi.fn(async () => true);
+  sendCode = vi.fn(async () => ({
+    phoneCodeHash: 'hash',
+    isCodeViaApp: true,
+  }));
   session = { save: vi.fn(() => {}) };
 }

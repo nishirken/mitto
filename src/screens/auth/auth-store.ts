@@ -15,7 +15,6 @@ export type AuthState =
 export interface IAuthStore {
   readonly state: Signal.State<AuthState>;
   init(): Promise<void>;
-  dispose(): void;
   sendPhoneNumber(phone: string): Promise<void>;
   sendAuthCode(code: string): Promise<void>;
   resendCodeViaSms(): Promise<void>;
@@ -66,38 +65,21 @@ export class TelegramAuthStore implements IAuthStore {
 
     if (hasSession) {
       this.state.set('ready');
-      void this._verifySessionInBackground();
+      setTimeout(() => this._verifySession().catch(() => {}), 0); // keep offline in case of error
 
       return;
     }
 
-    // No session: authentication needs the network, so a failure here is terminal.
     try {
-      await this._client.connect();
-      const authorized = await this._client.checkAuthorization();
-      this.state.set(authorized ? 'ready' : 'wait_phone');
+      await this._verifySession();
     } catch {
       this.state.set('error');
     }
   }
 
-  /**
-   * Connects and confirms the saved session is still valid. Only a definitive
-   * "not authorized" response downgrades to the phone prompt; a network failure
-   * leaves us in the cached 'ready' state (offline mode).
-   */
-  private async _verifySessionInBackground(): Promise<void> {
-    try {
-      await this._client.connect();
-      const authorized = await this._client.checkAuthorization();
-      if (!authorized) this.state.set('wait_phone');
-    } catch {
-      // Offline or transient failure — keep showing cached data.
-    }
-  }
-
-  dispose(): void {
-    // no-op — GramJS handles cleanup via disconnect
+  private async _verifySession(): Promise<void> {
+    const authorized = await this._client.checkAuthorization();
+    this.state.set(authorized ? 'ready' : 'wait_phone');
   }
 
   async sendPhoneNumber(phone: string): Promise<void> {
