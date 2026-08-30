@@ -12,6 +12,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 ## Coding
 - Do not add comments!
 - Blank line before every `return` — no longer linted, keep it by hand
+- `on*` names a property holding a callback (the slot a parent assigns, like `el.onclick`); `handle*` names the function passed to a listener (`addEventListener('click', handleClick)`). A method bound in a template is `handle*` even when the property it feeds is `on*` — `.onBottom=${this._handleBottom}`
 - Prefer semantic HTML (`<form>`, `<label>`, `<button type="submit">`) over divs with click handlers
 - Use appropriate ARIA roles and attributes
 - Add `data-testid` attributes to interactive elements for testing

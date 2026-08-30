@@ -10,7 +10,7 @@ export class MediaViewer extends LitElement {
   @property() url = '';
   @property() type: 'photo' | 'video' = 'photo';
 
-  private _onClose() {
+  private _handleClose() {
     this.dispatchEvent(new Event('close'));
   }
 
@@ -22,7 +22,7 @@ export class MediaViewer extends LitElement {
           icon="close"
           label="Close"
           data-testid="media-viewer.close"
-          @click=${this._onClose}
+          @click=${this._handleClose}
         ></mk-icon-button>
       </div>
       ${

@@ -9,11 +9,11 @@ export class DialogHeader extends LitElement {
 
   @property() contactName = '';
 
-  private _onBack() {
+  private _handleBack() {
     this.dispatchEvent(new Event('back'));
   }
 
-  private _onSettings() {
+  private _handleSettings() {
     this.dispatchEvent(new Event('settings'));
   }
 
@@ -25,7 +25,7 @@ export class DialogHeader extends LitElement {
           slot="start"
           icon="arrow-left"
           label="Back"
-          @click=${this._onBack}
+          @click=${this._handleBack}
         ></mk-icon-button>
         <span class="contact">${this.contactName}</span>
         <mk-icon-button
@@ -34,7 +34,7 @@ export class DialogHeader extends LitElement {
           icon="settings"
           label="Settings"
           data-testid="dialog.settings-button"
-          @click=${this._onSettings}
+          @click=${this._handleSettings}
         ></mk-icon-button>
       </mk-header>
     `;

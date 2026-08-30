@@ -23,7 +23,7 @@ export class MediaAttachment extends LitElement {
   @state() private _state: State = 'idle';
   @state() private _url = '';
 
-  private async _onDownload() {
+  private async _handleDownload() {
     if (this._state === 'loading') return;
 
     this._state = 'loading';
@@ -51,7 +51,7 @@ export class MediaAttachment extends LitElement {
     );
   }
 
-  private _onLoad() {
+  private _handleLoad() {
     this.dispatchEvent(new Event('mediaload', { bubbles: true, composed: true }));
   }
 
@@ -64,7 +64,7 @@ export class MediaAttachment extends LitElement {
         class="chip"
         data-testid="media.download"
         ?disabled=${this._state === 'error'}
-        @click=${this._onDownload}
+        @click=${this._handleDownload}
       >
         <mk-icon type=${this.media.type === 'video' ? 'play' : 'image'}></mk-icon>
         <span class="label">${this._state === 'loading' ? 'Loading…' : label}</span>
@@ -83,7 +83,7 @@ export class MediaAttachment extends LitElement {
             alt="Photo"
             width=${width ?? nothing}
             height=${height ?? nothing}
-            @load=${this._onLoad}
+            @load=${this._handleLoad}
           />
         </button>
       `;

@@ -18,22 +18,22 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
 
   @state() private _signingOut = false;
 
-  private _onBack = () => {
+  private _handleBack = () => {
     navigate('dialogs');
   };
 
-  private _onConversationsChange = (e: Event) => {
+  private _handleConversationsChange = (e: Event) => {
     void this.services.settingsStore.setPagedScroll(
       'conversations',
       (e.target as MkCheckbox).checked,
     );
   };
 
-  private _onMessagesChange = (e: Event) => {
+  private _handleMessagesChange = (e: Event) => {
     void this.services.settingsStore.setPagedScroll('messages', (e.target as MkCheckbox).checked);
   };
 
-  private _onSignOut = async () => {
+  private _handleSignOut = async () => {
     if (this._signingOut) return;
     this._signingOut = true;
     try {
@@ -57,7 +57,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
           icon="arrow-left"
           label="Back"
           data-testid="settings.back"
-          @click=${this._onBack}
+          @click=${this._handleBack}
         ></mk-icon-button>
       </mk-header>
 
@@ -68,7 +68,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
             label="Paged scroll"
             .checked=${settings.conversations.pagedScroll}
             data-testid="settings.conversations.paged-scroll"
-            @change=${this._onConversationsChange}
+            @change=${this._handleConversationsChange}
           ></mk-checkbox>
         </section>
 
@@ -78,7 +78,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
             label="Paged scroll"
             .checked=${settings.messages.pagedScroll}
             data-testid="settings.messages.paged-scroll"
-            @change=${this._onMessagesChange}
+            @change=${this._handleMessagesChange}
           ></mk-checkbox>
         </section>
       </div>
@@ -88,7 +88,7 @@ export class SettingsScreen extends SignalWatcher(LitElement) {
           variant="secondary"
           data-testid="settings.sign-out"
           ?disabled=${this._signingOut}
-          @click=${this._onSignOut}
+          @click=${this._handleSignOut}
         >${this._signingOut ? 'Signing out…' : 'Sign out'}</mk-button>
       </footer>
     `;

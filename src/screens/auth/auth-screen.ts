@@ -48,7 +48,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
   @state() private _loading = false;
   @state() private _error = '';
 
-  private async _onSubmitPhone(e?: Event) {
+  private async _handleSubmitPhone(e?: Event) {
     e?.preventDefault();
     if (!this._phone.trim()) return;
     this._loading = true;
@@ -61,7 +61,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._loading = false;
   }
 
-  private async _onResend() {
+  private async _handleResend() {
     this._loading = true;
     this._error = '';
     try {
@@ -72,7 +72,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._loading = false;
   }
 
-  private async _onSubmitCode(e?: Event) {
+  private async _handleSubmitCode(e?: Event) {
     e?.preventDefault();
     if (!this._code.trim()) return;
     this._loading = true;
@@ -86,7 +86,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._loading = false;
   }
 
-  private async _onSubmitPassword(e?: Event) {
+  private async _handleSubmitPassword(e?: Event) {
     e?.preventDefault();
     if (!this._password) return;
     this._loading = true;
@@ -100,7 +100,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._loading = false;
   }
 
-  private async _onRetry() {
+  private async _handleRetry() {
     this._loading = true;
     this._error = '';
     await this.services.authStore.checkAuthorization();
@@ -109,7 +109,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
 
   private _renderPhone() {
     return html`
-      <form class="form" @submit=${this._onSubmitPhone}>
+      <form class="form" @submit=${this._handleSubmitPhone}>
         <span class="title">Sign in</span>
         <mk-input
           data-testid="phone-input"
@@ -122,7 +122,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
           @input=${(e: Event) => (this._phone = (e.target as MkInput).value)}
         ></mk-input>
         ${this._error ? html`<div class="error">${this._error}</div>` : ''}
-        <mk-button data-testid="submit" @click=${this._onSubmitPhone} ?disabled=${this._loading} type="submit">
+        <mk-button data-testid="submit" @click=${this._handleSubmitPhone} ?disabled=${this._loading} type="submit">
           ${this._loading ? 'Sending...' : 'Continue'}
         </mk-button>
       </form>
@@ -134,7 +134,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     const length = codeLength ?? undefined;
 
     return html`
-      <form class="form" @submit=${this._onSubmitCode}>
+      <form class="form" @submit=${this._handleSubmitCode}>
         <span class="title">Enter code</span>
         <mk-input
           data-testid="code-input"
@@ -163,7 +163,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
         ${
           nextType
             ? html`
-          <mk-button data-testid="resend" variant="secondary" ?disabled=${this._loading} @click=${this._onResend}>
+          <mk-button data-testid="resend" variant="secondary" ?disabled=${this._loading} @click=${this._handleResend}>
             ${NEXT_TYPE_LABELS[nextType]}
           </mk-button>
         `
@@ -175,7 +175,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
 
   private _renderPassword({ hint }: WaitPasswordState) {
     return html`
-      <form class="form" @submit=${this._onSubmitPassword}>
+      <form class="form" @submit=${this._handleSubmitPassword}>
         <span class="title">Enter password</span>
         <mk-input
           data-testid="password-input"
@@ -199,7 +199,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
       <div class="form">
         <span class="title">Something went wrong</span>
         <div class="error">Could not reach Telegram.</div>
-        <mk-button data-testid="retry" ?disabled=${this._loading} @click=${this._onRetry}>
+        <mk-button data-testid="retry" ?disabled=${this._loading} @click=${this._handleRetry}>
           ${this._loading ? 'Retrying...' : 'Try again'}
         </mk-button>
       </div>

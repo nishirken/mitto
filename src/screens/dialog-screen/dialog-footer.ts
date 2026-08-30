@@ -10,7 +10,7 @@ export class DialogFooter extends LitElement {
 
   @property() value = '';
 
-  private _onInput(e: Event) {
+  private _handleInput(e: Event) {
     this.value = (e.target as MkTextarea).value;
     this.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
   }
@@ -26,7 +26,7 @@ export class DialogFooter extends LitElement {
   render() {
     return html`
       <form @submit=${this._handleSubmit}>
-        <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._onInput} data-testid="dialog.message-input"></mk-textarea>
+        <mk-textarea label="Message" placeholder="Message…" .value=${this.value} @input=${this._handleInput} data-testid="dialog.message-input"></mk-textarea>
         <mk-icon-button
           bordered
           icon="arrow-up"

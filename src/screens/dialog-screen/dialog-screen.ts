@@ -69,7 +69,7 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     this._scrollToFirstUnread();
   }
 
-  private _onScroll = ({ top, contentHeight, clientHeight }: ScrollDetail): void => {
+  private _handleScroll = ({ top, contentHeight, clientHeight }: ScrollDetail): void => {
     this._showScrollDown = contentHeight - top - clientHeight > clientHeight / 2;
   };
 
@@ -92,7 +92,7 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     this._scrollContainer?.scrollToBottom();
   }
 
-  private _onTop = (): void => {
+  private _handleTop = (): void => {
     void this._loadOlderMessages();
   };
 
@@ -107,31 +107,31 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     if (added > 0) container.scrollToOffset(container.currentTop + added);
   }
 
-  private _onBack() {
+  private _handleBack() {
     navigate('dialogs');
   }
 
-  private _onSettings() {
+  private _handleSettings() {
     navigate('settings');
   }
 
-  private _onMediaOpen = (e: CustomEvent<MediaOpenDetail>): void => {
+  private _handleMediaOpen = (e: CustomEvent<MediaOpenDetail>): void => {
     this._viewer = e.detail;
   };
 
-  private _onMediaLoad = (): void => {
+  private _handleMediaLoad = (): void => {
     this._scrollContainer?.refresh();
   };
 
-  private _onViewerClose = (): void => {
+  private _handleViewerClose = (): void => {
     this._viewer = undefined;
   };
 
-  private _onScrollDown = (): void => {
+  private _handleScrollDown = (): void => {
     this._scrollContainer?.scrollToBottom();
   };
 
-  private _onSend(e: CustomEvent<string>) {
+  private _handleSend(e: CustomEvent<string>) {
     const message = e.detail.trim();
     if (message) {
       this._dialogSyncService?.sendMessage(e.detail);
@@ -146,21 +146,21 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     return html`
       <dialog-header
         .contactName=${contactName}
-        @back=${this._onBack}
-        @settings=${this._onSettings}
+        @back=${this._handleBack}
+        @settings=${this._handleSettings}
       ></dialog-header>
       <div class="list-area">
         <scroll-container
           class="list"
           ?paged=${this.services.settingsStore.pagedScroll('messages')}
-          .onTop=${this._onTop}
-          .onScroll=${this._onScroll}
+          .onTop=${this._handleTop}
+          .onScroll=${this._handleScroll}
         >
           <div
             class="messages"
             id="messages"
-            @mediaopen=${this._onMediaOpen}
-            @mediaload=${this._onMediaLoad}
+            @mediaopen=${this._handleMediaOpen}
+            @mediaload=${this._handleMediaLoad}
           >
             ${messages.map(
               (msg) => html`
@@ -184,18 +184,18 @@ export class DialogScreen extends SignalWatcher(LitElement) {
               icon="arrow-up"
               label="Scroll to the latest message"
               data-testid="dialog.scroll-down"
-              @click=${this._onScrollDown}
+              @click=${this._handleScrollDown}
             ></mk-icon-button>`
             : nothing
         }
       </div>
-      <dialog-footer @send=${this._onSend}></dialog-footer>
+      <dialog-footer @send=${this._handleSend}></dialog-footer>
       ${
         this._viewer
           ? html`<media-viewer
             .url=${this._viewer.url}
             .type=${this._viewer.type}
-            @close=${this._onViewerClose}
+            @close=${this._handleViewerClose}
           ></media-viewer>`
           : nothing
       }

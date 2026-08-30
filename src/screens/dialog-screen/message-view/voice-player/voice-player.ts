@@ -23,7 +23,7 @@ export class VoicePlayer extends LitElement {
     this._audio?.pause();
   }
 
-  private async _onToggle() {
+  private async _handleToggle() {
     if (this._playing) {
       this._audio?.pause();
       this._playing = false;
@@ -57,7 +57,7 @@ export class VoicePlayer extends LitElement {
         data-testid="voice.toggle"
         icon=${this._playing ? 'pause' : 'play'}
         label=${this._playing ? 'Pause' : 'Play'}
-        @click=${this._onToggle}
+        @click=${this._handleToggle}
       ></mk-icon-button>
     `;
   }

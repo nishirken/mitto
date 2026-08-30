@@ -40,15 +40,15 @@ export class DialogListScreen extends SignalWatcher(LitElement) {
     this._dialogListProjection.dispose();
   }
 
-  private _onBottom = (): void => {
+  private _handleBottom = (): void => {
     void this._dialogListSyncService.loadMore().catch(() => {});
   };
 
-  private _onDialogClick = (peerId: PeerId) => {
+  private _handleDialogClick = (peerId: PeerId) => {
     navigate(`dialog/${peerId}`);
   };
 
-  private _onSettingsClick = () => {
+  private _handleSettingsClick = () => {
     navigate('settings');
   };
 
@@ -64,13 +64,13 @@ export class DialogListScreen extends SignalWatcher(LitElement) {
           icon="settings"
           label="Settings"
           data-testid="dialog-list.settings-button"
-          @click=${this._onSettingsClick}
+          @click=${this._handleSettingsClick}
         ></mk-icon-button>
       </mk-header>
       <scroll-container
         class="list"
         ?paged=${this.services.settingsStore.pagedScroll('conversations')}
-        .onBottom=${this._onBottom}
+        .onBottom=${this._handleBottom}
       >
         ${dialogs.map(
           (dialog) => html`
@@ -79,7 +79,7 @@ export class DialogListScreen extends SignalWatcher(LitElement) {
               .timestamp=${formatTimestamp(dialog.date)}
               .preview=${dialog.topMessage?.text}
               .unreadCount=${dialog.unreadCount}
-              @click="${() => this._onDialogClick(dialog.id)}"
+              @click="${() => this._handleDialogClick(dialog.id)}"
             ></dialog-item>
           `,
         )}
