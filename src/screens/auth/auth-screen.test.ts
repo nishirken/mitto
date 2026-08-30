@@ -9,7 +9,7 @@ import type { WaitCodeState } from './auth-store';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
 import type { MkInput } from 'mudita-ui';
-import { tid, typeInto } from 'test-utils';
+import { settled, tid, typeInto } from 'test-utils';
 
 let authStore: MockAuthStore;
 let services: Services;
@@ -132,6 +132,41 @@ describe('auth-screen', () => {
     const input = tid<MkInput>(el, 'code-input')!;
     expect(input.getAttribute('type')).toBe('text');
     expect(input.hasAttribute('maxlength')).toBe(false);
+  });
+
+  it('forwards autocomplete hints to the native inputs', async () => {
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+    const nativeOf = (id: string) =>
+      tid(el, id)!.shadowRoot!.querySelector('input')!.getAttribute('autocomplete');
+
+    expect(nativeOf('phone-input')).toBe('tel');
+
+    authStore.state.set(waitCode());
+    await el.updateComplete;
+    expect(nativeOf('code-input')).toBe('one-time-code');
+
+    authStore.state.set({ type: 'wait_password', hint: null });
+    await el.updateComplete;
+    expect(nativeOf('password-input')).toBe('current-password');
+  });
+
+  it('announces errors to assistive technology', async () => {
+    authStore.state.set(waitCode());
+    authStore.signIn.mockRejectedValueOnce(new Error('Invalid code'));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    typeInto(tid(el, 'code-input')!, '12345');
+    await el.updateComplete;
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await settled(el);
+
+    const error = el.shadowRoot!.querySelector('.error')!;
+    expect(error.getAttribute('role')).toBe('alert');
+    expect(error.textContent).toContain('Invalid code');
   });
 
   it('renders a masked password field with the account hint', async () => {

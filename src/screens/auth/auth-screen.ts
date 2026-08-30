@@ -110,10 +110,11 @@ export class AuthScreen extends SignalWatcher(LitElement) {
   private _renderPhone() {
     return html`
       <form class="form" @submit=${this._handleSubmitPhone}>
-        <span class="title">Sign in</span>
+        <h1 class="title">Sign in</h1>
         <mk-input
           data-testid="phone-input"
           type="tel"
+          autocomplete="tel"
           placeholder="+12345678900"
           label="Phone number"
           hint="International format"
@@ -121,7 +122,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
           .value=${this._phone}
           @input=${(e: Event) => (this._phone = (e.target as MkInput).value)}
         ></mk-input>
-        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : ''}
         <mk-button data-testid="submit" @click=${this._handleSubmitPhone} ?disabled=${this._loading} type="submit">
           ${this._loading ? 'Sending...' : 'Continue'}
         </mk-button>
@@ -135,10 +136,11 @@ export class AuthScreen extends SignalWatcher(LitElement) {
 
     return html`
       <form class="form" @submit=${this._handleSubmitCode}>
-        <span class="title">Enter code</span>
+        <h1 class="title">Enter code</h1>
         <mk-input
           data-testid="code-input"
           label="Authentication code"
+          autocomplete="one-time-code"
           hint=${codeHint(state)}
           required
           minlength=${ifDefined(length)}
@@ -156,7 +158,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
         `
             : ''
         }
-        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : ''}
         <mk-button data-testid="submit" type="submit" ?disabled=${this._loading}>
           ${this._loading ? 'Verifying...' : 'Continue'}
         </mk-button>
@@ -176,17 +178,18 @@ export class AuthScreen extends SignalWatcher(LitElement) {
   private _renderPassword({ hint }: WaitPasswordState) {
     return html`
       <form class="form" @submit=${this._handleSubmitPassword}>
-        <span class="title">Enter password</span>
+        <h1 class="title">Enter password</h1>
         <mk-input
           data-testid="password-input"
           type="password"
+          autocomplete="current-password"
           label="Password"
           hint=${hint ?? 'Two-step verification is enabled'}
           required
           .value=${this._password}
           @input=${(e: Event) => (this._password = (e.target as MkInput).value)}
         ></mk-input>
-        ${this._error ? html`<div class="error">${this._error}</div>` : ''}
+        ${this._error ? html`<div class="error" role="alert">${this._error}</div>` : ''}
         <mk-button data-testid="submit" type="submit" ?disabled=${this._loading}>
           ${this._loading ? 'Checking...' : 'Continue'}
         </mk-button>
@@ -197,7 +200,7 @@ export class AuthScreen extends SignalWatcher(LitElement) {
   private _renderError() {
     return html`
       <div class="form">
-        <span class="title">Something went wrong</span>
+        <h1 class="title">Something went wrong</h1>
         <div class="error">Could not reach Telegram.</div>
         <mk-button data-testid="retry" ?disabled=${this._loading} @click=${this._handleRetry}>
           ${this._loading ? 'Retrying...' : 'Try again'}

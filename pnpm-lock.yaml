@@ -32,8 +32,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       mudita-ui:
-        specifier: github:nishirken/mudita-ui#0a7ae82b9e73bd4d691112907efebff48c0ac6e2
-        version: https://codeload.github.com/nishirken/mudita-ui/tar.gz/0a7ae82b9e73bd4d691112907efebff48c0ac6e2(lit@3.3.2)
+        specifier: github:nishirken/mudita-ui#d7d701460c57ad1950eb96c8d3db1986ecdcab94
+        version: https://codeload.github.com/nishirken/mudita-ui/tar.gz/d7d701460c57ad1950eb96c8d3db1986ecdcab94(lit@3.3.2)
       signal-polyfill:
         specifier: ^0.2.2
         version: 0.2.2
@@ -1525,8 +1525,8 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
-  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/0a7ae82b9e73bd4d691112907efebff48c0ac6e2:
-    resolution: {tarball: https://codeload.github.com/nishirken/mudita-ui/tar.gz/0a7ae82b9e73bd4d691112907efebff48c0ac6e2}
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/d7d701460c57ad1950eb96c8d3db1986ecdcab94:
+    resolution: {tarball: https://codeload.github.com/nishirken/mudita-ui/tar.gz/d7d701460c57ad1950eb96c8d3db1986ecdcab94}
     version: 0.1.0
     peerDependencies:
       lit: ^3.0.0
@@ -3595,7 +3595,7 @@ snapshots:
 
   ms@2.1.3: {}
 
-  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/0a7ae82b9e73bd4d691112907efebff48c0ac6e2(lit@3.3.2):
+  mudita-ui@https://codeload.github.com/nishirken/mudita-ui/tar.gz/d7d701460c57ad1950eb96c8d3db1986ecdcab94(lit@3.3.2):
     dependencies:
       lit: 3.3.2
 
