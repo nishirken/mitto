@@ -48,19 +48,18 @@ export class AppRoot extends SignalWatcher(LitElement) {
     });
 
     const database = await Database.create();
-
-    const sessionString = (await database.getSession()) ?? '';
-    const session = new StringSession(sessionString);
+    const sessionString = await database.getSession();
+    const session = new StringSession(sessionString ?? undefined);
+    const config = { apiId: API_ID, apiHash: API_HASH };
     const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
+
     const client = new TelegramClient(session, API_ID, API_HASH, {
       testServers: useTestDC,
-    });
-    await client.connect();
-    const config = { apiId: API_ID, apiHash: API_HASH };
+    }) as InstanceType<typeof TelegramClient> & { session: typeof session };
+    const authStore = new TelegramAuthStore(config, client, database, sessionString);
 
     const mediaRepository = new MediaRepository(database);
     const settingsStore = new SettingsStore(database);
-    const authStore = new TelegramAuthStore(config, client, database);
 
     this._services = {
       client,
@@ -73,7 +72,13 @@ export class AppRoot extends SignalWatcher(LitElement) {
       settingsStore,
     };
 
-    await Promise.all([settingsStore.init(), authStore.init()]);
+    await client.connect();
+
+    if (sessionString !== null) {
+      void authStore.checkAuthorization();
+    }
+
+    void settingsStore.init();
   }
 
   disconnectedCallback() {

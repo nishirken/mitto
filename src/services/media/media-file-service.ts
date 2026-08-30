@@ -1,4 +1,4 @@
-import type { TelegramClient } from 'telegram';
+import type { ITelegramClient } from '../../api/telegram-client';
 import type { Database, MediaId, StoredMedia } from '../database';
 import { toInputLocation } from './input-location';
 
@@ -15,7 +15,7 @@ export class MediaFileService implements IMediaFileService {
   private readonly _pending = new Map<MediaId, Promise<string | null>>();
 
   constructor(
-    private readonly _client: TelegramClient,
+    private readonly _client: ITelegramClient,
     private readonly _storage: Database,
   ) {}
 

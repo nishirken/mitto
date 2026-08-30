@@ -36,6 +36,12 @@ mk-input {
   font-size: var(--fs-caption);
 }
 
+.fragment-link {
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+  margin-bottom: var(--sp-16);
+}
+
 mk-button {
   width: 100%;
 }

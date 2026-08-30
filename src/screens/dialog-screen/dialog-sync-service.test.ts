@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import telegram from 'telegram';
-import type { Api as ApiTypes, events, TelegramClient } from 'telegram';
+import type { Api as ApiTypes, events } from 'telegram';
+import type { ITelegramClient } from '../../api/telegram-client';
 import type { Database } from '../../services/database';
 import { createTestDatabase } from '../../services/database/__mocks__/database';
 import type { MessageId, PeerId } from '../../services/database';
@@ -69,7 +70,7 @@ describe('DialogSyncService', () => {
     const repo = new MessageRepository(database, media);
     const dialogRepo = new DialogRepository(database, media);
     service = new DialogSyncService(
-      client as unknown as TelegramClient,
+      client as unknown as ITelegramClient,
       repo,
       dialogRepo,
       database,

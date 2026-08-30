@@ -7,20 +7,20 @@ import type { AuthState, IAuthStore } from '../auth-store';
 // `useDefineForClassFields: false` rules out `private static`.
 const authMembers = {
   state: signal<AuthState>('loading'),
-  init: vi.fn(async () => {}),
-  dispose: vi.fn(() => {}),
-  sendPhoneNumber: vi.fn(async () => {}),
-  sendAuthCode: vi.fn(async () => {}),
-  resendCodeViaSms: vi.fn(async () => {}),
+  checkAuthorization: vi.fn(async () => {}),
+  sendCode: vi.fn(async () => {}),
+  signIn: vi.fn(async () => {}),
+  checkPassword: vi.fn(async () => {}),
+  resendCode: vi.fn(async () => {}),
   logout: vi.fn(async () => true),
 };
 
 export class MockAuthStore implements IAuthStore {
   readonly state = authMembers.state;
-  init = authMembers.init;
-  dispose = authMembers.dispose;
-  sendPhoneNumber = authMembers.sendPhoneNumber;
-  sendAuthCode = authMembers.sendAuthCode;
-  resendCodeViaSms = authMembers.resendCodeViaSms;
+  checkAuthorization = authMembers.checkAuthorization;
+  sendCode = authMembers.sendCode;
+  signIn = authMembers.signIn;
+  checkPassword = authMembers.checkPassword;
+  resendCode = authMembers.resendCode;
   logout = authMembers.logout;
 }

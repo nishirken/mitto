@@ -1,9 +1,10 @@
 import { signal, type Signal } from '@lit-labs/signals';
-import type { Api, TelegramClient, events } from 'telegram';
+import type { Api, events } from 'telegram';
 import telegram from 'telegram';
 import type { Timestamp } from '../../utils/flavour';
 import type { MessageId } from '../../services/database';
 import type { IDialogRepository } from '../../services/repositories/dialog/dialog-repository';
+import type { ITelegramClient } from '../../api/telegram-client';
 import type { IMessageRepository } from '../../services/repositories/message/message-repository';
 import { peerKey } from '../../services/peer-key';
 
@@ -27,7 +28,7 @@ export class DialogListSyncService {
   private _offset?: Offset;
 
   constructor(
-    private readonly _client: TelegramClient,
+    private readonly _client: ITelegramClient,
     private readonly _dialogRepo: IDialogRepository,
     private readonly _messageRepo: IMessageRepository,
   ) {}

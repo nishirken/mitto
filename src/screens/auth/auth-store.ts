@@ -1,24 +1,84 @@
 import { signal, type Signal } from '@lit-labs/signals';
-import type { TelegramClient } from 'telegram';
-import telegram from 'telegram';
+import type { ITelegramClient } from '../../api/telegram-client';
+import telegram, { type Api } from 'telegram';
 import type { TelegramConfig } from 'types/telegram';
 import type { Database } from 'services/database';
+
+export type CodeType = 'app' | 'sms' | 'call' | 'fragment' | 'word' | 'phrase' | 'unknown';
+
+export type NextType = 'sms' | 'call' | 'fragment';
+
+export type WaitCodeState = {
+  type: 'wait_code';
+  codeType: CodeType;
+  codeLength: number | null;
+  nextType: NextType | null;
+  beginning: string | null;
+  fragmentUrl: string | null;
+};
+
+export type WaitPasswordState = {
+  type: 'wait_password';
+  hint: string | null;
+};
 
 export type AuthState =
   | 'loading'
   | 'error'
   | 'wait_phone'
-  | { type: 'wait_code'; isSmsAvailable: boolean }
-  | 'wait_password'
+  | WaitCodeState
+  | WaitPasswordState
   | 'ready';
 
 export interface IAuthStore {
   readonly state: Signal.State<AuthState>;
-  init(): Promise<void>;
-  sendPhoneNumber(phone: string): Promise<void>;
-  sendAuthCode(code: string): Promise<void>;
-  resendCodeViaSms(): Promise<void>;
+  checkAuthorization(): Promise<void>;
+  sendCode(phone: string): Promise<void>;
+  signIn(code: string): Promise<void>;
+  checkPassword(password: string): Promise<void>;
+  resendCode(): Promise<void>;
   logout(): Promise<boolean>;
+}
+
+function errorMessageOf(e: unknown): string | null {
+  return e && typeof e === 'object' && 'errorMessage' in e
+    ? String((e as Record<string, unknown>).errorMessage)
+    : null;
+}
+
+function toCodeType(type: Api.auth.TypeSentCodeType): CodeType {
+  const { auth } = telegram.Api;
+
+  if (type instanceof auth.SentCodeTypeApp) return 'app';
+  if (type instanceof auth.SentCodeTypeSms) return 'sms';
+  if (type instanceof auth.SentCodeTypeCall) return 'call';
+  if (type instanceof auth.SentCodeTypeFragmentSms) return 'fragment';
+  if (type instanceof auth.SentCodeTypeSmsWord) return 'word';
+  if (type instanceof auth.SentCodeTypeSmsPhrase) return 'phrase';
+
+  return 'unknown';
+}
+
+function toCodeLength(type: Api.auth.TypeSentCodeType): number | null {
+  return 'length' in type && typeof type.length === 'number' ? type.length : null;
+}
+
+function toBeginning(type: Api.auth.TypeSentCodeType): string | null {
+  return 'beginning' in type ? (type.beginning ?? null) : null;
+}
+
+function toFragmentUrl(type: Api.auth.TypeSentCodeType): string | null {
+  return type instanceof telegram.Api.auth.SentCodeTypeFragmentSms ? type.url : null;
+}
+
+function toNextType(type?: Api.auth.TypeCodeType): NextType | null {
+  const { auth } = telegram.Api;
+
+  if (type instanceof auth.CodeTypeSms) return 'sms';
+  if (type instanceof auth.CodeTypeCall) return 'call';
+  if (type instanceof auth.CodeTypeFragmentSms) return 'fragment';
+
+  return null;
 }
 
 export class TelegramAuthStore implements IAuthStore {
@@ -29,9 +89,12 @@ export class TelegramAuthStore implements IAuthStore {
 
   constructor(
     private readonly _config: TelegramConfig,
-    private readonly _client: TelegramClient,
+    private readonly _client: ITelegramClient,
     private readonly _storage: Database,
-  ) {}
+    session: string | null,
+  ) {
+    this.state.set(session === null ? 'wait_phone' : 'ready');
+  }
 
   /**
    * GramJS auto-reconnect doesn't re-send InitConnection, and its built-in
@@ -42,12 +105,7 @@ export class TelegramAuthStore implements IAuthStore {
     try {
       return await fn();
     } catch (e: unknown) {
-      if (
-        e &&
-        typeof e === 'object' &&
-        'errorMessage' in e &&
-        (e as Record<string, unknown>).errorMessage === 'CONNECTION_NOT_INITED'
-      ) {
+      if (errorMessageOf(e) === 'CONNECTION_NOT_INITED') {
         await this._client.disconnect();
         await this._client.connect();
 
@@ -57,43 +115,58 @@ export class TelegramAuthStore implements IAuthStore {
     }
   }
 
-  async init(): Promise<void> {
-    // With a saved session, render from the offline cache immediately and verify
-    // connectivity in the background — otherwise a device with no internet lands on
-    // 'error' and the cache is never shown, defeating its purpose.
-    const hasSession = (await this._storage.getSession()) !== null;
-
-    if (hasSession) {
-      this.state.set('ready');
-      setTimeout(() => this._verifySession().catch(() => {}), 0); // keep offline in case of error
-
-      return;
-    }
-
+  async checkAuthorization(): Promise<void> {
     try {
-      await this._verifySession();
+      const authorized = await this._client.checkAuthorization();
+      this.state.set(authorized ? 'ready' : 'wait_phone');
     } catch {
       this.state.set('error');
     }
   }
 
-  private async _verifySession(): Promise<void> {
-    const authorized = await this._client.checkAuthorization();
-    this.state.set(authorized ? 'ready' : 'wait_phone');
-  }
-
-  async sendPhoneNumber(phone: string): Promise<void> {
+  async sendCode(phone: string): Promise<void> {
     this._phoneNumber = phone;
 
     const { apiId, apiHash } = this._config;
-    const { phoneCodeHash, isCodeViaApp } = await this._invoke(() =>
-      this._client.sendCode({ apiId, apiHash }, phone),
+    const result = await this._invoke(() =>
+      this._client.invoke(
+        new telegram.Api.auth.SendCode({
+          phoneNumber: phone,
+          apiId,
+          apiHash,
+          settings: new telegram.Api.CodeSettings({}),
+        }),
+      ),
     );
-    this._phoneCodeHash = phoneCodeHash;
-    this.state.set({ type: 'wait_code', isSmsAvailable: !isCodeViaApp });
+
+    await this._applySentCode(result);
   }
 
-  async sendAuthCode(code: string): Promise<void> {
+  private async _applySentCode(result: Api.auth.TypeSentCode): Promise<void> {
+    if (result instanceof telegram.Api.auth.SentCodeSuccess) {
+      await this._saveSession();
+
+      return;
+    }
+
+    this._phoneCodeHash = result.phoneCodeHash;
+    this.state.set({
+      type: 'wait_code',
+      codeType: toCodeType(result.type),
+      codeLength: toCodeLength(result.type),
+      nextType: toNextType(result.nextType),
+      beginning: toBeginning(result.type),
+      fragmentUrl: toFragmentUrl(result.type),
+    });
+  }
+
+  private async _saveSession(): Promise<void> {
+    const sessionString = this._client.session.save();
+    await this._storage.setSession(sessionString);
+    this.state.set('ready');
+  }
+
+  async signIn(code: string): Promise<void> {
     try {
       const result = await this._invoke(() =>
         this._client.invoke(
@@ -109,33 +182,63 @@ export class TelegramAuthStore implements IAuthStore {
         throw new Error('Please create a Telegram account using an official client first');
       }
 
-      const sessionString = this._client.session.save() as unknown as string;
-      await this._storage.setSession(sessionString);
-      this.state.set('ready');
+      await this._saveSession();
     } catch (e: unknown) {
-      if (
-        e &&
-        typeof e === 'object' &&
-        'errorMessage' in e &&
-        (e as Record<string, unknown>).errorMessage === 'SESSION_PASSWORD_NEEDED'
-      ) {
-        this.state.set('wait_password');
+      if (errorMessageOf(e) === 'SESSION_PASSWORD_NEEDED') {
+        this.state.set({ type: 'wait_password', hint: await this._passwordHint() });
       } else {
         throw e;
       }
     }
   }
 
-  async resendCodeViaSms(): Promise<void> {
-    const result = await this._client.invoke(
-      new telegram.Api.auth.ResendCode({
-        phoneNumber: this._phoneNumber,
-        phoneCodeHash: this._phoneCodeHash,
-      }),
-    );
-    if (result instanceof telegram.Api.auth.SentCode) {
-      this._phoneCodeHash = result.phoneCodeHash;
+  private async _getPassword(): Promise<Api.account.Password> {
+    return await this._invoke(() => this._client.invoke(new telegram.Api.account.GetPassword()));
+  }
+
+  private async _passwordHint(): Promise<string | null> {
+    try {
+      const password = await this._getPassword();
+
+      return password.hint ?? null;
+    } catch {
+      return null;
     }
+  }
+
+  async checkPassword(password: string): Promise<void> {
+    const current = await this._getPassword();
+    const srp = await telegram.password.computeCheck(current, password);
+
+    try {
+      const result = await this._invoke(() =>
+        this._client.invoke(new telegram.Api.auth.CheckPassword({ password: srp })),
+      );
+
+      if (result instanceof telegram.Api.auth.AuthorizationSignUpRequired) {
+        throw new Error('Please create a Telegram account using an official client first');
+      }
+    } catch (e: unknown) {
+      if (errorMessageOf(e) === 'PASSWORD_HASH_INVALID') {
+        throw new Error('Incorrect password');
+      }
+      throw e;
+    }
+
+    await this._saveSession();
+  }
+
+  async resendCode(): Promise<void> {
+    const result = await this._invoke(() =>
+      this._client.invoke(
+        new telegram.Api.auth.ResendCode({
+          phoneNumber: this._phoneNumber,
+          phoneCodeHash: this._phoneCodeHash,
+        }),
+      ),
+    );
+
+    await this._applySentCode(result);
   }
 
   /**

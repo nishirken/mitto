@@ -5,13 +5,26 @@ import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { createMockServices } from 'api/__mocks__/services-context';
 import { MockAuthStore } from 'screens/auth/__mocks__/auth-store';
+import type { WaitCodeState } from './auth-store';
 import './auth-screen';
 import type { AuthScreen } from './auth-screen';
 import type { MkInput } from 'mudita-ui';
-import { tid } from 'test-utils';
+import { tid, typeInto } from 'test-utils';
 
 let authStore: MockAuthStore;
 let services: Services;
+
+function waitCode(overrides: Partial<WaitCodeState> = {}): WaitCodeState {
+  return {
+    type: 'wait_code',
+    codeType: 'app',
+    codeLength: 5,
+    nextType: null,
+    beginning: null,
+    fragmentUrl: null,
+    ...overrides,
+  };
+}
 
 function withContext() {
   const provider = document.createElement('div');
@@ -28,20 +41,18 @@ beforeEach(() => {
 });
 
 describe('auth-screen', () => {
-  it('calls sendPhoneNumber on phone submit', async () => {
+  it('calls sendCode on phone submit', async () => {
     const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
       parentNode: withContext(),
     });
-    const input = tid<MkInput>(el, 'phone-input')!;
     const phoneNumber = '+1234567890';
-    input.value = phoneNumber;
-    input.dispatchEvent(new Event('input'));
+    typeInto(tid(el, 'phone-input')!, phoneNumber);
     await el.updateComplete;
 
     tid(el, 'submit')!.click();
     await el.updateComplete;
 
-    expect(authStore.sendPhoneNumber).toHaveBeenCalledWith(phoneNumber);
+    expect(authStore.sendCode).toHaveBeenCalledWith(phoneNumber);
   });
 
   it('shows code input after auth state changes to wait_code', async () => {
@@ -49,15 +60,135 @@ describe('auth-screen', () => {
       parentNode: withContext(),
     });
 
-    authStore.state.set({ type: 'wait_code', isSmsAvailable: false });
+    authStore.state.set(waitCode());
     await el.updateComplete;
 
     expect(el.shadowRoot!.querySelector('.title')!.textContent).toBe('Enter code');
     expect(tid(el, 'code-input')).not.toBeNull();
   });
 
-  it('calls sendAuthCode on code submit', async () => {
-    authStore.state.set({ type: 'wait_code', isSmsAvailable: false });
+  it('hints at the delivery channel and offers no resend without nextType', async () => {
+    authStore.state.set(waitCode({ codeType: 'sms' }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    expect(tid<MkInput>(el, 'code-input')!.getAttribute('hint')).toBe('Check your SMS');
+    expect(tid(el, 'resend')).toBeNull();
+  });
+
+  it('labels the resend button after nextType', async () => {
+    authStore.state.set(waitCode({ nextType: 'call' }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    const resend = tid(el, 'resend')!;
+    expect(resend.textContent!.trim()).toBe('Get code by phone call');
+
+    resend.click();
+    await el.updateComplete;
+
+    expect(authStore.resendCode).toHaveBeenCalled();
+  });
+
+  it('shows the word beginning in the hint', async () => {
+    authStore.state.set(waitCode({ codeType: 'word', codeLength: null, beginning: 'a' }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    expect(tid<MkInput>(el, 'code-input')!.getAttribute('hint')).toBe('Check your SMS for "a…"');
+  });
+
+  it('links to Fragment when the code is delivered there', async () => {
+    const url = 'https://fragment.com/number/8881234/code';
+    authStore.state.set(waitCode({ codeType: 'fragment', fragmentUrl: url }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    const link = tid(el, 'fragment-link')!;
+    expect(link.getAttribute('href')).toBe(url);
+    expect(link.textContent!.trim()).toBe(url);
+  });
+
+  it('has no Fragment link for other code types', async () => {
+    authStore.state.set(waitCode({ codeType: 'sms' }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    expect(tid(el, 'code-input')).not.toBeNull();
+    expect(tid(el, 'fragment-link')).toBeNull();
+  });
+
+  it('drops the length constraint for word codes', async () => {
+    authStore.state.set(waitCode({ codeType: 'word', codeLength: null }));
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    const input = tid<MkInput>(el, 'code-input')!;
+    expect(input.getAttribute('type')).toBe('text');
+    expect(input.hasAttribute('maxlength')).toBe(false);
+  });
+
+  it('renders a masked password field with the account hint', async () => {
+    authStore.state.set({ type: 'wait_password', hint: 'my cat name' });
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    const input = tid<MkInput>(el, 'password-input')!;
+    expect(el.shadowRoot!.querySelector('.title')!.textContent).toBe('Enter password');
+    expect(input.getAttribute('type')).toBe('password');
+    expect(input.getAttribute('hint')).toBe('my cat name');
+  });
+
+  it('falls back to a generic hint when the account has none', async () => {
+    authStore.state.set({ type: 'wait_password', hint: null });
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    expect(tid<MkInput>(el, 'password-input')!.getAttribute('hint')).toBe(
+      'Two-step verification is enabled',
+    );
+  });
+
+  it('calls checkPassword on password submit', async () => {
+    authStore.state.set({ type: 'wait_password', hint: null });
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    typeInto(tid(el, 'password-input')!, 'hunter2');
+    await el.updateComplete;
+
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true }));
+    await el.updateComplete;
+
+    expect(authStore.checkPassword).toHaveBeenCalledWith('hunter2');
+  });
+
+  it('offers a retry in the error state', async () => {
+    authStore.state.set('error');
+    const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
+      parentNode: withContext(),
+    });
+
+    const retry = tid(el, 'retry')!;
+    expect(retry).not.toBeNull();
+
+    retry.click();
+    await el.updateComplete;
+
+    expect(authStore.checkAuthorization).toHaveBeenCalled();
+  });
+
+  it('calls signIn on code submit', async () => {
+    authStore.state.set(waitCode());
     const el = await fixture<AuthScreen>(
       html`
       <auth-screen></auth-screen>
@@ -65,15 +196,13 @@ describe('auth-screen', () => {
       { parentNode: withContext() },
     );
 
-    const input = tid<MkInput>(el, 'code-input')!;
-    input.value = '12345';
-    input.dispatchEvent(new Event('input'));
+    typeInto(tid(el, 'code-input')!, '12345');
     await el.updateComplete;
 
     const form = el.shadowRoot!.querySelector('form')!;
     form.dispatchEvent(new Event('submit', { cancelable: true }));
     await el.updateComplete;
 
-    expect(authStore.sendAuthCode).toHaveBeenCalledWith('12345');
+    expect(authStore.signIn).toHaveBeenCalledWith('12345');
   });
 });

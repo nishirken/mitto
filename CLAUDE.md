@@ -1,6 +1,6 @@
 # Mitto
 
-E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×480, 217 PPI). Lit web components, TypeScript, Vite, pnpm. Capacitor for Android APK bundling. gramjs (vendored bundle in `src/lib/telegram/`) for Telegram API. Vitest + @open-wc/testing + happy-dom for testing. Biome for linting and formatting (TS + CSS). Nix flake + direnv for dev environment.
+E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×480, 217 PPI). Lit web components, TypeScript, Vite, pnpm. Capacitor for Android APK bundling. gramjs (vendored bundle in `src/lib/telegram/`, v2.26.7 / TL layer 193 — verify via `Version.d.ts` and `tl/AllTLObjects.d.ts`) for Telegram API. Vitest + @open-wc/testing + happy-dom for testing. Biome for linting and formatting (TS + CSS). Nix flake + direnv for dev environment.
 
 ## Conventions
 - Files: kebab-case (`dialog-item.ts`, `dialog-list-screen.ts`)
@@ -42,7 +42,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - A mock standing in for something the code under test calls with `new` **must be constructible** — arrow functions have no `[[Construct]]` and throw `TypeError: … is not a constructor`. This surfaces as an unrelated assertion failure when the throw happens inside an async `connectedCallback`
 - Share members at module level when the code under test constructs its own instance, so `new MockX()` and the exported `mockX` observe the same spies (`useDefineForClassFields: false` rules out `private static`)
 - `vi.fn()` needs an explicit body — write `vi.fn(() => {})`; the bare form's inferred type can't be named under `declaration: true`
-- Never import `api/__mocks__/telegram-client` inside a `vi.mock('telegram')` factory — that module imports `telegram` itself, so the factory re-enters and deadlocks with no output. Build what you need from the factory's `actual` instead
+- `api/__mocks__/telegram-client` must stay free of a *runtime* `telegram` import (type-only is fine) — that is what lets a `vi.mock('telegram')` factory reuse `MockClient`. Add one and the factory re-enters and deadlocks with no output; pass the `Api` namespace in from the factory's `actual` instead
 - `vi.mock` factories are hoisted above imports: reference imported values via `await import(...)` inside the factory, never from the module scope
 
 ## Key Notes
