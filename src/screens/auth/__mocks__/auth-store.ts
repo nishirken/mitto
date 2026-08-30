@@ -6,7 +6,7 @@ import type { AuthState, IAuthStore } from '../auth-store';
 // observable from the instance the test constructs. Module-level because
 // `useDefineForClassFields: false` rules out `private static`.
 const authMembers = {
-  state: signal<AuthState>('loading'),
+  state: signal<AuthState>({ type: 'loading' }),
   checkAuthorization: vi.fn(async () => {}),
   sendCode: vi.fn(async () => {}),
   signIn: vi.fn(async () => {}),

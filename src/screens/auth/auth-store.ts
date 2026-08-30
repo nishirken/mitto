@@ -23,12 +23,12 @@ export type WaitPasswordState = {
 };
 
 export type AuthState =
-  | 'loading'
-  | 'error'
-  | 'wait_phone'
+  | { type: 'loading' }
+  | { type: 'error' }
+  | { type: 'wait_phone' }
   | WaitCodeState
   | WaitPasswordState
-  | 'ready';
+  | { type: 'ready' };
 
 export interface IAuthStore {
   readonly state: Signal.State<AuthState>;
@@ -82,7 +82,7 @@ function toNextType(type?: Api.auth.TypeCodeType): NextType | null {
 }
 
 export class TelegramAuthStore implements IAuthStore {
-  readonly state = signal<AuthState>('loading');
+  readonly state = signal<AuthState>({ type: 'loading' });
 
   private _phoneNumber = '';
   private _phoneCodeHash = '';
@@ -93,7 +93,7 @@ export class TelegramAuthStore implements IAuthStore {
     private readonly _storage: Database,
     session: string | null,
   ) {
-    this.state.set(session === null ? 'wait_phone' : 'ready');
+    this.state.set({ type: session === null ? 'wait_phone' : 'ready' });
   }
 
   /**
@@ -118,9 +118,9 @@ export class TelegramAuthStore implements IAuthStore {
   async checkAuthorization(): Promise<void> {
     try {
       const authorized = await this._client.checkAuthorization();
-      this.state.set(authorized ? 'ready' : 'wait_phone');
+      this.state.set({ type: authorized ? 'ready' : 'wait_phone' });
     } catch {
-      this.state.set('error');
+      this.state.set({ type: 'error' });
     }
   }
 
@@ -163,7 +163,7 @@ export class TelegramAuthStore implements IAuthStore {
   private async _saveSession(): Promise<void> {
     const sessionString = this._client.session.save();
     await this._storage.setSession(sessionString);
-    this.state.set('ready');
+    this.state.set({ type: 'ready' });
   }
 
   async signIn(code: string): Promise<void> {
@@ -255,14 +255,14 @@ export class TelegramAuthStore implements IAuthStore {
     try {
       await this._invoke(() => this._client.invoke(new telegram.Api.auth.LogOut()));
     } catch {
-      this.state.set('error');
+      this.state.set({ type: 'error' });
 
       return false;
     }
 
     await this._storage.clearSession();
     await this._storage.clearCache();
-    this.state.set('wait_phone');
+    this.state.set({ type: 'wait_phone' });
 
     return true;
   }

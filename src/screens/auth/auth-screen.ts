@@ -1,4 +1,4 @@
-import { LitElement, html, unsafeCSS } from 'lit';
+import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { consume } from '@lit/context';
@@ -212,20 +212,18 @@ export class AuthScreen extends SignalWatcher(LitElement) {
   private _renderAuthState() {
     const authState = this.services.authStore.state.get();
 
-    if (authState === 'wait_phone') {
-      return this._renderPhone();
-    }
-
-    if (authState === 'error') {
-      return this._renderError();
-    }
-
-    if (typeof authState === 'object' && authState.type === 'wait_code') {
-      return this._renderCode(authState);
-    }
-
-    if (typeof authState === 'object' && authState.type === 'wait_password') {
-      return this._renderPassword(authState);
+    switch (authState.type) {
+      case 'wait_phone':
+        return this._renderPhone();
+      case 'error':
+        return this._renderError();
+      case 'wait_code':
+        return this._renderCode(authState);
+      case 'wait_password':
+        return this._renderPassword(authState);
+      case 'loading':
+      case 'ready':
+        return nothing;
     }
   }
 

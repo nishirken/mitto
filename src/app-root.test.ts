@@ -85,13 +85,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   database = createTestDatabase();
   authStore = new MockAuthStore();
-  authStore.state.set('loading');
+  authStore.state.set({ type: 'loading' });
 });
 
 describe('app-root', () => {
   describe('routes', () => {
     it('renders dialog-list-screen for #/dialogs', async () => {
-      authStore.state.set('ready');
+      authStore.state.set({ type: 'ready' });
       window.location.hash = '#/dialogs';
       const el = await fixture<AppRoot>(html`<app-root></app-root>`);
       await flushAsync(el);
@@ -99,7 +99,7 @@ describe('app-root', () => {
     });
 
     it('renders dialog-screen for #/dialog/user:1', async () => {
-      authStore.state.set('ready');
+      authStore.state.set({ type: 'ready' });
       window.location.hash = '#/dialog/user:1';
       const el = await fixture<AppRoot>(html`<app-root></app-root>`);
       await flushAsync(el);
@@ -107,7 +107,7 @@ describe('app-root', () => {
     });
 
     it('renders settings', async () => {
-      authStore.state.set('ready');
+      authStore.state.set({ type: 'ready' });
       window.location.hash = '#/settings';
       const el = await fixture<AppRoot>(html`<app-root></app-root>`);
       await flushAsync(el);
@@ -115,7 +115,7 @@ describe('app-root', () => {
     });
 
     it('renders auth-screen for #/auth', async () => {
-      authStore.state.set('wait_phone');
+      authStore.state.set({ type: 'wait_phone' });
       window.location.hash = '#/auth';
       const el = await fixture<AppRoot>(html`<app-root></app-root>`);
       await flushAsync(el);

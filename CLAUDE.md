@@ -18,6 +18,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - Add `data-testid` attributes to interactive elements for testing
 - The `data-testid` values are hierarchical and selectable as through the root element of the component.
 - Custom form elements use `formAssociated` + `ElementInternals`
+- In a union (that is usually a State type) if a member is object use objects { type: 'loading' } for each member of the type, otherwise use plain strings. Eg `'loading' | 'error'` vs `{ type: 'loading' } | { type: 'error', message: 'string' }`
 
 ## State & Routing
 - `@lit-labs/signals` for reactive state, `@lit/context` for DI (services provided at `app-root`)

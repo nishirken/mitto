@@ -40,28 +40,28 @@ describe('TelegramAuthStore', () => {
   describe('Session', () => {
     test('There is no session', async () => {
       const { store } = createStore(null);
-      expect(store.state.get()).toBe('wait_phone');
+      expect(store.state.get()).toEqual({ type: 'wait_phone' });
     });
 
     test('Authorized', async () => {
       const { store, client } = createStore('session');
       client.checkAuthorization.mockResolvedValueOnce(true);
       await store.checkAuthorization();
-      expect(store.state.get()).toBe('ready');
+      expect(store.state.get()).toEqual({ type: 'ready' });
     });
 
     test('Is not authorized', async () => {
       const { client, store } = createStore('session');
       client.checkAuthorization.mockResolvedValueOnce(false);
       await store.checkAuthorization();
-      expect(store.state.get()).toBe('wait_phone');
+      expect(store.state.get()).toEqual({ type: 'wait_phone' });
     });
 
     test('Error during checkAuthorization', async () => {
       const { client, store } = createStore();
       client.checkAuthorization.mockRejectedValueOnce(new Error('Some error'));
       await store.checkAuthorization();
-      expect(store.state.get()).toBe('error');
+      expect(store.state.get()).toEqual({ type: 'error' });
       expect(client.checkAuthorization).toHaveBeenCalledTimes(1);
     });
   });
@@ -159,7 +159,7 @@ describe('TelegramAuthStore', () => {
     );
     const s = await storage.getSession();
     expect(s).toBe(session);
-    expect(store.state.get()).toBe('ready');
+    expect(store.state.get()).toEqual({ type: 'ready' });
   });
 
   test('signIn throws sign up error', async () => {
@@ -232,7 +232,7 @@ describe('TelegramAuthStore', () => {
       expect(calls[calls.length - 1][0]).toBeInstanceOf(telegram.Api.auth.CheckPassword);
       expect(telegram.password.computeCheck).toHaveBeenCalledWith(expect.anything(), 'hunter2');
       expect(await storage.getSession()).toBe('passwordSession');
-      expect(store.state.get()).toBe('ready');
+      expect(store.state.get()).toEqual({ type: 'ready' });
     });
 
     test('checkPassword reports a wrong password', async () => {
@@ -300,7 +300,7 @@ describe('TelegramAuthStore', () => {
 
       client.invoke.mockRejectedValueOnce(new Error());
       const result = await store.logout();
-      expect(store.state.get()).toBe('error');
+      expect(store.state.get()).toEqual({ type: 'error' });
       expect(result).toBeFalsy();
       expect(storage.clearSession).not.toHaveBeenCalled();
       expect(storage.clearCache).not.toHaveBeenCalled();
@@ -313,7 +313,7 @@ describe('TelegramAuthStore', () => {
 
       expect(storage.clearSession).toHaveBeenCalled();
       expect(storage.clearCache).toHaveBeenCalled();
-      expect(store.state.get()).toBe('wait_phone');
+      expect(store.state.get()).toEqual({ type: 'wait_phone' });
     });
   });
 });

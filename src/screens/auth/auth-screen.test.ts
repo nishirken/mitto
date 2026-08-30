@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   authStore = new MockAuthStore();
   services = createMockServices({ authStore });
-  authStore.state.set('wait_phone');
+  authStore.state.set({ type: 'wait_phone' });
 });
 
 describe('auth-screen', () => {
@@ -208,7 +208,7 @@ describe('auth-screen', () => {
   });
 
   it('offers a retry in the error state', async () => {
-    authStore.state.set('error');
+    authStore.state.set({ type: 'error' });
     const el = await fixture<AuthScreen>(html`<auth-screen></auth-screen>`, {
       parentNode: withContext(),
     });

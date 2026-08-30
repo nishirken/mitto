@@ -109,15 +109,11 @@ export class AppRoot extends SignalWatcher(LitElement) {
 
     const authState = this._services.authStore.state.get();
 
-    if (authState === 'loading') {
+    if (authState.type === 'loading') {
       return html`<mk-loading></mk-loading>`;
     }
 
-    if (authState === 'error') {
-      return 'Something went wrong';
-    }
-
-    if (authState === 'ready') {
+    if (authState.type === 'ready') {
       return this._renderRoute();
     }
 
