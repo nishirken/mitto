@@ -7,14 +7,13 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - Colocate test files next to components (`*.test.ts`)
 - Custom elements: kebab-case (`<dialog-item>`, `<app-root>`)
 - Classes: PascalCase (`DialogItem`, `AppRoot`)
-- `mk-*` prefix for design system components, full names for feature/screen components
+- `mk-*` components come from the `mudita-ui` package, not this repo — new shared ones go upstream there; local components use full feature/screen names
 
 ## Coding
 - Do not add comments!
 - Blank line before every `return` — no longer linted, keep it by hand
 - `on*` names a property holding a callback (the slot a parent assigns, like `el.onclick`); `handle*` names the function passed to a listener (`addEventListener('click', handleClick)`). A method bound in a template is `handle*` even when the property it feeds is `on*` — `.onBottom=${this._handleBottom}`
 - Prefer semantic HTML (`<form>`, `<label>`, `<button type="submit">`) over divs with click handlers
-- Use appropriate ARIA roles and attributes
 - Add `data-testid` attributes to interactive elements for testing
 - The `data-testid` values are hierarchical and selectable as through the root element of the component.
 - Custom form elements use `formAssociated` + `ElementInternals`
@@ -39,7 +38,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 - Mocks colocated in `__mocks__/` directories next to the module being mocked
 
 ### Writing mocks
-- Services expose an interface (`IAuthStore`, `IDatabase`, `IDialogRepository`, …) next to the class; the class `implements` it. Concrete classes have private fields, so a mock can never `implements` them directly — the interface is what ties mock and impl together
+- Services expose an interface (`IAuthStore`, `IDialogRepository`, `IMessageRepository`, …) next to the class; the class `implements` it. Concrete classes have private fields, so a mock can never `implements` them directly — the interface is what ties mock and impl together
 - Mocks are classes, never object literals: `export class MockX implements IX {}` plus `export const mockX = new MockX()`. A literal needs `as unknown as X`, which silently rots as the real API changes
 - A mock standing in for something the code under test calls with `new` **must be constructible** — arrow functions have no `[[Construct]]` and throw `TypeError: … is not a constructor`. This surfaces as an unrelated assertion failure when the throw happens inside an async `connectedCallback`
 - Share members at module level when the code under test constructs its own instance, so `new MockX()` and the exported `mockX` observe the same spies (`useDefineForClassFields: false` rules out `private static`)
@@ -49,6 +48,7 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Key Notes
 - `tsconfig.json`: `useDefineForClassFields: false` is critical for Lit decorators and prevents `private static` fields — use module-level variables instead
+- Commit straight to the current branch, `master` included — do not create a branch first
 - Pre-commit hook via simple-git-hooks → lint-staged (`biome check --write` on .ts and .css)
 - `biome` comes from the Nix flake, not npm — the npm binary is dynamically linked and NixOS cannot run it
 - `biome.json` rejects comments; keep it strict JSON or it silently falls back to defaults

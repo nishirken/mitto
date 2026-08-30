@@ -51,11 +51,10 @@ export class AppRoot extends SignalWatcher(LitElement) {
     const sessionString = await database.getSession();
     const session = new StringSession(sessionString ?? undefined);
     const config = { apiId: API_ID, apiHash: API_HASH };
-    const useTestDC = import.meta.env.VITE_USE_TEST_DC === 'true';
 
-    const client = new TelegramClient(session, API_ID, API_HASH, {
-      testServers: useTestDC,
-    }) as InstanceType<typeof TelegramClient> & { session: typeof session };
+    const client = new TelegramClient(session, API_ID, API_HASH, {}) as InstanceType<
+      typeof TelegramClient
+    > & { session: typeof session };
     const authStore = new TelegramAuthStore(config, client, database, sessionString);
 
     const mediaRepository = new MediaRepository(database);
