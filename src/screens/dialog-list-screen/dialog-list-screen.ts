@@ -76,8 +76,8 @@ export class DialogListScreen extends SignalWatcher(LitElement) {
           (dialog) => html`
             <dialog-item
               .name=${dialog.name}
-              .timestamp=${formatTimestamp(dialog.date)}
-              .preview=${dialog.topMessage?.text}
+              .timestamp=${dialog.date}
+              .message=${dialog.topMessage?.text}
               .unreadCount=${dialog.unreadCount}
               @click="${() => this._handleDialogClick(dialog.id)}"
             ></dialog-item>

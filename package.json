@@ -7,6 +7,7 @@
   "scripts": {
     "start": "vite",
     "build": "tsc --noEmit && vite build",
+    "install:release": "adb install android/app/build/outputs/apk/release/app-release.apk",
     "build:apk:debug": "tsc --noEmit && vite build && cap sync android && cd android && ./gradlew assembleDebug",
     "build:apk:release": "tsc --noEmit && vite build && cap sync android && cd android && ./gradlew assembleRelease",
     "test": "vitest run",

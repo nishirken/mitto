@@ -5,7 +5,7 @@ export function formatTimestamp(unix: number): string {
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays === 0) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   } else if (diffDays < 7) {
     return date.toLocaleDateString([], { weekday: 'short' });
   }

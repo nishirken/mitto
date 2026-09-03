@@ -10,7 +10,7 @@ import type {
 } from '../../services/database/database-schema';
 import { isUser } from '../../services/peer-key';
 
-export type MessageMedia =
+export type MessageViewableMessage =
   | { id: MediaId; type: 'photo'; size?: number; width?: number; height?: number }
   | {
       id: MediaId;
@@ -19,7 +19,9 @@ export type MessageMedia =
       width?: number;
       height?: number;
       duration?: number;
-    }
+    };
+export type MessageMedia =
+  | MessageViewableMessage
   | { id: MediaId; type: 'voice'; size?: number; duration?: number };
 
 export type MessageListItem = {

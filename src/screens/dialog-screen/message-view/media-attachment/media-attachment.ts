@@ -1,12 +1,13 @@
-import { LitElement, html, nothing, unsafeCSS } from 'lit';
+import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { consume } from '@lit/context';
 import 'mudita-ui';
 import { servicesContext } from 'api/services-context';
 import type { Services } from 'api/services-context';
 import { formatFileSize } from 'utils/format-file-size';
-import type { MessageMedia } from '../../dialog-projection';
+import type { MessageViewableMessage } from '../../dialog-projection';
 import styles from './media-attachment.css?inline';
+import { ifDefined } from 'lit/directives/if-defined.js';
 
 export type MediaOpenDetail = { url: string; type: 'photo' | 'video' };
 
@@ -19,7 +20,7 @@ export class MediaAttachment extends LitElement {
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
 
-  @property({ attribute: false }) media!: MessageMedia & { type: 'photo' | 'video' };
+  @property({ attribute: false }) media!: MessageViewableMessage;
   @state() private _state: State = 'idle';
   @state() private _url = '';
 
@@ -81,8 +82,8 @@ export class MediaAttachment extends LitElement {
           <img
             src=${this._url}
             alt="Photo"
-            width=${width ?? nothing}
-            height=${height ?? nothing}
+            width=${ifDefined(width)}
+            height=${ifDefined(height)}
             @load=${this._handleLoad}
           />
         </button>

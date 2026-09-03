@@ -1,5 +1,5 @@
 import { LitElement, html, nothing, unsafeCSS } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { consume } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
@@ -39,7 +39,6 @@ const NEXT_TYPE_LABELS: Record<NextType, string> = {
 export class AuthScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @property() private _onSubmit?: VoidFunction;
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   @state() private _phone = '';
@@ -79,7 +78,6 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._error = '';
     try {
       await this.services.authStore.signIn(this._code.trim());
-      this._onSubmit?.();
     } catch (e) {
       this._error = (e as Error).message;
     }
@@ -93,7 +91,6 @@ export class AuthScreen extends SignalWatcher(LitElement) {
     this._error = '';
     try {
       await this.services.authStore.checkPassword(this._password);
-      this._onSubmit?.();
     } catch (e) {
       this._error = (e as Error).message;
     }

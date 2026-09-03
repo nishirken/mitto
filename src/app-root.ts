@@ -15,7 +15,7 @@ import 'mudita-ui/eink.css';
 import 'mudita-ui';
 import telegram from 'telegram';
 import { TelegramAuthStore } from './screens/auth/auth-store';
-import { Database } from './services/database';
+import { Database, type PeerId } from './services/database';
 import { MessageRepository } from './services/repositories/message/message-repository';
 import { DialogRepository } from './services/repositories/dialog/dialog-repository';
 import { MediaRepository } from './services/repositories/media/media-repository';
@@ -91,7 +91,7 @@ export class AppRoot extends SignalWatcher(LitElement) {
         return html`<dialog-list-screen></dialog-list-screen>`;
       case 'dialog': {
         return html`<dialog-screen
-          .peerId=${this._route.params.id}
+          .peerId=${this._route.params.id as PeerId}
         ></dialog-screen>`;
       }
       case 'settings':

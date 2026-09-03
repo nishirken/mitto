@@ -5,6 +5,7 @@ import type { MessageMedia } from '../dialog-projection';
 import './media-attachment/media-attachment';
 import './voice-player/voice-player';
 import 'mudita-ui';
+import { formatTimestamp } from '../../../utils/format-timestamp';
 
 @customElement('message-view')
 export class MessageView extends LitElement {
@@ -13,8 +14,8 @@ export class MessageView extends LitElement {
   @property({ type: Boolean, reflect: true }) outgoing = false;
   @property({ type: Boolean, reflect: true }) read = false;
   @property({ type: Object, attribute: false }) media?: MessageMedia;
-  @property() text = '';
-  @property() timestamp = '';
+  @property() text?: string;
+  @property({ type: Number }) timestamp: number;
 
   private get _renderMedia() {
     if (this.media) {
@@ -60,7 +61,7 @@ export class MessageView extends LitElement {
             : nothing
         }
       </span>
-      <span class="msg-time">${this.timestamp}${this._renderStatus}</span>
+      <span class="msg-time">${formatTimestamp(this.timestamp)}${this._renderStatus}</span>
     `;
   }
 }

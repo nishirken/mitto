@@ -2,7 +2,6 @@ import { LitElement, html, nothing, unsafeCSS } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { SignalWatcher } from '@lit-labs/signals';
 import { navigate } from 'router';
-import { formatTimestamp } from 'utils/format-timestamp';
 import './dialog-header';
 import './dialog-footer';
 import './message-view/message-view';
@@ -22,7 +21,7 @@ import type { MediaOpenDetail } from './message-view/media-attachment/media-atta
 export class DialogScreen extends SignalWatcher(LitElement) {
   static styles = unsafeCSS(styles);
 
-  @property({ type: String }) peerId = '' as PeerId;
+  @property({ attribute: false }) peerId: PeerId = '';
   @consume({ context: servicesContext, subscribe: true })
   services!: Services;
   private _dialogProjection!: DialogProjection;
@@ -170,7 +169,7 @@ export class DialogScreen extends SignalWatcher(LitElement) {
                   ?read=${msg.isRead}
                   .text=${msg.text}
                   .media=${msg.media}
-                  .timestamp=${formatTimestamp(msg.date)}
+                  .timestamp=${msg.date}
                 ></message-view>
               `,
             )}

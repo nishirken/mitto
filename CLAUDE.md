@@ -11,13 +11,15 @@ E-ink optimized Telegram web client targeting Mudita Kompakt (4.3" E Ink, 800×4
 
 ## Coding
 - Do not add comments!
-- Blank line before every `return` — no longer linted, keep it by hand
+- Blank line before every `return`
 - `on*` names a property holding a callback (the slot a parent assigns, like `el.onclick`); `handle*` names the function passed to a listener (`addEventListener('click', handleClick)`). A method bound in a template is `handle*` even when the property it feeds is `on*` — `.onBottom=${this._handleBottom}`
 - Prefer semantic HTML (`<form>`, `<label>`, `<button type="submit">`) over divs with click handlers
 - Add `data-testid` attributes to interactive elements for testing
 - The `data-testid` values are hierarchical and selectable as through the root element of the component.
 - Custom form elements use `formAssociated` + `ElementInternals`
 - In a union (that is usually a State type) if a member is object use objects { type: 'loading' } for each member of the type, otherwise use plain strings. Eg `'loading' | 'error'` vs `{ type: 'loading' } | { type: 'error', message: 'string' }`
+- Do not set `type: String` to lit's `@property` - it's default
+- Prefer using lit directives if possible
 
 ## State & Routing
 - `@lit-labs/signals` for reactive state, `@lit/context` for DI (services provided at `app-root`)

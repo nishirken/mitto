@@ -20,5 +20,6 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     environment: 'happy-dom',
     setupFiles: ['src/test-setup.ts'],
+    env: { TZ: 'UTC' },
   },
 });
