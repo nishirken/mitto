@@ -41,7 +41,7 @@ export class DialogListSyncService {
     return this._hasMore;
   }
 
-  async loadInitial(limit = 20): Promise<void> {
+  async loadInitial(limit = 50): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
     this._client.addEventHandler(this._handleReadEvent, this._incomingReadEvent);
 
@@ -93,7 +93,7 @@ export class DialogListSyncService {
       if (result instanceof A.messages.Dialogs) {
         this._hasMore.set(false);
       } else if (result instanceof A.messages.DialogsSlice) {
-        this._hasMore.set(result.dialogs.length < limit);
+        this._hasMore.set(result.dialogs.length >= limit);
       } else if (result instanceof A.messages.DialogsNotModified) {
         return;
       }

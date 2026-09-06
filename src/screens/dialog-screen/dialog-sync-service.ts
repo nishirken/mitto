@@ -44,10 +44,9 @@ export class DialogSyncService {
     return this._hasMore;
   }
 
-  async loadInitial(limit = 20): Promise<void> {
+  async loadInitial(limit = 50): Promise<void> {
     this._client.addEventHandler(this._handleNewMessage, this._newMessageEvent);
     this._client.addEventHandler(this._handleReadHistory, this._readHistoryEvent);
-    this._loading.set(true);
 
     const peer = await this._db.getPeer(this._peerId);
 
@@ -55,6 +54,7 @@ export class DialogSyncService {
       return;
     }
 
+    this._loading.set(true);
     this._peer = toInputPeer(peer);
 
     try {
@@ -101,7 +101,7 @@ export class DialogSyncService {
       if (result instanceof A.messages.Messages) {
         this._hasMore.set(false);
       } else if (result instanceof A.messages.MessagesSlice) {
-        this._hasMore.set(result.messages.length < limit);
+        this._hasMore.set(result.messages.length >= limit);
       } else {
         return;
       }
@@ -149,6 +149,7 @@ export class DialogSyncService {
     this._client.removeEventHandler(this._handleReadHistory, this._readHistoryEvent);
   }
 
+  // GetHistory returns newest first, so the oldest usable message is the cursor for the next page
   private _resolveOffset(result: MessagesResult): Offset | undefined {
     if (!this._peer) return;
     const { messages } = result;
@@ -157,7 +158,8 @@ export class DialogSyncService {
       if (message instanceof A.MessageEmpty || message instanceof A.MessageService) {
         continue;
       }
-      this._offset = {
+
+      return {
         id: message.id,
         date: message.date,
         peer: this._peer,

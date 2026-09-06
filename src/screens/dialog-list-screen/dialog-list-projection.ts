@@ -57,7 +57,7 @@ export class DialogListProjection {
 
   init(): void {
     this._sub = liveQuery(async () => {
-      const dialogs = (await this._db.dialogs.toArray()).filter((d) => isUser(d.peerId));
+      const dialogs = await this._db.dialogs.filter((d) => isUser(d.peerId)).toArray();
       const [users, topMessages] = await Promise.all([
         this._db.users.bulkGet(dialogs.map((d) => d.peerId as UserId)),
         this._db.messages.bulkGet(dialogs.map((d) => [d.peerId, d.topMessageId])),

@@ -16,6 +16,8 @@ import { consume } from '@lit/context';
 import type { PeerId } from 'services/database';
 import { DialogSyncService } from './dialog-sync-service';
 import type { MediaOpenDetail } from './message-view/media-attachment/media-attachment';
+import { createRef, type Ref, ref } from 'lit/directives/ref.js';
+import { ViewportBackfill } from '../viewport-backfill';
 
 @customElement('dialog-screen')
 export class DialogScreen extends SignalWatcher(LitElement) {
@@ -26,6 +28,10 @@ export class DialogScreen extends SignalWatcher(LitElement) {
   services!: Services;
   private _dialogProjection!: DialogProjection;
   private _dialogSyncService!: DialogSyncService;
+  private _backfill!: ViewportBackfill;
+  private readonly _messagesRef: Ref<HTMLDivElement> = createRef();
+  private _messagesRO?: ResizeObserver;
+  private _scrollContainerClientHeight = 0; // constant height on the device
   @query('scroll-container') private _scrollContainer?: ScrollContainer;
   @state() private _viewer?: MediaOpenDetail;
   @state() private _showScrollDown = false;
@@ -46,13 +52,26 @@ export class DialogScreen extends SignalWatcher(LitElement) {
     );
     this._dialogProjection = new DialogProjection(this.services.database, this.peerId);
     this._dialogProjection.init();
-    void this._dialogSyncService.loadInitial();
+    this._backfill = new ViewportBackfill(this._dialogSyncService);
+    this._backfill.track(this._dialogSyncService.loadInitial().catch(() => {}));
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._messagesRO?.disconnect();
+    this._backfill?.dispose();
     this._dialogSyncService?.dispose();
     this._dialogProjection?.dispose();
+  }
+
+  private _handleMessagesResize: ResizeObserverCallback = async ([entry]) => {
+    const fetched = await this._backfill.run(this._isViewportCovered(entry.contentRect.height));
+
+    if (fetched) this._scrollToFirstUnread();
+  };
+
+  private _isViewportCovered(height: number): boolean {
+    return height > this._scrollContainerClientHeight;
   }
 
   protected async getUpdateComplete(): Promise<boolean> {
@@ -63,6 +82,17 @@ export class DialogScreen extends SignalWatcher(LitElement) {
   }
 
   protected async firstUpdated(): Promise<void> {
+    const messages = this._messagesRef.value;
+
+    if (messages) {
+      this._messagesRO = new ResizeObserver(this._handleMessagesResize);
+      this._messagesRO.observe(messages);
+    }
+
+    if (this._scrollContainer) {
+      this._scrollContainerClientHeight = this._scrollContainer.clientHeight;
+    }
+
     await this._dialogProjection.firstMessages;
     await this.updateComplete;
     this._scrollToFirstUnread();
@@ -156,6 +186,7 @@ export class DialogScreen extends SignalWatcher(LitElement) {
           .onScroll=${this._handleScroll}
         >
           <div
+            ${ref(this._messagesRef)}
             class="messages"
             id="messages"
             @mediaopen=${this._handleMediaOpen}
