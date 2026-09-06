@@ -10,23 +10,10 @@ let database: Database;
 // same default export.
 vi.mock('telegram', async (importOriginal) => {
   const actual = await importOriginal<typeof import('telegram')>();
-  // Safe to import here only because that module has no runtime `telegram` import; a module
-  // that does would re-enter this factory and deadlock with no output.
-  const { emptyDialogs, MockClient } = await import('api/__mocks__/telegram-client');
-  const dialogs = emptyDialogs(actual.default.Api);
-
-  // app-root calls `new TelegramClient(session, apiId, apiHash, params)`, so the shared stub
-  // is adapted to that arity here rather than growing a constructor it does not need.
-  class MockTelegramClient extends MockClient {
-    constructor() {
-      super();
-      this.invokeResult = dialogs;
-    }
-  }
 
   // The real `StringSession` parses what it is given and throws on anything that is not a
-  // version-prefixed gramjs payload. Only `MockTelegramClient` receives it, and it ignores
-  // its arguments, so a stub lets a test store any string as the session.
+  // version-prefixed gramjs payload. Only the mock client receives it, and it ignores its
+  // arguments, so a stub lets a test store any string as the session.
   class MockStringSession {
     constructor(private readonly _session?: string) {}
 
@@ -39,10 +26,29 @@ vi.mock('telegram', async (importOriginal) => {
     ...actual,
     default: {
       ...actual.default,
-      TelegramClient: MockTelegramClient,
       sessions: { ...actual.default.sessions, StringSession: MockStringSession },
     },
   };
+});
+
+// Replacing our own module rather than gramjs's `TelegramClient` keeps `MittoTelegramClient`'s
+// real base class out of the test. The stub may only *add* to `MockClient`: that class holds
+// `connect`/`invoke` as instance fields, so an override would be shadowed by the assignment in
+// `super()` and `super.connect()` would throw.
+vi.mock('api/telegram-client', async () => {
+  const { emptyDialogs, MockClient } = await import('api/__mocks__/telegram-client');
+  const telegram = await import('telegram');
+
+  // app-root calls `new MittoTelegramClient(session, apiId, apiHash, params)`, so the shared
+  // stub is adapted to that arity here rather than growing a constructor it does not need.
+  class MockMittoTelegramClient extends MockClient {
+    constructor() {
+      super();
+      this.invokeResult = emptyDialogs(telegram.default.Api);
+    }
+  }
+
+  return { MittoTelegramClient: MockMittoTelegramClient };
 });
 
 vi.mock('./services/database', async (importOriginal) => {
@@ -72,7 +78,6 @@ vi.mock('./screens/auth/auth-store', async (importOriginal) => {
 import 'app-root';
 import type { AppRoot } from 'app-root';
 import type { Database } from './services/database';
-import { client } from 'telegram';
 
 async function flushAsync(el: AppRoot): Promise<void> {
   for (let i = 0; i < 5; i++) {
@@ -123,16 +128,11 @@ describe('app-root', () => {
     });
   });
 
-  it('calls checkAuthorization if there is session', async () => {
-    await database.setSession('session');
+  // Whether that init then confirms the session is the store's own decision, covered in
+  // auth-store.test.ts; app-root only has to start it.
+  it('initialises the auth store', async () => {
     const el = await fixture<AppRoot>(html`<app-root></app-root>`);
     await flushAsync(el);
-    expect(authStore.checkAuthorization).toHaveBeenCalled();
-  });
-
-  it('does not call checkAuthorization without a session', async () => {
-    const el = await fixture<AppRoot>(html`<app-root></app-root>`);
-    await flushAsync(el);
-    expect(authStore.checkAuthorization).not.toHaveBeenCalled();
+    expect(authStore.init).toHaveBeenCalled();
   });
 });

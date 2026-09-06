@@ -32,6 +32,7 @@ export type AuthState =
 
 export interface IAuthStore {
   readonly state: Signal.State<AuthState>;
+  init(): void;
   checkAuthorization(): Promise<void>;
   sendCode(phone: string): Promise<void>;
   signIn(code: string): Promise<void>;
@@ -91,9 +92,22 @@ export class TelegramAuthStore implements IAuthStore {
     private readonly _config: TelegramConfig,
     private readonly _client: ITelegramClient,
     private readonly _storage: Database,
-    session: string | null,
+    private readonly _session: string | null,
   ) {
-    this.state.set({ type: session === null ? 'wait_phone' : 'ready' });
+    this.state.set({ type: _session === null ? 'wait_phone' : 'ready' });
+  }
+
+  /**
+   * A stored session is trusted for the first render so cached content paints straight away,
+   * then confirmed against the server. The client's `invoke` holds this until there is a
+   * connection to ask over, which matters here: gramjs's `checkAuthorization` swallows every
+   * error from `updates.GetState` and reports false, so asking too early would read as a
+   * revoked session and sign the user out.
+   */
+  init(): void {
+    if (this._session === null) return;
+
+    void this.checkAuthorization();
   }
 
   /**

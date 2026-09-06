@@ -1,4 +1,5 @@
 import { vi, type Mock } from 'vitest';
+import { signal } from '@lit-labs/signals';
 import type { Api } from 'telegram';
 import type { ITelegramClient } from '../telegram-client';
 
@@ -21,4 +22,7 @@ export class MockClient implements ITelegramClient {
   removeEventHandler = vi.fn(() => {});
   checkAuthorization = vi.fn(async () => true);
   session = { save: vi.fn(() => '') };
+  // Connected from the start, so `invoke` never waits and tests keep their existing timing.
+  connected: boolean | undefined = true;
+  readonly isConnected = signal(true);
 }

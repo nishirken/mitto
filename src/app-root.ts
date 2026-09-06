@@ -14,6 +14,7 @@ import 'mudita-ui/tokens.css';
 import 'mudita-ui/eink.css';
 import 'mudita-ui';
 import telegram from 'telegram';
+import { MittoTelegramClient } from 'api/telegram-client';
 import { TelegramAuthStore } from './screens/auth/auth-store';
 import { Database, type PeerId } from './services/database';
 import { MessageRepository } from './services/repositories/message/message-repository';
@@ -23,7 +24,6 @@ import { MediaFileService } from './services/media/media-file-service';
 import { SettingsStore } from './services/settings/settings-store';
 
 const {
-  TelegramClient,
   sessions: { StringSession },
 } = telegram;
 
@@ -52,9 +52,9 @@ export class AppRoot extends SignalWatcher(LitElement) {
     const session = new StringSession(sessionString ?? undefined);
     const config = { apiId: API_ID, apiHash: API_HASH };
 
-    const client = new TelegramClient(session, API_ID, API_HASH, {}) as InstanceType<
-      typeof TelegramClient
-    > & { session: typeof session };
+    const client = new MittoTelegramClient(session, API_ID, API_HASH, {});
+    void client.connect();
+
     const authStore = new TelegramAuthStore(config, client, database, sessionString);
 
     const mediaRepository = new MediaRepository(database);
@@ -71,13 +71,8 @@ export class AppRoot extends SignalWatcher(LitElement) {
       settingsStore,
     };
 
-    await client.connect();
-
-    if (sessionString !== null) {
-      void authStore.checkAuthorization();
-    }
-
     void settingsStore.init();
+    authStore.init();
   }
 
   disconnectedCallback() {

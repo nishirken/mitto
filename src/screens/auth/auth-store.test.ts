@@ -43,6 +43,18 @@ describe('TelegramAuthStore', () => {
       expect(store.state.get()).toEqual({ type: 'wait_phone' });
     });
 
+    test('init confirms a stored session', async () => {
+      const { store, client } = createStore('session');
+      store.init();
+      expect(client.checkAuthorization).toHaveBeenCalled();
+    });
+
+    test('init does not confirm without a session', async () => {
+      const { store, client } = createStore(null);
+      store.init();
+      expect(client.checkAuthorization).not.toHaveBeenCalled();
+    });
+
     test('Authorized', async () => {
       const { store, client } = createStore('session');
       client.checkAuthorization.mockResolvedValueOnce(true);
